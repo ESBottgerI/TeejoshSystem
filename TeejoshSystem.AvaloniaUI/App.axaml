@@ -1,10 +1,30 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             x:Class="TeejoshSystem.AvaloniaUI.App"
-             RequestedThemeVariant="Default">
-             <!-- "Default" ThemeVariant follows system theme variant. "Dark" or "Light" are other available options. -->
+             xmlns:vm="clr-namespace:TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Menu"
+             xmlns:views="clr-namespace:TeejoshSystem.AvaloniaUI.Adapters.Inbound.Views.Menu"
+             x:Class="TeejoshSystem.AvaloniaUI.App">
 
-    <Application.Styles>
-        <FluentTheme />
-    </Application.Styles>
+	<Application.Styles>
+		<FluentTheme />
+	</Application.Styles>
+
+	<Application.DataTemplates>
+		<DataTemplate DataType="{x:Type vm:MenuPrincipalViewModel}">
+			<views:MenuPrincipalView />
+		</DataTemplate>
+		<!-- Comenta los demás hasta que las vistas existan 
+		<DataTemplate DataType="{x:Type vm:Productos.InventarioViewModel}">
+			<views:Productos.InventarioView />
+		</DataTemplate>
+		<DataTemplate DataType="{x:Type vm:Productos.GestionarProductosViewModel}">
+			<views:Productos.GestionarProductosView />
+		</DataTemplate>
+		<DataTemplate DataType="{x:Type vm:Productos.CrearProductoViewModel}">
+			<views:Productos.CrearProductoView />
+		</DataTemplate>
+		<DataTemplate DataType="{x:Type vm:Productos.EditarProductoViewModel}">
+			<views:Productos.EditarProductoView />
+		</DataTemplate>
+		-->
+	</Application.DataTemplates>
 </Application>

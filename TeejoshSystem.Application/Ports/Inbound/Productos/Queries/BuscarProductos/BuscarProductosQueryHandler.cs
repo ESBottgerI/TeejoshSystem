@@ -1,7 +1,7 @@
 ﻿using MediatR;
-using TeejoshInventario.Domain.Ports.Outbound.Repositories;
+using TeejoshSystem.Domain.Ports.Outbound.Repositories;
 
-namespace TeejoshInventario.Application.Ports.Inbound.Productos.Queries.BuscarProductos
+namespace TeejoshSystem.Application.Ports.Inbound.Productos.Queries.BuscarProductos
 {
     public class BuscarProductosQueryHandler : IRequestHandler<BuscarProductosQuery, List<ProductoBusquedaDto>>
     {

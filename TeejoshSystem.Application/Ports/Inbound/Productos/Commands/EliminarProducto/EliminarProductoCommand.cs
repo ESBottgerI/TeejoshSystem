@@ -1,7 +1,7 @@
 ﻿using MediatR;
-using TeejoshInventario.Application.Common;
+using TeejoshSystem.Application.Common;
 
-namespace TeejoshInventario.Application.Ports.Inbound.Productos.Commands.EliminarProducto
+namespace TeejoshSystem.Application.Ports.Inbound.Productos.Commands.EliminarProducto
 {
     public record EliminarProductosCommand(List<int> ProductoIds) : IRequest<Result>;
 }

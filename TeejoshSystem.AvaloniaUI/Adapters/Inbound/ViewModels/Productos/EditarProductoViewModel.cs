@@ -1,14 +1,18 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MediatR;
-using TeejoshInventario.Application.Ports.Inbound.Productos.Commands.ActualizarProducto;
-using TeejoshInventario.Application.Ports.Inbound.Productos.Queries.ObtenerProductos;
-using TeejoshInventario.WPF.Adapters.Inbound.Services;
-using TeejoshInventario.WPF.Adapters.Inbound.ViewModels.Common;
-using TeejoshInventario.WPF.Adapters.Inbound.ViewModels.Shell;
-using static TeejoshInventario.WPF.Adapters.Inbound.ViewModels.Common.ValidatableViewModel;
+using TeejoshSystem.Application.Ports.Inbound.Productos.Commands.ActualizarProducto;
+using TeejoshSystem.Application.Ports.Inbound.Productos.Queries.ObtenerProductos;
+using TeejoshSystem.AvaloniaUI.Adapters.Inbound.Services;
+using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Common;
+using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Shell;
+using static TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Common.ValidatableViewModel;
 
-namespace TeejoshInventario.WPF.Adapters.Inbound.ViewModels.Productos
+namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Productos
 {
     public partial class EditarProductoViewModel
         : ValidatableViewModel, ILoadable
@@ -73,7 +77,7 @@ namespace TeejoshInventario.WPF.Adapters.Inbound.ViewModels.Productos
             var confirmar = _confirmation.Confirm(
                 "¿Desea guardar los cambios del producto?");
 
-            if (!confirmar) return;
+            if (!await confirmar) return;
 
             try
             {
@@ -88,7 +92,7 @@ namespace TeejoshInventario.WPF.Adapters.Inbound.ViewModels.Productos
 
                 if (result.IsSuccess)
                 {
-                    _notification.ShowSuccess("Producto actualizado correctamente.");
+                    await _notification.ShowSuccess("Producto actualizado correctamente.");
 
                     // Refrescar lista y volver
                     await _gestionarVm.BuscarAsync();
@@ -96,7 +100,7 @@ namespace TeejoshInventario.WPF.Adapters.Inbound.ViewModels.Productos
                 }
                 else
                 {
-                    _notification.ShowError(
+                    await _notification.ShowError(
                         result.Error ?? "Ocurrió un error al guardar el producto.");
                 }
             }

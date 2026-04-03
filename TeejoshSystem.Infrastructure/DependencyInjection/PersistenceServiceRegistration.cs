@@ -1,11 +1,11 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using TeejoshInventario.Domain.Ports.Outbound.Repositories;
-using TeejoshInventario.Infrastructure.Adapters.Outbound.Persistence;
-using TeejoshInventario.Infrastructure.Adapters.Outbound.Persistence.Repositories;
+using TeejoshSystem.Domain.Ports.Outbound.Repositories;
+using TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence;
+using TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Repositories;
 
-namespace TeejoshInventario.Infrastructure.DependencyInjection
+namespace TeejoshSystem.Infrastructure.DependencyInjection
 {
     public static class PersistenceServiceRegistration
     {

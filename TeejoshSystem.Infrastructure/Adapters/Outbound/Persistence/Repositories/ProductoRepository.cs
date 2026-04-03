@@ -1,10 +1,10 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using TeejoshInventario.Domain.Entities;
-using TeejoshInventario.Domain.Entities.Detalles;
-using TeejoshInventario.Domain.Enums;
-using TeejoshInventario.Domain.Ports.Outbound.Repositories;
+using TeejoshSystem.Domain.Entities;
+using TeejoshSystem.Domain.Entities.Detalles;
+using TeejoshSystem.Domain.Enums;
+using TeejoshSystem.Domain.Ports.Outbound.Repositories;
 
-namespace TeejoshInventario.Infrastructure.Adapters.Outbound.Persistence.Repositories
+namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Repositories
 {
     public class ProductoRepository : IProductoRepository
     {

@@ -1,16 +1,35 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
-using static TeejoshInventario.WPF.Adapters.Inbound.ViewModels.Common.ValidatableViewModel;
+using Microsoft.Extensions.DependencyInjection;
+using System;
+using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Menu;
 
-namespace TeejoshInventario.WPF.Adapters.Inbound.ViewModels.Shell
+namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Shell
 {
     public partial class MainViewModel : ObservableObject
     {
+        private readonly IServiceProvider _serviceProvider;
+
         [ObservableProperty]
         private object? _currentView;
-        partial void OnCurrentViewChanged(object? value)
+
+        public MainViewModel(IServiceProvider serviceProvider)
         {
-            if (value is ILoadable loadable)
-                loadable.OnLoaded();
+            _serviceProvider = serviceProvider;
+            // Evitamos el ciclo usando el constructor vacío de MenuPrincipalViewModel
+            CurrentView = new MenuPrincipalViewModel();
         }
+
+        // public MainViewModel(IServiceProvider serviceProvider)
+        // {
+        //     _serviceProvider = serviceProvider;
+        //     // Resolver el menú principal desde DI
+        //     CurrentView = _serviceProvider.GetRequiredService<MenuPrincipalViewModel>();
+        // }
+
+        // partial void OnCurrentViewChanged(object? value)
+        // {
+        //     if (value is ILoadable loadable)
+        //         loadable.OnLoaded();
+        // }
     }
 }

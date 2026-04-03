@@ -1,7 +1,7 @@
 ﻿using MediatR;
-using TeejoshInventario.Application.Common;
+using TeejoshSystem.Application.Common;
 
-namespace TeejoshInventario.Application.Ports.Inbound.Productos.Commands.ActualizarProducto
+namespace TeejoshSystem.Application.Ports.Inbound.Productos.Commands.ActualizarProducto
 {
     public record ActualizarProductoCommand(
         int Id,

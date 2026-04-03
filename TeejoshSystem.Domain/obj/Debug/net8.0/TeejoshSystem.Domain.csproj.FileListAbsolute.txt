@@ -1,0 +1,12 @@
+C:\Users\Usuario\source\repos\TeejoshSystem\TeejoshSystem.Domain\bin\Debug\net8.0\TeejoshSystem.Domain.deps.json
+C:\Users\Usuario\source\repos\TeejoshSystem\TeejoshSystem.Domain\bin\Debug\net8.0\TeejoshSystem.Domain.dll
+C:\Users\Usuario\source\repos\TeejoshSystem\TeejoshSystem.Domain\bin\Debug\net8.0\TeejoshSystem.Domain.pdb
+C:\Users\Usuario\source\repos\TeejoshSystem\TeejoshSystem.Domain\obj\Debug\net8.0\TeejoshSystem.Domain.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Usuario\source\repos\TeejoshSystem\TeejoshSystem.Domain\obj\Debug\net8.0\TeejoshSystem.Domain.AssemblyInfoInputs.cache
+C:\Users\Usuario\source\repos\TeejoshSystem\TeejoshSystem.Domain\obj\Debug\net8.0\TeejoshSystem.Domain.AssemblyInfo.cs
+C:\Users\Usuario\source\repos\TeejoshSystem\TeejoshSystem.Domain\obj\Debug\net8.0\TeejoshSystem.Domain.csproj.CoreCompileInputs.cache
+C:\Users\Usuario\source\repos\TeejoshSystem\TeejoshSystem.Domain\obj\Debug\net8.0\TeejoshSystem.Domain.sourcelink.json
+C:\Users\Usuario\source\repos\TeejoshSystem\TeejoshSystem.Domain\obj\Debug\net8.0\TeejoshSystem.Domain.dll
+C:\Users\Usuario\source\repos\TeejoshSystem\TeejoshSystem.Domain\obj\Debug\net8.0\refint\TeejoshSystem.Domain.dll
+C:\Users\Usuario\source\repos\TeejoshSystem\TeejoshSystem.Domain\obj\Debug\net8.0\TeejoshSystem.Domain.pdb
+C:\Users\Usuario\source\repos\TeejoshSystem\TeejoshSystem.Domain\obj\Debug\net8.0\ref\TeejoshSystem.Domain.dll

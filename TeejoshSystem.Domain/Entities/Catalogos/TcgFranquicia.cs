@@ -1,6 +1,6 @@
 ﻿
 
-namespace TeejoshInventario.Domain.Entities.Catalogos
+namespace TeejoshSystem.Domain.Entities.Catalogos
 {
     public class TcgFranquicia
     {

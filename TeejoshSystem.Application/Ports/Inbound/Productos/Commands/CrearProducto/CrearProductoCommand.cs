@@ -1,8 +1,8 @@
 ﻿using MediatR;
-using TeejoshInventario.Domain.Enums;
-using TeejoshInventario.Application.Common;
+using TeejoshSystem.Domain.Enums;
+using TeejoshSystem.Application.Common;
 
-namespace TeejoshInventario.Application.Ports.Inbound.Productos.Commands.CrearProducto
+namespace TeejoshSystem.Application.Ports.Inbound.Productos.Commands.CrearProducto
 {
     public record CrearProductoCommand : IRequest<Result>
     {

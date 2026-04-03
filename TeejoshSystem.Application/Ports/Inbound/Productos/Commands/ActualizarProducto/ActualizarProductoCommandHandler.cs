@@ -1,9 +1,9 @@
 ﻿using MediatR;
-using TeejoshInventario.Domain.ValueObjects;
-using TeejoshInventario.Domain.Ports.Outbound.Repositories;
-using TeejoshInventario.Application.Common;
+using TeejoshSystem.Domain.ValueObjects;
+using TeejoshSystem.Domain.Ports.Outbound.Repositories;
+using TeejoshSystem.Application.Common;
 
-namespace TeejoshInventario.Application.Ports.Inbound.Productos.Commands.ActualizarProducto
+namespace TeejoshSystem.Application.Ports.Inbound.Productos.Commands.ActualizarProducto
 {
     public class ActualizarProductoCommandHandler : IRequestHandler<ActualizarProductoCommand, Result>
     {

@@ -1,8 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using TeejoshInventario.Domain.Entities.Catalogos;
-using TeejoshInventario.Domain.Ports.Outbound.Repositories;
+using TeejoshSystem.Domain.Entities.Catalogos;
+using TeejoshSystem.Domain.Ports.Outbound.Repositories;
 
-namespace TeejoshInventario.Infrastructure.Adapters.Outbound.Persistence.Repositories
+namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Repositories
 {
     public class CatalogoRepository : ICatalogoRepository
     {

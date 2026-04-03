@@ -1,6 +1,6 @@
 ﻿
 
-namespace TeejoshInventario.Domain.Enums
+namespace TeejoshSystem.Domain.Enums
 {
     public enum TipoProducto
     {

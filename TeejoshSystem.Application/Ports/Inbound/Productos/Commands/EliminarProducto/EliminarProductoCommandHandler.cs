@@ -1,8 +1,8 @@
 ﻿using MediatR;
-using TeejoshInventario.Domain.Ports.Outbound.Repositories;
-using TeejoshInventario.Application.Common;
+using TeejoshSystem.Domain.Ports.Outbound.Repositories;
+using TeejoshSystem.Application.Common;
 
-namespace TeejoshInventario.Application.Ports.Inbound.Productos.Commands.EliminarProducto
+namespace TeejoshSystem.Application.Ports.Inbound.Productos.Commands.EliminarProducto
 {
     public class EliminarProductosCommandHandler
         : IRequestHandler<EliminarProductosCommand, Result>

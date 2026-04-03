@@ -1,19 +1,23 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using System.Collections.ObjectModel;
-using TeejoshInventario.Domain.Entities.Catalogos;
-using TeejoshInventario.Domain.Enums;
-using TeejoshInventario.Application.Ports.Inbound.Catalogos.Queries.ObtenerCatalogos;
-using TeejoshInventario.Application.Ports.Inbound.Catalogos.Queries.ObtenerExpansionesYPacks;
-using TeejoshInventario.Application.Ports.Inbound.Productos.Commands.CrearProducto;
-using TeejoshInventario.WPF.Adapters.Inbound.Services;
-using TeejoshInventario.WPF.Adapters.Inbound.ViewModels.Common;
-using TeejoshInventario.WPF.Adapters.Inbound.ViewModels.Menu;
-using TeejoshInventario.WPF.Adapters.Inbound.ViewModels.Shell;
+using TeejoshSystem.Domain.Entities.Catalogos;
+using TeejoshSystem.Domain.Enums;
+using TeejoshSystem.Application.Ports.Inbound.Catalogos.Queries.ObtenerCatalogos;
+using TeejoshSystem.Application.Ports.Inbound.Catalogos.Queries.ObtenerExpansionesYPacks;
+using TeejoshSystem.Application.Ports.Inbound.Productos.Commands.CrearProducto;
+using TeejoshSystem.AvaloniaUI.Adapters.Inbound.Services;
+using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Common;
+using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Menu;
+using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Shell;
 
-namespace TeejoshInventario.WPF.Adapters.Inbound.ViewModels.Productos
+namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Productos
 {
     public partial class CrearProductoViewModel : ValidatableViewModel
     {
@@ -195,7 +199,7 @@ namespace TeejoshInventario.WPF.Adapters.Inbound.ViewModels.Productos
             }
             catch (Exception ex)
             {
-                _notification.ShowError("Error al cargar catalogos: " + ex.Message);
+                await _notification.ShowError("Error al cargar catalogos: " + ex.Message);
             }
             finally
             {
@@ -241,7 +245,7 @@ namespace TeejoshInventario.WPF.Adapters.Inbound.ViewModels.Productos
             }
             catch (Exception ex)
             {
-                _notification.ShowError("Error al cargar expansiones: " + ex.Message);
+                await _notification.ShowError("Error al cargar expansiones: " + ex.Message);
             }
         }
 
@@ -252,7 +256,7 @@ namespace TeejoshInventario.WPF.Adapters.Inbound.ViewModels.Productos
 
             var confirmar = _confirmation.Confirm("¿Desea crear el producto?");
 
-            if (!confirmar) return;
+            if (!await confirmar) return;
 
             try
             {
@@ -263,12 +267,12 @@ namespace TeejoshInventario.WPF.Adapters.Inbound.ViewModels.Productos
 
                 if (result.IsSuccess)
                 {
-                    _notification.ShowSuccess("Producto creado exitosamente");
+                    await _notification.ShowSuccess("Producto creado exitosamente");
                     Volver();
                 }
                 else
                 {
-                    _notification.ShowError(result.Error ?? "Error al crear producto");
+                    await _notification.ShowError(result.Error ?? "Error al crear producto");
                 }
             }
             finally

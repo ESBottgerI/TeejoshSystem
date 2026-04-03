@@ -1,7 +1,13 @@
 ﻿using System.Collections;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.ComponentModel;
+using System.Threading.Tasks;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 
-namespace TeejoshInventario.WPF.Adapters.Inbound.ViewModels.Common
+namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Common
 {
     public abstract class ValidatableViewModel : ViewModelBase, INotifyDataErrorInfo
     {

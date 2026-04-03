@@ -1,6 +1,6 @@
 ﻿
 
-namespace TeejoshInventario.Domain.Entities.Detalles
+namespace TeejoshSystem.Domain.Entities.Detalles
 {
     public abstract class ProductoDetalle
     {

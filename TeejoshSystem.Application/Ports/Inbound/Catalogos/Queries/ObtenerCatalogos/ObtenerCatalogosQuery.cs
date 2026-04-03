@@ -1,7 +1,7 @@
 ﻿using MediatR;
-using TeejoshInventario.Domain.Entities.Catalogos;
+using TeejoshSystem.Domain.Entities.Catalogos;
 
-namespace TeejoshInventario.Application.Ports.Inbound.Catalogos.Queries.ObtenerCatalogos
+namespace TeejoshSystem.Application.Ports.Inbound.Catalogos.Queries.ObtenerCatalogos
 {
     public record ObtenerCatalogosQuery : IRequest<CatalogosDto>;
 

@@ -1,8 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using TeejoshInventario.Domain.Entities;
+using TeejoshSystem.Domain.Entities;
 
-namespace TeejoshInventario.Infrastructure.Adapters.Outbound.Persistence.Configurations
+namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Configurations
 {
     public class ProductoConfiguration : IEntityTypeConfiguration<Producto>
     {

@@ -1,6 +1,6 @@
-﻿using TeejoshInventario.Domain.Entities.Catalogos;
+﻿using TeejoshSystem.Domain.Entities.Catalogos;
 
-namespace TeejoshInventario.Domain.Ports.Outbound.Repositories
+namespace TeejoshSystem.Domain.Ports.Outbound.Repositories
 {
     public interface ICatalogoRepository
     {

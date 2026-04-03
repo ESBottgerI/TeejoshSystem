@@ -1,6 +1,6 @@
-﻿using TeejoshInventario.Domain.Enums;
+﻿using TeejoshSystem.Domain.Enums;
 
-namespace TeejoshInventario.Application.Ports.Inbound.Productos.Queries.ObtenerProductosPorId
+namespace TeejoshSystem.Application.Ports.Inbound.Productos.Queries.ObtenerProductosPorId
 {
     public class ProductoDetalladoDto
     {

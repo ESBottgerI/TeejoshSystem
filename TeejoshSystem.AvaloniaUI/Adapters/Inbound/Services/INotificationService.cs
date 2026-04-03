@@ -1,10 +1,12 @@
-﻿
+﻿using System.Threading.Tasks;
 
-namespace TeejoshInventario.WPF.Adapters.Inbound.Services
+namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.Services
 {
     public interface INotificationService
     {
-        void ShowSuccess(string message);
-        void ShowError(string message);
+        Task ShowSuccess(string message, string title = "Éxito");
+        Task ShowError(string message, string title = "Error");
+        Task ShowWarning(string message, string title = "Advertencia");
+        Task ShowInfo(string message, string title = "Información");
     }
 }

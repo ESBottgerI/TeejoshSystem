@@ -1,7 +1,7 @@
-﻿using TeejoshInventario.Domain.Entities.Detalles;
-using TeejoshInventario.Domain.ValueObjects;
+﻿using TeejoshSystem.Domain.Entities.Detalles;
+using TeejoshSystem.Domain.ValueObjects;
 
-namespace TeejoshInventario.Domain.Entities
+namespace TeejoshSystem.Domain.Entities
 {
     public class Producto
     {

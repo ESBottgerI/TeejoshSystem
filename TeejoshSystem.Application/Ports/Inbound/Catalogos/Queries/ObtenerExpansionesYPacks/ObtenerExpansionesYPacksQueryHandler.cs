@@ -1,7 +1,7 @@
 ﻿using MediatR;
-using TeejoshInventario.Domain.Ports.Outbound.Repositories;
+using TeejoshSystem.Domain.Ports.Outbound.Repositories;
 
-namespace TeejoshInventario.Application.Ports.Inbound.Catalogos.Queries.ObtenerExpansionesYPacks
+namespace TeejoshSystem.Application.Ports.Inbound.Catalogos.Queries.ObtenerExpansionesYPacks
 {
     public class ObtenerExpansionesYPacksQueryHandler
         : IRequestHandler<ObtenerExpansionesYPacksQuery, ExpansionesYPacksDto>

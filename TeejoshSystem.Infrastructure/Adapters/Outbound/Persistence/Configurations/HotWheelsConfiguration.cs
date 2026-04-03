@@ -1,9 +1,9 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using TeejoshInventario.Domain.Entities;
-using TeejoshInventario.Domain.Entities.Detalles;
+using TeejoshSystem.Domain.Entities;
+using TeejoshSystem.Domain.Entities.Detalles;
 
-namespace TeejoshInventario.Infrastructure.Adapters.Outbound.Persistence.Configurations
+namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Configurations
 {
     public class HotWheelsConfiguration : IEntityTypeConfiguration<HotWheelsDetalle>
     {

@@ -1,7 +1,7 @@
 ﻿using MediatR;
-using TeejoshInventario.Domain.Enums;
+using TeejoshSystem.Domain.Enums;
 
-namespace TeejoshInventario.Application.Ports.Inbound.Productos.Queries.BuscarProductos
+namespace TeejoshSystem.Application.Ports.Inbound.Productos.Queries.BuscarProductos
 {
     public record BuscarProductosQuery(
         string? Nombre,

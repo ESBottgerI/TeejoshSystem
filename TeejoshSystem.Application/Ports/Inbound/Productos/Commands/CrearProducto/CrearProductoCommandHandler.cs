@@ -1,12 +1,12 @@
 ﻿using MediatR;
-using TeejoshInventario.Domain.Entities;
-using TeejoshInventario.Domain.Entities.Detalles;
-using TeejoshInventario.Domain.ValueObjects;
-using TeejoshInventario.Domain.Enums;
-using TeejoshInventario.Domain.Ports.Outbound.Repositories;
-using TeejoshInventario.Application.Common;
+using TeejoshSystem.Domain.Entities;
+using TeejoshSystem.Domain.Entities.Detalles;
+using TeejoshSystem.Domain.ValueObjects;
+using TeejoshSystem.Domain.Enums;
+using TeejoshSystem.Domain.Ports.Outbound.Repositories;
+using TeejoshSystem.Application.Common;
 
-namespace TeejoshInventario.Application.Ports.Inbound.Productos.Commands.CrearProducto
+namespace TeejoshSystem.Application.Ports.Inbound.Productos.Commands.CrearProducto
 {
     public class CrearProductoCommandHandler : IRequestHandler<CrearProductoCommand, Result>
     {

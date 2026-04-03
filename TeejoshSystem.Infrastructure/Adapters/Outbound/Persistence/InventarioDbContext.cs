@@ -1,9 +1,9 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using TeejoshInventario.Domain.Entities;
-using TeejoshInventario.Domain.Entities.Catalogos;
-using TeejoshInventario.Domain.Entities.Detalles;
+using TeejoshSystem.Domain.Entities;
+using TeejoshSystem.Domain.Entities.Catalogos;
+using TeejoshSystem.Domain.Entities.Detalles;
 
-namespace TeejoshInventario.Infrastructure.Adapters.Outbound.Persistence
+namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence
 {
     public class InventarioDbContext : DbContext
     {

@@ -1,9 +1,9 @@
-﻿
+﻿using System.Threading.Tasks;
 
-namespace TeejoshInventario.WPF.Adapters.Inbound.Services
+namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.Services
 {
     public interface IConfirmationService
     {
-        bool Confirm(string message, string title = "Confirmacion");
+        Task<bool> Confirm(string message, string title = "Confirmar");
     }
 }

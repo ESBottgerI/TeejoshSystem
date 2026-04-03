@@ -1,8 +1,8 @@
-﻿using TeejoshInventario.Domain.Entities;
-using TeejoshInventario.Domain.Entities.Detalles;
-using TeejoshInventario.Domain.Enums;
+﻿using TeejoshSystem.Domain.Entities;
+using TeejoshSystem.Domain.Entities.Detalles;
+using TeejoshSystem.Domain.Enums;
 
-namespace TeejoshInventario.Domain.Ports.Outbound.Repositories
+namespace TeejoshSystem.Domain.Ports.Outbound.Repositories
 {
     public interface IProductoRepository
     {

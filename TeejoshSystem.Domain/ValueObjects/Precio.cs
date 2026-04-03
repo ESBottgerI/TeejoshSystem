@@ -1,6 +1,6 @@
 ﻿
 
-namespace TeejoshInventario.Domain.ValueObjects
+namespace TeejoshSystem.Domain.ValueObjects
 {
     public sealed class Precio
     {

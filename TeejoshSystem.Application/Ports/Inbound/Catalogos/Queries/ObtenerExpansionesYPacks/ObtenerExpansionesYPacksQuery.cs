@@ -1,7 +1,7 @@
 ﻿using MediatR;
-using TeejoshInventario.Domain.Entities.Catalogos;
+using TeejoshSystem.Domain.Entities.Catalogos;
 
-namespace TeejoshInventario.Application.Ports.Inbound.Catalogos.Queries.ObtenerExpansionesYPacks
+namespace TeejoshSystem.Application.Ports.Inbound.Catalogos.Queries.ObtenerExpansionesYPacks
 {
     public record ObtenerExpansionesYPacksQuery(int FranquiciaId)
         : IRequest<ExpansionesYPacksDto>;

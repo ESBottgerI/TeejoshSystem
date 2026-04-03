@@ -1,17 +1,21 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using System.Collections.ObjectModel;
-using TeejoshInventario.Domain.Enums;
-using TeejoshInventario.Application.Ports.Inbound.Productos.Commands.EliminarProducto;
-using TeejoshInventario.Application.Ports.Inbound.Productos.Queries.BuscarProductos;
-using TeejoshInventario.Application.Ports.Inbound.Productos.Queries.ObtenerProductos;
-using TeejoshInventario.WPF.Adapters.Inbound.Services;
-using TeejoshInventario.WPF.Adapters.Inbound.ViewModels.Menu;
-using TeejoshInventario.WPF.Adapters.Inbound.ViewModels.Shell;
+using TeejoshSystem.Domain.Enums;
+using TeejoshSystem.Application.Ports.Inbound.Productos.Commands.EliminarProducto;
+using TeejoshSystem.Application.Ports.Inbound.Productos.Queries.BuscarProductos;
+using TeejoshSystem.Application.Ports.Inbound.Productos.Queries.ObtenerProductos;
+using TeejoshSystem.AvaloniaUI.Adapters.Inbound.Services;
+using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Menu;
+using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Shell;
 
-namespace TeejoshInventario.WPF.Adapters.Inbound.ViewModels.Productos
+namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Productos
 {
     public partial class GestionarProductosViewModel : ObservableObject
     {
@@ -131,7 +135,7 @@ namespace TeejoshInventario.WPF.Adapters.Inbound.ViewModels.Productos
 
             var confirmar = _confirmation.Confirm(mensaje);
 
-            if (!confirmar) return;
+            if (!await confirmar) return;
 
             try
             {
@@ -143,7 +147,7 @@ namespace TeejoshInventario.WPF.Adapters.Inbound.ViewModels.Productos
 
                 if (result.IsSuccess)
                 {
-                    _notification.ShowSuccess(
+                    await _notification.ShowSuccess(
                         cantidad == 1
                             ? "Producto eliminado correctamente"
                             : $"{cantidad} productos eliminados correctamente");
@@ -153,7 +157,7 @@ namespace TeejoshInventario.WPF.Adapters.Inbound.ViewModels.Productos
                 }
                 else
                 {
-                    _notification.ShowError(result.Error ?? "Error al eliminar");
+                    await _notification.ShowError(result.Error ?? "Error al eliminar");
                 }
             }
             finally

@@ -1,8 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using TeejoshInventario.Domain.Entities.Catalogos;
+using TeejoshSystem.Domain.Entities.Catalogos;
 
-namespace TeejoshInventario.Infrastructure.Adapters.Outbound.Persistence.Configurations
+namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Configurations
 {
     public class TcgExpansionConfiguration : IEntityTypeConfiguration<TcgExpansion>
     {

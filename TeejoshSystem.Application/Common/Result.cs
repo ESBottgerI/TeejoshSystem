@@ -1,6 +1,6 @@
 ﻿
 
-namespace TeejoshInventario.Application.Common
+namespace TeejoshSystem.Application.Common
 {
     public class Result
     {

@@ -1,9 +1,34 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        xmlns:vm="clr-namespace:TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Shell"
         x:Class="TeejoshSystem.AvaloniaUI.MainWindow"
-        Title="TeejoshSystem.AvaloniaUI">
-    Welcome to Avalonia!
+        Title="TeejoshSystem - Inventario"
+        Width="1024"
+        Height="768"
+        WindowStartupLocation="CenterScreen">
+    
+    <Design.DataContext>
+        <vm:MainViewModel />
+    </Design.DataContext>
+    
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        
+        <!-- Barra de título -->
+        <Border Grid.Row="0" Background="#2C3E50" Height="50">
+            <TextBlock Text="TeejoshSystem - Gestión de Inventario" 
+                       Foreground="White" 
+                       FontSize="16"
+                       VerticalAlignment="Center"
+                       Margin="20,0"/>
+        </Border>
+        
+        <!-- Contenido dinámico -->
+        <ContentControl Grid.Row="1" 
+                        Content="{Binding CurrentView}"
+                        x:DataType="vm:MainViewModel" />
+    </Grid>
 </Window>

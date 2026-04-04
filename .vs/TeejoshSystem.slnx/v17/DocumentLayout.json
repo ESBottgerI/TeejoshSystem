@@ -25,6 +25,10 @@
           "SelectedChildIndex": 2,
           "Children": [
             {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{1c4feeaa-4718-4aa9-859d-94ce25d182ba}"
+            },
+            {
               "$type": "Document",
               "DocumentIndex": 1,
               "Title": "MenuPrincipalViewModel.cs",
@@ -34,12 +38,7 @@
               "RelativeToolTip": "TeejoshSystem.AvaloniaUI\\Adapters\\Inbound\\ViewModels\\Menu\\MenuPrincipalViewModel.cs",
               "ViewState": "AgIAAA4AAAAAAAAAAAAQwCIAAAAJAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-04-03T20:41:08.226Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Bookmark",
-              "Name": "ST:0:0:{1c4feeaa-4718-4aa9-859d-94ce25d182ba}"
+              "WhenOpened": "2026-04-03T20:41:08.226Z"
             },
             {
               "$type": "Document",
@@ -64,8 +63,7 @@
               "RelativeToolTip": "TeejoshSystem.AvaloniaUI\\Adapters\\Inbound\\Views\\Menu\\MenuPrincipalView.axaml",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAABIAAAAOAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
-              "WhenOpened": "2026-04-03T20:24:11.919Z",
-              "EditorCaption": ""
+              "WhenOpened": "2026-04-03T20:24:11.919Z"
             }
           ]
         }

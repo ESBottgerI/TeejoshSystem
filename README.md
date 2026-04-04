@@ -2,192 +2,270 @@
 
 ## Resumen
 
-Sistema de gestión de inventario para coleccionables (Hot Wheels, Funkos, TCG, Toys y Varios) desarrollado bajo **Clean Architecture**, **Hexagonal Architecture**, **DDD**, **CQRS** y **MVVM**.
+**TeejoshSystem** es una aplicación de escritorio para gestionar inventarios de coleccionables (Hot Wheels, Funkos, TCG, Toys y Varios).
 
-El sistema está diseñado como una aplicación de escritorio **offline-first**, con una arquitectura desacoplada que permite evolucionar la UI y la persistencia sin afectar el core del negocio.
+El sistema está diseñado con **arquitectura hexagonal** sobre **Clean Architecture**, aplicando **DDD**, **CQRS** y **MVVM**. Estas no son decisiones decorativas — cada patrón responde a un problema concreto del dominio y se explican en detalle en la sección [[#Patrones y Decisiones]].
+
+Funciona **offline-first**: sin conexión a red, sin servicios externos en runtime, con base de datos local. La UI es **Avalonia**, verificada en Windows y Linux (Fedora 43).
+
+> La arquitectura no se diseñó para la versión actual — se diseñó para todas las versiones futuras.
 
 ---
 
-## Descripción del Proyecto
+## Estado del Proyecto
 
-**TeejoshInventario** permite gestionar productos coleccionables con estructuras variables según su tipo, manteniendo consistencia de dominio y separación estricta de responsabilidades.
+|Campo|Valor|
+|---|---|
+|**Versión**|0.4 — beta|
+|**Estado**|Activo|
+|**UI**|Avalonia (migración desde WPF parcial)|
+|**Plataformas verificadas**|Windows, Linux (Fedora 43)|
+|**Persistencia**|SQL Server Express — Database-First (migración a Code-First pendiente)|
+|**Arquitectura**|Estable|
+|**Última actualización**|Abril 2026|
 
-### Capacidades clave
+---
 
-- Gestión de múltiples tipos de producto (Hot Wheels, Funko, TCG, Toy, Varios)
-- Formularios dinámicos por tipo de producto
-- Catálogos relacionales con carga en cascada
-- Validaciones en tiempo real (INotifyDataErrorInfo)
+## Capacidades
+
+- Gestión de 5 tipos de producto con campos distintos entre sí
+- Formularios dinámicos que adaptan sus campos según el tipo seleccionado
+- Catálogos relacionales con carga en cascada (TCG: Franquicia → Expansiones/Packs)
+- Validaciones en tiempo real sobre cada campo
 - Búsqueda y filtrado por nombre y tipo
 - CRUD completo con confirmaciones antes de acciones destructivas
-- Arquitectura desacoplada (Ports & Adapters)
+- Operación completamente offline
 
 ---
 
 ## Arquitectura
 
-La arquitectura está modelada mediante **C4 Model** usando Structurizr.
+### Modelo C4
 
-### Niveles documentados
+La arquitectura está modelada mediante **C4 Model** usando Structurizr DSL.
 
-- **Context** → El usuario interactúa con el sistema de inventario
-- **Container** → UI, Application, Domain, Infrastructure
-- **Component** → Casos de uso, puertos y adaptadores internos
+> Los diagramas se generan desde el archivo `.dsl` — no están incrustados en este documento.
 
-> La fuente de verdad arquitectónica es el archivo `.dsl` de Structurizr.
+Niveles documentados:
 
----
-
-## Modelo Arquitectónico
-
-### Clean Architecture
-
-Separación estricta en 4 capas con dependencias unidireccionales hacia el núcleo:
-
-|Capa|Rol|Dependencias|
-|---|---|---|
-|**Domain**|Núcleo del negocio: entidades, value objects, puertos|Ninguna|
-|**Application**|Casos de uso, comandos, queries, DTOs|Solo Domain|
-|**Infrastructure**|Persistencia con EF Core, implementaciones de repositorios|Domain + Application|
-|**UI**|Interfaz WPF, ViewModels, vistas|Application + Infrastructure (solo DI)|
-
-**¿Por qué esta separación?** El dominio concentra las reglas de negocio sin saber cómo se persisten ni cómo se presentan. Esto permite reemplazar la base de datos o la UI sin tocar la lógica central.
+- **System Context** → El usuario interactúa con TeejoshSystem
+- **Container** → UI, Application, Domain, Infrastructure, Database
+- **Component** → ViewModels, casos de uso, puertos, repositorios, DbContext
 
 ---
 
-### Hexagonal Architecture (Ports & Adapters)
-
-El sistema distingue entre lo que el negocio necesita y cómo esas necesidades se implementan:
-
-- **Inbound Ports** → Interfaces que exponen casos de uso (Application)
-- **Outbound Ports** → Contratos que el dominio define para sus dependencias
-- **Inbound Adapters** → UI WPF (versión actual 0.4)
-- **Outbound Adapters** → Persistencia con EF Core + SQL Server
-
-**¿Por qué hexagonal?** Permite conectar nuevas interfaces (API REST, CLI, MAUI) o nuevos mecanismos de persistencia sin modificar Application ni Domain. El core permanece estable mientras los detalles evolucionan.
-
----
-
-## Reglas de Dependencia
+### Capas y reglas de dependencia
 
 ```
-Domain ← Application ← Infrastructure
-                  ↑
-                  UI
+UI (Avalonia)
+      ↓
+Infrastructure ──→ Domain
+      ↓                ↑
+  Application ─────────┘
 ```
 
-|Capa|Puede depender de|No puede depender de|
-|---|---|---|
-|Domain|Nada|Todas|
-|Application|Domain|Infrastructure, UI|
-|Infrastructure|Domain|Application, UI|
-|UI|Application|Domain directo|
+|Capa|Rol|Depende de|NO Depende de|
+|---|---|---|---|
+|**Domain**|Núcleo: entidades, value objects, contratos|Nada|Todas|
+|**Application**|Casos de uso, comandos, queries, DTOs|Domain|Infrastructure, UI|
+|**Infrastructure**|Persistencia, EF Core, repositorios|Domain, Application| UI|
+|**UI (Avalonia)**|Presentación: ViewModels, Views, Services|Application|Domain|
 
-> Infrastructure puede referenciar *Application* únicamente para implementar sus interfaces (outbound ports), nunca para invocar casos de uso.
+> Infrastructure puede referenciar Application únicamente para implementar sus interfaces (outbound ports). Nunca para invocar casos de uso.
 
-### Violaciones que rompen la arquitectura
+La dirección de las dependencias no es una convención — es una garantía. Significa que Domain compila sin conocer que existe EF Core, Avalonia, o SQL Server. Si eso deja de ser cierto, la arquitectura está rota.
 
-Estas situaciones se consideran errores arquitectónicos no negociables:
+### Violaciones no aceptables
 
-- Referenciar EF Core, SQL o frameworks externos desde `Domain`
+- Referenciar EF Core, SQL o cualquier framework externo desde `Domain`
 - Acceder a repositorios directamente desde un ViewModel
 - Instanciar `DbContext` fuera de Infrastructure
 - Introducir lógica de negocio en ViewModels o code-behind
 
 ---
 
-## Flujo de Ejecución
+### Flujo de ejecución (C4 - Component)
 
 ```
-Inbound Adapter (UI)
-  → Inbound Port (caso de uso via MediatR)
-    → Application Handler
-      → Domain (entidades, reglas, value objects)
-        → Outbound Port (IProductoRepository)
-          → Outbound Adapter (Infrastructure / EF Core)
-            → Base de datos
+Views (Avalonia XAML)
+  ↓ data binding
+ViewModels
+  ↓ MediatR.Send(command/query)
+Application Handler
+  ↓ orquesta entidades y value objects
+Domain (reglas de negocio, invariantes)
+  ↓ IProductoRepository / ICatalogoRepository
+Infrastructure (EF Core)
+  ↓
+Base de datos
+  ↑
+Result<T> regresa encapsulado por toda la cadena
 ```
 
-1. La UI invoca un comando o query a través de MediatR
-2. El handler de Application ejecuta la lógica coordinando entidades
-3. El Domain aplica reglas de negocio y valida invariantes
-4. Infrastructure implementa el acceso a datos sin que el dominio lo sepa
-5. El resultado regresa encapsulado en un `Result<T>`
+---
+
+## Patrones y Decisiones
+
+Esta sección explica qué resuelve cada patrón, por qué se eligió, y qué problema concreto habría sin él.
 
 ---
 
-## Patrones Implementados
+### Clean Architecture
 
-|Patrón|Descripción|Ubicación|
-|---|---|---|
-|**Hexagonal / Clean Architecture**|Separación por capas con puertos y adaptadores|Todo el proyecto|
-|**DDD**|Entidades, Value Objects, Agregados|`Domain/`|
-|**CQRS**|Comandos (escritura) separados de Queries (lectura)|`Application/Ports/Inbound/`|
-|**MVVM**|Separación vista-lógica-estado|`WPF/Adapters/Inbound/`|
-|**Repository**|Abstracción de persistencia|`Domain/Ports/Outbound/`|
-|**Result Pattern**|Manejo de errores sin excepciones|`Application/Common/Result.cs`|
-|**Mediator**|Desacoplamiento entre handlers y casos de uso|MediatR via Application|
-|**Dependency Injection**|Composición del sistema en startup|App.xaml.cs|
+**Qué es:** Organización del sistema en capas concéntricas donde las dependencias siempre apuntan hacia adentro (hacia el dominio). Ninguna capa interna conoce las externas.
+
+**Qué problema resuelve:** Sin esta separación, la lógica de negocio termina acoplada a la base de datos, al framework de UI, o a ambos. Cualquier cambio en EF Core, en WPF/Avalonia, o en el esquema SQL arrastraría cambios en las reglas del negocio — que son la parte más estable y valiosa del sistema.
+
+**Por qué importa aquí:** La migración de WPF a Avalonia fue posible sin tocar Domain ni Application. Si la arquitectura estuviera acoplada, esa migración habría requerido reescribir lógica de negocio junto con la UI.
 
 ---
 
-## Decisiones Técnicas
+### Hexagonal Architecture (Ports & Adapters)
 
-### CQRS sin Event Sourcing
+**Qué es:** El dominio define contratos (Ports) para todo lo que necesita del exterior. El exterior (UI, base de datos, APIs) los implementa mediante Adapters. El dominio nunca llama directamente a ninguna implementación concreta.
 
-Los comandos (escritura) y las queries (lectura) están separados en handlers distintos bajo `Application/Ports/Inbound/`. MediatR actúa como dispatcher interno.
+**Qué problema resuelve:** Sin esto, el dominio está atado a tecnologías específicas. Si mañana se reemplaza SQL Server por SQLite, o se agrega una API REST, o se migra de Avalonia a MAUI, el dominio no debería necesitar cambios.
 
-**¿Por qué CQRS sin eventos?** El sistema no requiere auditoría de estados intermedios ni reconstrucción de estado a partir de eventos. CQRS simplificado aporta la separación de intenciones (leer vs. modificar) sin la complejidad operativa del Event Sourcing.
+**Inbound Adapters actuales:** UI Avalonia  
+**Outbound Adapters actuales:** EF Core + SQL Server  
+**Puertos definidos:** `IProductoRepository`, `ICatalogoRepository`
 
----
-
-### Result Pattern en lugar de excepciones
-
-Todos los casos de uso retornan `Result.Success()` o `Result.Failure(error)` en lugar de lanzar excepciones para el flujo de control.
-
-**¿Por qué?** Las excepciones tienen overhead de captura de stack trace y dificultan el razonamiento sobre los caminos posibles de ejecución. Con `Result<T>`, el caller está obligado a manejar explícitamente el caso de error, los mensajes son más descriptivos para el usuario final, y no existe costo de excepciones en rutas normales.
+**Por qué importa aquí:** La sección [[#Evolución Planeada]] lista cambios de infraestructura que no requieren tocar el dominio, exactamente porque los ports están bien definidos.
 
 ---
 
-### Value Objects en el Dominio
+### Domain-Driven Design (DDD)
 
-`NombreProducto`, `Precio` y `Unidades` encapsulan sus propias reglas de validación y son inmutables.
+**Qué es:** Modelar el software a partir del dominio del problema — en este caso, el negocio de coleccionables. Las entidades representan conceptos reales del negocio, los value objects encapsulan reglas, y los invariantes se protegen desde adentro.
 
-**¿Por qué?** Centralizar la validación en el value object garantiza que un `Precio` nunca puede existir en estado inválido en ninguna parte del sistema. Evita validaciones duplicadas dispersas en handlers, ViewModels o repositorios. Se mapean con `OwnsOne()` en EF Core sin necesidad de tablas adicionales.
+**Qué problema resuelve:** Sin DDD, las reglas de negocio se dispersan: validaciones en ViewModels, lógica de cálculo en handlers, restricciones en la base de datos. El resultado es que no hay un único lugar donde confiar para saber "qué es válido".
 
----
+**Aplicación concreta:**
 
-### Database-First con Fluent API
-
-La base de datos preexiste. EF Core mapea las tablas mediante 12 archivos de configuración Fluent API. No se usan migraciones.
-
-**¿Por qué?** El esquema de base de datos fue definido antes que la aplicación y tiene dependencias externas. Usar Database-First permite trabajar sobre él sin riesgo de que EF genere cambios destructivos. Las configuraciones Fluent API otorgan control total sobre el mapeo sin atarse a convenciones de nombres.
-
-**Limitación conocida:** cambios en el esquema requieren intervención manual tanto en la BD como en las configuraciones.
+- `Producto` es la entidad raíz del agregado
+- `NombreProducto`, `Precio`, `Unidades` son value objects inmutables que validan sus propias reglas — un `Precio` inválido no puede existir en ningún punto del sistema
+- `ProductoDetalle` (abstracta) y sus subtipos modelan la variabilidad estructural de cada tipo de coleccionable
+- Los catálogos (`TcgFranquicia`, `TcgExpansion`, etc.) son entidades de referencia con identidad propia
 
 ---
 
-### Table-Per-Type (TPT)
+### CQRS (Command Query Responsibility Segregation)
 
-Cada subtipo de producto (HotWheels, Funko, TCG, Toy, Varios) tiene su propia tabla relacionada 1:1 con `product` mediante `product_id`.
+**Qué es:** Separar explícitamente las operaciones que modifican estado (Commands) de las que solo leen (Queries). Cada intención tiene su propio objeto y su propio handler.
 
-**¿Por qué TPT y no Table-Per-Hierarchy (TPH)?** TPH almacena todos los subtipos en una sola tabla con columnas nullable para los campos específicos de cada tipo. Con 5 tipos de producto con campos muy distintos entre sí, TPH generaría una tabla con una gran cantidad de NULLs, dificultando consultas y comprometiendo la integridad. TPT mantiene el esquema normalizado y cada tabla tiene sentido por sí misma.
+**Qué problema resuelve:** Sin CQRS, un mismo método hace demasiado: valida, persiste, y devuelve datos para la UI al mismo tiempo. Esto dificulta mantener, testear y razonar sobre el código. Con CQRS, `CrearProductoCommand` solo sabe crear, y `ObtenerProductosQuery` solo sabe leer.
 
----
+**Implementación:** CQRS simplificado — sin Event Sourcing, sin event store. MediatR actúa como dispatcher. Los comandos retornan `Result<T>`, las queries retornan DTOs.
 
-### Navegación por estado (Shell Pattern) sin NavigationService
-
-`MainViewModel.CurrentView` controla la vista activa. Los DataTemplates en XAML mapean automáticamente cada ViewModel a su View. Los ViewModels se resuelven desde el contenedor DI.
-
-**¿Por qué?** Introducir un NavigationService cuando no hay navegación compleja (historial, deep linking, parámetros de ruta) es sobreingeniería. El Shell Pattern resuelve la navegación de forma simple, testeable y consistente con MVVM: la vista solo reacciona al estado del ViewModel central.
+**¿Por qué sin Event Sourcing?** El sistema no requiere reconstruir estado a partir de eventos ni mantener historial de cambios intermedios. Event Sourcing agregaría complejidad operativa sin beneficio concreto en este contexto. Si el módulo de auditoría (roadmap) lo requiere en el futuro, es un cambio de Infrastructure, no de Domain.
 
 ---
 
-### Modo Offline
+### MVVM (Model-View-ViewModel)
 
-La aplicación opera completamente sin conexión. La base de datos es local (SQL Server Express). No existen dependencias de red en el flujo operativo normal.
+**Qué es:** Separar la vista (XAML) de su lógica de presentación (ViewModel) mediante data binding. La vista no tiene lógica; el ViewModel no conoce la vista.
 
-La conectividad se reserva únicamente para operaciones explícitas iniciadas por el usuario (ej.: importación desde APIs externas). Si no hay red, la aplicación continúa sin errores ni degradación de funcionalidad.
+**Qué problema resuelve:** Sin MVVM, la lógica de presentación vive en code-behind: está atada al framework de UI, no es testeable, y mezcla estado con comportamiento visual. Con MVVM, los ViewModels son clases C# puras que pueden testearse sin levantar la UI.
+
+**Por qué importa en la migración WPF → Avalonia:** Los ViewModels no cambiaron. Solo cambiaron los archivos `.xaml` y la reimplementación de `INotificationService` e `IConfirmationService`. Esto es exactamente el contrato que MVVM garantiza.
+
+---
+
+### Repository Pattern
+
+**Qué es:** Abstraer el acceso a datos detrás de una interfaz. El dominio define qué necesita (`IProductoRepository`), la infraestructura decide cómo lo obtiene.
+
+**Qué problema resuelve:** Sin este patrón, los handlers de Application usarían `DbContext` directamente — acoplando la capa de casos de uso a EF Core. Cambiar la base de datos requeriría modificar Application.
+
+**Implementación:** Los repositorios viven en Infrastructure. Los ports (interfaces) viven en Domain. Application solo conoce los ports.
+
+---
+
+### Result Pattern
+
+**Qué es:** Todos los casos de uso retornan `Result.Success(valor)` o `Result.Failure(error)` en lugar de lanzar excepciones para el flujo de control.
+
+**Qué problema resuelve:** Las excepciones tienen overhead (captura de stack trace) y hacen implícitos los caminos de error — el caller puede ignorarlos o capturarlos incorrectamente. Con `Result<T>`, el caller está obligado a manejar el caso de error, los mensajes son descriptivos para el usuario, y no hay costo de excepciones en rutas normales.
+
+---
+
+### Mediator (MediatR)
+
+**Qué es:** Un despachador central que recibe un comando o query y lo dirige al handler correcto, sin que el emisor conozca al receptor.
+
+**Qué problema resuelve:** Sin Mediator, los ViewModels tendrían referencias directas a múltiples servicios de Application. Con MediatR, el ViewModel solo conoce `IMediator`. Agregar un nuevo caso de uso no requiere modificar la UI.
+
+---
+
+### Shell Pattern (navegación por estado)
+
+**Qué es:** `MainViewModel.CurrentView` controla qué vista está activa. Los DataTemplates en XAML mapean cada ViewModel a su View automáticamente. Los ViewModels se resuelven desde el contenedor DI.
+
+**Por qué no NavigationService:** Introducir un NavigationService implica historial, parámetros de ruta, y deep linking. Ninguna de esas necesidades existe aquí. El Shell Pattern resuelve la navegación de forma simple, sin overhead, y consistente con MVVM.
+
+---
+
+## Estructura del Proyecto
+
+Estructura real según el repositorio:
+
+```
+TeejoshSystem/
+├── README.md
+├── TeejoshSystem.slnx
+│
+├── TeejoshSystem.Domain/
+│   ├── Entities/
+│   │   ├── Producto.cs
+│   │   ├── Catalogos/        # FunkoSubtipo, TcgFranquicia, TcgExpansion...
+│   │   └── Detalles/         # FunkoDetalle, HotWheelsDetalle, TcgDetalle...
+│   ├── ValueObjects/
+│   │   ├── NombreProducto.cs
+│   │   ├── Precio.cs
+│   │   └── Unidades.cs
+│   ├── Enums/
+│   │   └── TipoProducto.cs
+│   └── Ports/
+│       └── Outbound/
+│           └── Repositories/
+│               ├── IProductoRepository.cs
+│               └── ICatalogoRepository.cs
+│
+├── TeejoshSystem.Application/
+│   ├── Common/
+│   │   └── Result.cs
+│   └── Ports/
+│       └── Inbound/
+│           ├── Productos/
+│           │   ├── Commands/   # Crear, Actualizar, Eliminar
+│           │   └── Queries/    # ObtenerProductos, BuscarProductos, ObtenerPorId
+│           └── Catalogos/
+│               └── Queries/    # ObtenerCatalogos, ObtenerExpansionesYPacks
+│
+├── TeejoshSystem.Infrastructure/
+│   ├── Adapters/
+│   │   └── Outbound/
+│   │       └── Persistence/
+│   │           ├── InventarioDbContext.cs
+│   │           ├── Configurations/   # Fluent API — 12 archivos
+│   │           └── Repositories/
+│   │               ├── ProductoRepository.cs
+│   │               └── CatalogoRepository.cs
+│   └── DependencyInjection/
+│       ├── InfrastructureServiceRegistration.cs
+│       └── PersistenceServiceRegistration.cs
+│
+└── TeejoshSystem.AvaloniaUI/
+    ├── App.axaml / App.axaml.cs
+    ├── MainWindow.axaml / MainWindow.axaml.cs
+    ├── Program.cs
+    ├── appsettings.json
+    └── Adapters/
+        └── Inbound/
+            ├── ViewModels/     # Shell, Menu, Productos, Common
+            ├── Views/          # Menu, Productos
+            └── Services/       # INotificationService, IConfirmationService
+```
 
 ---
 
@@ -204,54 +282,17 @@ product (
 )
 ```
 
-### Tablas de detalles (1:1 con `product`)
+### Tablas de detalles (1:1 con `product`, TPT)
 
 ```sql
-hot_wheels (
-    product_id  INT PRIMARY KEY,
-    model       NVARCHAR(50),
-    year        INT,
-    serie       NVARCHAR(50),
-    category_id INT,
-    FOREIGN KEY (product_id) REFERENCES product(id) ON DELETE CASCADE
-)
-
-funko (
-    product_id          INT PRIMARY KEY,
-    box_number          INT,
-    license             NVARCHAR(50),
-    subtype_id          INT,
-    special_feature_id  INT NULL,
-    FOREIGN KEY (product_id) REFERENCES product(id) ON DELETE CASCADE
-)
-
-tcg (
-    product_id   INT PRIMARY KEY,
-    pack_id      INT,
-    expansion_id INT,
-    FOREIGN KEY (product_id) REFERENCES product(id) ON DELETE CASCADE
-)
-
-toy (
-    product_id   INT PRIMARY KEY,
-    min_years    INT,
-    min_players  INT,
-    max_players  INT,
-    board_game   BIT,
-    FOREIGN KEY (product_id) REFERENCES product(id) ON DELETE CASCADE
-)
-
-varios (
-    product_id   INT PRIMARY KEY,
-    brand        NVARCHAR(50),
-    height       DECIMAL(5,2),
-    width        DECIMAL(5,2),
-    length       DECIMAL(5,2) NULL,
-    material     NVARCHAR(50),
-    illustration BIT,
-    FOREIGN KEY (product_id) REFERENCES product(id) ON DELETE CASCADE
-)
+hot_wheels (product_id PK, model, year, serie, category_id)
+funko      (product_id PK, box_number, license, subtype_id, special_feature_id)
+tcg        (product_id PK, pack_id, expansion_id)
+toy        (product_id PK, min_years, min_players, max_players, board_game)
+varios     (product_id PK, brand, height, width, length, material, illustration)
 ```
+
+Todas con `FOREIGN KEY (product_id) REFERENCES product(id) ON DELETE CASCADE`.
 
 ### Tablas de catálogos
 
@@ -264,84 +305,9 @@ tcg_expansion          (id, name, franchise_id)
 tcg_pack               (id, name, franchise_id)
 ```
 
-La carga de expansiones y packs de TCG es en cascada: primero se selecciona la franquicia, y solo entonces se habilitan y cargan los combos dependientes.
+### Por qué Table-Per-Type (TPT) y no Table-Per-Hierarchy (TPH)
 
----
-
-## Estructura del Proyecto
-
-```
-Domain/           # Núcleo: entidades, value objects, puertos
-Application/      # Casos de uso: commands, queries, DTOs
-Infrastructure/   # Persistencia: EF Core, repositorios, DbContext
-WPF/              # UI: ViewModels, Views, Services, Converters
-```
-
-### Domain
-
-```
-Domain/
-├── Entities/
-│   ├── Producto.cs
-│   ├── Catalogos/          # FunkoSubtipo, TcgFranquicia, TcgExpansion...
-│   └── Detalles/           # FunkoDetalle, HotWheelsDetalle, TcgDetalle...
-├── ValueObjects/
-│   ├── NombreProducto.cs
-│   ├── Precio.cs
-│   └── Unidades.cs
-├── Enums/
-│   └── TipoProducto.cs
-└── Ports/
-    └── Outbound/
-        ├── IProductoRepository.cs
-        └── ICatalogoRepository.cs
-```
-
-### Application
-
-```
-Application/
-├── Common/
-│   └── Result.cs
-└── Ports/
-    └── Inbound/
-        ├── Productos/
-        │   ├── Commands/   # Crear, Actualizar, Eliminar
-        │   └── Queries/    # ObtenerProductos, BuscarProductos, ObtenerPorId
-        └── Catalogos/
-            └── Queries/    # ObtenerCatalogos, ObtenerExpansionesYPacks
-```
-
-### Infrastructure
-
-```
-Infrastructure/
-├── DependencyInjection/
-└── Adapters/
-    └── Outbound/
-        └── Persistence/
-            ├── InventarioDbContext.cs
-            ├── Configurations/     # Fluent API por entidad (12 archivos)
-            └── Repositories/
-                ├── ProductoRepository.cs
-                └── CatalogoRepository.cs
-```
-
-### WPF
-
-```
-WPF/
-├── App.xaml / App.xaml.cs          # DI y startup
-├── appsettings.json
-├── MainWindow.xaml
-└── Adapters/
-    └── Inbound/
-        ├── ViewModels/             # Shell, Menu, Productos
-        ├── Views/                  # Menu, Productos
-        ├── Services/               # Notificaciones, confirmaciones
-        ├── Behaviors/              # SelectedItemsBehavior (DataGrid)
-        └── Converters/             # InverseBool, ObjectToBool
-```
+TPH almacena todos los subtipos en una sola tabla con columnas nullable para los campos que no aplican. Con 5 tipos de coleccionable con estructuras muy diferentes entre sí, TPH generaría una tabla con mayoría de NULLs, consultas con muchos `IS NULL`, e integridad referencial débil. TPT mantiene cada tabla coherente y normalizada.
 
 ---
 
@@ -353,35 +319,87 @@ WPF/
 |---|---|---|
 |.NET|8.0|Framework base|
 |Entity Framework Core|8.0.0|ORM|
-|SQL Server Express|—|Base de datos local|
 |MediatR|12.2.0|Dispatcher CQRS|
 |FluentValidation|11.9.0|Validaciones de Application (opcional)|
 
-### Frontend (WPF)
+### Frontend (Avalonia)
 
 |Librería|Versión|Propósito|
 |---|---|---|
-|WPF|.NET 8|Interfaz de usuario|
+|Avalonia|-|UI multiplataforma (Windows, Linux, macOS)|
 |CommunityToolkit.Mvvm|8.2.2|ObservableObject, RelayCommand|
 |Microsoft.Extensions.Hosting|8.0.0|DI container|
 |Microsoft.Extensions.Configuration|8.0.0|appsettings.json|
 
 ---
 
+## Evolución Planeada
+
+### Database-First → Code-First
+
+**Estado actual:** La base de datos preexiste. EF Core mapea las tablas mediante Fluent API. No hay migraciones.
+
+**Por qué migrar:** Con Database-First, los cambios de esquema requieren intervención manual en dos lugares (BD y configuraciones). Es frágil y no versionable. Code-First invierte esto: las clases del dominio y sus configuraciones Fluent definen el esquema, las migraciones versionan la BD junto con el código.
+
+**Impacto por capa al migrar:**
+
+|Capa|Cambio|
+|---|---|
+|Domain|Ninguno|
+|Application|Ninguno|
+|Infrastructure|Se agregan `Migrations/`. DbContext pasa a ser la fuente de verdad del esquema. Las configuraciones Fluent se mantienen y evolucionan.|
+|Base de datos|Generada y versionada desde código|
+
+---
+
+### Elección de base de datos: SQLite sobre SQL Server Express
+
+Para un sistema de escritorio offline-first, de usuario único, con importación/exportación de Excel en el roadmap, **SQLite es la opción más adecuada**.
+
+|Criterio|SQL Server Express|SQLite|
+|---|---|---|
+|Proceso de servidor|Requiere instalación y servicio en background|No — archivo único|
+|Multiplataforma|Windows only (sin configuración extra)|Windows, Linux, macOS nativo|
+|Instalación para el usuario|Compleja|Ninguna — incluida en el binario|
+|EF Core + Code-First + Migrations|✓|✓|
+|Importación/exportación Excel|Indiferente|Indiferente|
+|Backup|Requiere herramientas SQL|Copiar el archivo `.db`|
+|Concurrencia multiusuario|✓|No necesaria en este contexto|
+|Tamaño para coleccionables|Sobredimensionado|Ajustado|
+
+El único escenario donde SQL Server gana es acceso concurrente de múltiples usuarios sobre red — que no aplica aquí. El resto de características de SQL Server Express son overhead innecesario para una aplicación de escritorio de usuario único.
+
+**Cambio de proveedor con Code-First:** reemplazar el proveedor en `PersistenceServiceRegistration.cs` y regenerar migraciones. Domain y Application no se tocan.
+
+---
+
+### UI: Migración a Avalonia — Completada
+
+La migración de WPF a Avalonia está **completada**. El proyecto `TeejoshSystem.AvaloniaUI` reemplaza al anterior `WPF/`.
+
+**Verificado en:** Windows y Linux (Fedora 43).
+
+**Qué cambió:** Solo la capa de presentación — Views reescritas en XAML de Avalonia, reimplementación de `INotificationService` e `IConfirmationService`, ajuste de bindings.
+
+**Qué no cambió:** Domain, Application, Infrastructure — exactamente como garantiza la arquitectura.
+
+> Si la migración de UI hubiera requerido cambios en capas internas, habría indicado una violación arquitectónica.
+
+---
+
 ## Problemas Conocidos
 
-### Filtrado por tipo no funciona a nivel SQL
+### Filtrado por tipo ejecutado en memoria
 
-**Causa:** La tabla `product` no tiene columna discriminadora `type`.  
-**Estado actual:** El filtrado se realiza en memoria mediante joins a las tablas de detalle.  
-**Solución futura:** Agregar columna `type` en `product` como discriminador.
+**Causa:** La tabla `product` no tiene columna discriminadora `type`. El filtrado se hace mediante joins en memoria a las tablas de detalle.  
+**Solución futura:** Agregar columna `type` en `product`. Con Code-First esto se resuelve en la configuración Fluent y una migración, sin tocar el dominio.
 
 ---
 
 ### "Invalid object name 'ProductoDetalle'"
 
-**Causa:** EF Core generaba una tabla para la clase base abstracta `ProductoDetalle`.  
-**Solución:** Usar `builder.HasBaseType((Type)null)` en la configuración Fluent de cada clase derivada.
+**Causa:** EF Core intentaba crear una tabla para la clase base abstracta `ProductoDetalle`.  
+**Solución:** `builder.HasBaseType((Type)null)` en la configuración Fluent de cada clase derivada.
 
 ---
 
@@ -392,59 +410,25 @@ WPF/
 
 ---
 
-## Evolución Planeada
-
-### Database-First → Code-First
-
-El esquema actual fue heredado. La evolución natural es que las clases del dominio pasen a definir el esquema.
-
-**Cambios:**
-
-- Las entidades y configuraciones Fluent pasan a ser la fuente de verdad
-- Se introducen migraciones (`Migrations/`) en Infrastructure
-- Se elimina la dependencia del esquema preexistente
-- Domain y Application no requieren cambios
-
----
-
-### WPF → Avalonia
-
-Avalonia permite ejecutar la misma aplicación en Windows, macOS y Linux.
-
-**Qué cambia:** Solo el proyecto `WPF/` se reescribe.  
-**Qué no cambia:** Domain, Application, Infrastructure permanecen virtualmente intactos.
-
-> Si un cambio de UI requiere modificar completamente capas internas, es indicador de una violación arquitectónica.
-
-**Ajustes necesarios en la migración:**
-
-- Reescritura de Views en XAML compatible con Avalonia
-- Adaptación de bindings y triggers
-- Reimplementación de `INotificationService` e `IConfirmationService`
-
----
-
 ## Extensibilidad
 
-Gracias a la arquitectura hexagonal, el sistema admite nuevos adaptadores sin modificar el core.
+La arquitectura hexagonal permite conectar nuevos adaptadores sin modificar el core.
 
-### Nuevos Inbound Adapters
+### Nuevos Inbound Adapters (sin tocar Domain ni Application)
 
-- API REST (ASP.NET Core)
+- API REST con ASP.NET Core
 - CLI
-- Avalonia / MAUI
+- MAUI para mobile
 
-Solo se necesita crear el nuevo adapter que invoque los inbound ports existentes.
+Solo se necesita un nuevo proyecto que invoque los inbound ports existentes vía MediatR.
 
-### Nuevos Outbound Adapters
+### Nuevos Outbound Adapters (sin tocar Domain ni Application)
 
-- APIs externas (ej.: precios TCG via API pública)
-- SQLite para contextos más ligeros
-- Cache en memoria
+- SQLite (recomendado — ver sección anterior)
+- APIs externas de precios (ej.: TCGPlayer API)
+- Cache en memoria para catálogos
 
-Solo se necesita implementar `IProductoRepository` o `ICatalogoRepository` con la nueva tecnología.
-
-> El dominio define contratos. La infraestructura los cumple. Cambiar la infraestructura no requiere cambiar el dominio.
+Solo se necesita implementar `IProductoRepository` o `ICatalogoRepository` con la nueva tecnología y registrarla en DI.
 
 ---
 
@@ -461,23 +445,23 @@ Solo se necesita implementar `IProductoRepository` o `ICatalogoRepository` con l
 |Variables locales|camelCase|`producto`|
 |Métodos async|Sufijo `Async`|`AddAsync`|
 
-### Buenas prácticas
+### Reglas arquitectónicas
+
+- Ports → siempre interfaces
+- Adapters → siempre implementan Ports
+- DTOs → solo en Application
+- Entidades de dominio → nunca cruzan hacia la UI
+- Validaciones de negocio → en Domain (value objects)
+- Validaciones de presentación → en la UI (INotifyDataErrorInfo)
+
+### Buenas prácticas de código
 
 - `async/await` en todas las operaciones I/O
 - `ConfigureAwait(false)` en código de librería
 - Cada método tiene una sola responsabilidad (SRP)
-- Dependencias siempre por constructor
+- Dependencias siempre inyectadas por constructor
 - Sin lógica de negocio en ViewModels ni code-behind
 - Clases que no serán heredadas: `sealed`
-
-### Reglas arquitectónicas
-
-- Los Ports siempre son interfaces
-- Los Adapters siempre implementan Ports
-- Los DTOs existen solo en Application
-- Las entidades de dominio nunca cruzan hacia la UI
-- Las validaciones de negocio viven en Domain
-- Las validaciones de presentación viven en la UI
 
 ---
 
@@ -485,13 +469,14 @@ Solo se necesita implementar `IProductoRepository` o `ICatalogoRepository` con l
 
 ### Alta prioridad 🔴
 
+- [ ] Migración a Code-First + SQLite
 - [ ] Módulo de ventas
-- [ ] Validaciones de negocio adicionales (stock no negativo tras venta)
+- [ ] Validaciones adicionales (stock no negativo tras venta)
 - [ ] Columna discriminadora `type` en tabla `product`
 
 ### Media prioridad 🟡
 
-- [ ] Importación desde Excel
+- [ ] Importación y exportación desde Excel
 - [ ] Historial de cambios (audit log)
 - [ ] Imágenes de productos
 
@@ -502,15 +487,6 @@ Solo se necesita implementar `IProductoRepository` o `ICatalogoRepository` con l
 - [ ] Temas claro/oscuro
 - [ ] Internacionalización (i18n)
 - [ ] API REST para consumo externo
-
----
-
-## Estado del Proyecto
-
-**Versión:** 0.4 — beta  
-**Estado:** Activo  
-**Arquitectura:** Estable  
-**Última actualización:** Abril 2026
 
 ---
 

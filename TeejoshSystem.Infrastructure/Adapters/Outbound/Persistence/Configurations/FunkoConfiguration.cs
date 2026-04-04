@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using TeejoshSystem.Domain.Entities;
 using TeejoshSystem.Domain.Entities.Detalles;
 
 namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Configurations
@@ -8,12 +9,10 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Configurati
     {
         public void Configure(EntityTypeBuilder<FunkoDetalle> builder)
         {
-            // ✅ Tratar como entidad independiente, NO como herencia
             builder.HasBaseType((Type)null);
 
             builder.ToTable("funko");
 
-            // ✅ Primary Key
             builder.HasKey(d => d.ProductoId);
 
             builder.Property(d => d.ProductoId)
@@ -25,15 +24,21 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Configurati
 
             builder.Property(d => d.Licencia)
                 .HasColumnName("license")
-                .HasMaxLength(50)
+                .HasMaxLength(100)
                 .IsRequired();
 
             builder.Property(d => d.SubtipoId)
-                .HasColumnName("subtype_id")
+                .HasColumnName("subtype")
                 .IsRequired();
 
             builder.Property(d => d.CaracteristicaEspecialId)
-                .HasColumnName("special_feature_id");
+                .HasColumnName("special_caracteristic")
+                .IsRequired();
+
+            builder.HasOne<Producto>()
+                .WithOne()
+                .HasForeignKey<FunkoDetalle>(d => d.ProductoId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

@@ -9,12 +9,10 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Configurati
     {
         public void Configure(EntityTypeBuilder<HotWheelsDetalle> builder)
         {
-            // ✅ Tratar como entidad independiente, NO como herencia
             builder.HasBaseType((Type)null);
 
             builder.ToTable("hot_wheels");
 
-            // ✅ Primary Key
             builder.HasKey(d => d.ProductoId);
 
             builder.Property(d => d.ProductoId)
@@ -22,7 +20,7 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Configurati
 
             builder.Property(d => d.Modelo)
                 .HasColumnName("model")
-                .HasMaxLength(50)
+                .HasMaxLength(100)
                 .IsRequired();
 
             builder.Property(d => d.Anio)
@@ -31,12 +29,17 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Configurati
 
             builder.Property(d => d.Serie)
                 .HasColumnName("serie")
-                .HasMaxLength(50)
+                .HasMaxLength(100)
                 .IsRequired();
 
             builder.Property(d => d.CategoriaId)
                 .HasColumnName("category_id")
                 .IsRequired();
+
+            builder.HasOne<Producto>()
+                .WithOne()
+                .HasForeignKey<HotWheelsDetalle>(d => d.ProductoId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

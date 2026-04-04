@@ -11,18 +11,17 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Configurati
             builder.ToTable("tcg_pack");
 
             builder.HasKey(p => p.Id);
-            builder.Property(p => p.Id).HasColumnName("id");
+
+            builder.Property(p => p.Id)
+                .HasColumnName("id");
 
             builder.Property(p => p.Nombre)
                 .HasColumnName("name")
-                .HasMaxLength(50)
+                .HasMaxLength(100)
                 .IsRequired();
 
-            builder.Property(p => p.FranquiciaId)
-                .HasColumnName("franchise_id")
-                .IsRequired();
-
-            builder.HasIndex(p => new { p.Nombre, p.FranquiciaId }).IsUnique();
+            builder.HasIndex(p => p.Nombre)
+                .IsUnique();
         }
     }
 }

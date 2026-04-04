@@ -5,8 +5,8 @@ using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MediatR;
+using TeejoshSystem.Application.Common.Dtos;
 using TeejoshSystem.Application.Ports.Inbound.Productos.Commands.ActualizarProducto;
-using TeejoshSystem.Application.Ports.Inbound.Productos.Queries.ObtenerProductos;
 using TeejoshSystem.AvaloniaUI.Adapters.Inbound.Services;
 using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Common;
 using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Shell;
@@ -14,6 +14,7 @@ using static TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Common.Validat
 
 namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Productos
 {
+    /*
     public partial class EditarProductoViewModel
         : ValidatableViewModel, ILoadable
     {
@@ -36,6 +37,7 @@ namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Productos
         [ObservableProperty]
         private bool isBusy;
 
+        /*
         public EditarProductoViewModel(
             MainViewModel shell,
             IMediator mediator,
@@ -68,7 +70,7 @@ namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Productos
         {
             _shell.CurrentView = _gestionarVm;
         }
-
+        
         [RelayCommand(CanExecute = nameof(CanGuardar))]
         private async Task GuardarAsync()
         {
@@ -142,5 +144,7 @@ namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Productos
             if (value < 0)
                 AddError(nameof(Unidades), "Las unidades no pueden ser negativas.");
         }
+        
     }
+    */
 }

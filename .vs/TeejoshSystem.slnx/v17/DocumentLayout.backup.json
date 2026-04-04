@@ -3,16 +3,8 @@
   "WorkspaceRootPath": "C:\\Users\\Usuario\\source\\repos\\TeejoshSystem\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{2F8A6EE4-66A7-0C2C-34A5-329357342D06}|TeejoshSystem.AvaloniaUI\\TeejoshSystem.AvaloniaUI.csproj|c:\\users\\usuario\\source\\repos\\teejoshsystem\\teejoshsystem.avaloniaui\\adapters\\inbound\\viewmodels\\shell\\mainviewmodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{2F8A6EE4-66A7-0C2C-34A5-329357342D06}|TeejoshSystem.AvaloniaUI\\TeejoshSystem.AvaloniaUI.csproj|solutionrelative:teejoshsystem.avaloniaui\\adapters\\inbound\\viewmodels\\shell\\mainviewmodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{2F8A6EE4-66A7-0C2C-34A5-329357342D06}|TeejoshSystem.AvaloniaUI\\TeejoshSystem.AvaloniaUI.csproj|c:\\users\\usuario\\source\\repos\\teejoshsystem\\teejoshsystem.avaloniaui\\adapters\\inbound\\viewmodels\\menu\\menuprincipalviewmodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{2F8A6EE4-66A7-0C2C-34A5-329357342D06}|TeejoshSystem.AvaloniaUI\\TeejoshSystem.AvaloniaUI.csproj|solutionrelative:teejoshsystem.avaloniaui\\adapters\\inbound\\viewmodels\\menu\\menuprincipalviewmodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{2F8A6EE4-66A7-0C2C-34A5-329357342D06}|TeejoshSystem.AvaloniaUI\\TeejoshSystem.AvaloniaUI.csproj|c:\\users\\usuario\\source\\repos\\teejoshsystem\\teejoshsystem.avaloniaui\\adapters\\inbound\\views\\menu\\menuprincipalview.axaml||{FA3CD31E-987B-443A-9B81-186104E8DAC1}",
-      "RelativeMoniker": "D:0:0:{2F8A6EE4-66A7-0C2C-34A5-329357342D06}|TeejoshSystem.AvaloniaUI\\TeejoshSystem.AvaloniaUI.csproj|solutionrelative:teejoshsystem.avaloniaui\\adapters\\inbound\\views\\menu\\menuprincipalview.axaml||{FA3CD31E-987B-443A-9B81-186104E8DAC1}"
+      "AbsoluteMoniker": "D:0:0:{2F8A6EE4-66A7-0C2C-34A5-329357342D06}|TeejoshSystem.AvaloniaUI\\TeejoshSystem.AvaloniaUI.csproj|c:\\users\\usuario\\source\\repos\\teejoshsystem\\teejoshsystem.avaloniaui\\app.axaml||{FA3CD31E-987B-443A-9B81-186104E8DAC1}",
+      "RelativeMoniker": "D:0:0:{2F8A6EE4-66A7-0C2C-34A5-329357342D06}|TeejoshSystem.AvaloniaUI\\TeejoshSystem.AvaloniaUI.csproj|solutionrelative:teejoshsystem.avaloniaui\\app.axaml||{FA3CD31E-987B-443A-9B81-186104E8DAC1}"
     }
   ],
   "DocumentGroupContainers": [
@@ -22,21 +14,8 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 2,
+          "SelectedChildIndex": 1,
           "Children": [
-            {
-              "$type": "Document",
-              "DocumentIndex": 1,
-              "Title": "MenuPrincipalViewModel.cs",
-              "DocumentMoniker": "C:\\Users\\Usuario\\source\\repos\\TeejoshSystem\\TeejoshSystem.AvaloniaUI\\Adapters\\Inbound\\ViewModels\\Menu\\MenuPrincipalViewModel.cs",
-              "RelativeDocumentMoniker": "TeejoshSystem.AvaloniaUI\\Adapters\\Inbound\\ViewModels\\Menu\\MenuPrincipalViewModel.cs",
-              "ToolTip": "C:\\Users\\Usuario\\source\\repos\\TeejoshSystem\\TeejoshSystem.AvaloniaUI\\Adapters\\Inbound\\ViewModels\\Menu\\MenuPrincipalViewModel.cs",
-              "RelativeToolTip": "TeejoshSystem.AvaloniaUI\\Adapters\\Inbound\\ViewModels\\Menu\\MenuPrincipalViewModel.cs",
-              "ViewState": "AgIAAA4AAAAAAAAAAAAQwCIAAAAJAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-04-03T20:41:08.226Z",
-              "EditorCaption": ""
-            },
             {
               "$type": "Bookmark",
               "Name": "ST:0:0:{1c4feeaa-4718-4aa9-859d-94ce25d182ba}"
@@ -44,27 +23,14 @@
             {
               "$type": "Document",
               "DocumentIndex": 0,
-              "Title": "MainViewModel.cs",
-              "DocumentMoniker": "C:\\Users\\Usuario\\source\\repos\\TeejoshSystem\\TeejoshSystem.AvaloniaUI\\Adapters\\Inbound\\ViewModels\\Shell\\MainViewModel.cs",
-              "RelativeDocumentMoniker": "TeejoshSystem.AvaloniaUI\\Adapters\\Inbound\\ViewModels\\Shell\\MainViewModel.cs",
-              "ToolTip": "C:\\Users\\Usuario\\source\\repos\\TeejoshSystem\\TeejoshSystem.AvaloniaUI\\Adapters\\Inbound\\ViewModels\\Shell\\MainViewModel.cs",
-              "RelativeToolTip": "TeejoshSystem.AvaloniaUI\\Adapters\\Inbound\\ViewModels\\Shell\\MainViewModel.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAABMAAAAJAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-04-03T20:39:15.07Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 2,
-              "Title": "MenuPrincipalView.axaml",
-              "DocumentMoniker": "C:\\Users\\Usuario\\source\\repos\\TeejoshSystem\\TeejoshSystem.AvaloniaUI\\Adapters\\Inbound\\Views\\Menu\\MenuPrincipalView.axaml",
-              "RelativeDocumentMoniker": "TeejoshSystem.AvaloniaUI\\Adapters\\Inbound\\Views\\Menu\\MenuPrincipalView.axaml",
-              "ToolTip": "C:\\Users\\Usuario\\source\\repos\\TeejoshSystem\\TeejoshSystem.AvaloniaUI\\Adapters\\Inbound\\Views\\Menu\\MenuPrincipalView.axaml",
-              "RelativeToolTip": "TeejoshSystem.AvaloniaUI\\Adapters\\Inbound\\Views\\Menu\\MenuPrincipalView.axaml",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAABIAAAAOAAAAAAAAAA==",
+              "Title": "App.axaml",
+              "DocumentMoniker": "C:\\Users\\Usuario\\source\\repos\\TeejoshSystem\\TeejoshSystem.AvaloniaUI\\App.axaml",
+              "RelativeDocumentMoniker": "TeejoshSystem.AvaloniaUI\\App.axaml",
+              "ToolTip": "C:\\Users\\Usuario\\source\\repos\\TeejoshSystem\\TeejoshSystem.AvaloniaUI\\App.axaml",
+              "RelativeToolTip": "TeejoshSystem.AvaloniaUI\\App.axaml",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABcAAABIAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
-              "WhenOpened": "2026-04-03T20:24:11.919Z",
+              "WhenOpened": "2026-04-04T04:43:05.067Z",
               "EditorCaption": ""
             }
           ]

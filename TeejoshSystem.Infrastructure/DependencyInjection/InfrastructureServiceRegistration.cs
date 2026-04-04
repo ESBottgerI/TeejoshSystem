@@ -1,8 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using TeejoshSystem.Domain.Ports.Outbound.Repositories;
-using TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence;
 using TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Repositories;
 
 namespace TeejoshSystem.Infrastructure.DependencyInjection
@@ -15,12 +13,6 @@ namespace TeejoshSystem.Infrastructure.DependencyInjection
         {
             services.AddPersistence(configuration);
 
-            // DbContext
-            services.AddDbContext<InventarioDbContext>(options =>
-                options.UseSqlServer(
-                    configuration.GetConnectionString("DefaultConnection")));
-
-            // Repositories
             services.AddScoped<IProductoRepository, ProductoRepository>();
             services.AddScoped<ICatalogoRepository, CatalogoRepository>();
 

@@ -25,6 +25,7 @@ namespace TeejoshSystem.Application.Ports.Inbound.Productos.Commands.CrearProduc
             {
                 // 1. Crear producto base
                 var producto = new Producto(
+                    request.Tipo,
                     new NombreProducto(request.Nombre),
                     new Precio(request.Precio),
                     new Unidades(request.Unidades)
@@ -34,7 +35,7 @@ namespace TeejoshSystem.Application.Ports.Inbound.Productos.Commands.CrearProduc
                 var productoId = await _repository.AddAsync(producto);
 
                 // 3. Crear y guardar detalle segun tipo
-                await CrearYGuardarDetallePorTipo(productoId, request);
+                await CrearYGuardarDetallePorTipo(productoId, producto, request);
 
                 return Result.Success();
             }
@@ -50,7 +51,10 @@ namespace TeejoshSystem.Application.Ports.Inbound.Productos.Commands.CrearProduc
             }
         }
 
-        private async Task CrearYGuardarDetallePorTipo(int productoId, CrearProductoCommand request)
+        private async Task CrearYGuardarDetallePorTipo(
+            int productoId, 
+            Producto producto,
+            CrearProductoCommand request)
         {
             switch (request.Tipo)
             {
@@ -65,7 +69,8 @@ namespace TeejoshSystem.Application.Ports.Inbound.Productos.Commands.CrearProduc
                         request.HotWheels.CategoriaId
                     );
 
-                    hwDetalle.ProductoId = productoId;
+                    hwDetalle.AsignarProductoId(productoId);
+                    producto.AsignarDescripcion(hwDetalle);
                     await _repository.AddHotWheelsDetalleAsync(hwDetalle);
                     break;
 
@@ -80,7 +85,8 @@ namespace TeejoshSystem.Application.Ports.Inbound.Productos.Commands.CrearProduc
                         request.Funko.CaracteristicaEspecialId
                     );
 
-                    funkoDetalle.ProductoId = productoId;
+                    funkoDetalle.AsignarProductoId(productoId);
+                    producto.AsignarDescripcion(funkoDetalle);
                     await _repository.AddFunkoDetalleAsync(funkoDetalle);
                     break;
 
@@ -93,7 +99,8 @@ namespace TeejoshSystem.Application.Ports.Inbound.Productos.Commands.CrearProduc
                         request.Tcg.ExpansionId
                     );
 
-                    tcgDetalle.ProductoId = productoId;
+                    tcgDetalle.AsignarProductoId(productoId);
+                    producto.AsignarDescripcion(tcgDetalle);
                     await _repository.AddTcgDetalleAsync(tcgDetalle);
                     break;
 
@@ -108,7 +115,8 @@ namespace TeejoshSystem.Application.Ports.Inbound.Productos.Commands.CrearProduc
                         request.Toy.EsJuegoMesa
                     );
 
-                    toyDetalle.ProductoId = productoId;
+                    toyDetalle.AsignarProductoId(productoId);
+                    producto.AsignarDescripcion(toyDetalle);
                     await _repository.AddToyDetalleAsync(toyDetalle);
                     break;
 
@@ -125,7 +133,8 @@ namespace TeejoshSystem.Application.Ports.Inbound.Productos.Commands.CrearProduc
                         request.Varios.TieneIlustracion
                     );
 
-                    variosDetalle.ProductoId = productoId;
+                    variosDetalle.AsignarProductoId(productoId);
+                    producto.AsignarDescripcion(variosDetalle);
                     await _repository.AddVariosDetalleAsync(variosDetalle);
                     break;
 

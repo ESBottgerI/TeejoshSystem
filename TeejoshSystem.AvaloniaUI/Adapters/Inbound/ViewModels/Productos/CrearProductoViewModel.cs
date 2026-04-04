@@ -140,6 +140,7 @@ namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Productos
         public bool MostrarToy => TipoSeleccionado == TipoProducto.Toy;
         public bool MostrarVarios => TipoSeleccionado == TipoProducto.Varios;
 
+        /*
         // Lista de tipos disponibles
         public ObservableCollection<TipoProductoOption> TiposDisponibles { get; } = new()
         {
@@ -149,7 +150,7 @@ namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Productos
             new TipoProductoOption { Nombre = "Toy", Valor = TipoProducto.Toy },
             new TipoProductoOption { Nombre = "Varios", Valor = TipoProducto.Varios }
         };
-
+        
         public CrearProductoViewModel(
             MainViewModel shell,
             IMediator mediator,
@@ -248,6 +249,7 @@ namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Productos
                 await _notification.ShowError("Error al cargar expansiones: " + ex.Message);
             }
         }
+        */
 
         [RelayCommand(CanExecute = nameof(CanGuardar))]
         private async Task GuardarAsync()

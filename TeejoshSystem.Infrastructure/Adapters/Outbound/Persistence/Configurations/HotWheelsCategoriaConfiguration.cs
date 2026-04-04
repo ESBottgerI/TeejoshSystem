@@ -11,14 +11,17 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Configurati
             builder.ToTable("hot_wheels_category");
 
             builder.HasKey(c => c.Id);
-            builder.Property(c => c.Id).HasColumnName("id");
+
+            builder.Property(c => c.Id)
+                .HasColumnName("id");
 
             builder.Property(c => c.Nombre)
                 .HasColumnName("name")
-                .HasMaxLength(50)
+                .HasMaxLength(100)
                 .IsRequired();
 
-            builder.HasIndex(c => c.Nombre).IsUnique();
+            builder.HasIndex(c => c.Nombre)
+                .IsUnique();
         }
     }
 }

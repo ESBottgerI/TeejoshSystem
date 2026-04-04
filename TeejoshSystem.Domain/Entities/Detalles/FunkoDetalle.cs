@@ -1,11 +1,13 @@
 ﻿
 
+using TeejoshSystem.Domain.Enums;
+
 namespace TeejoshSystem.Domain.Entities.Detalles
 {
     public sealed class FunkoDetalle : ProductoDetalle
     {
         public int NumeroCaja { get; private set; }
-        public string Licencia { get; private set; }
+        public string Licencia { get; private set; } = null!;
         public int SubtipoId { get; private set; }
         public int? CaracteristicaEspecialId { get; private set; }
 

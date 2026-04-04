@@ -19,6 +19,7 @@ namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Productos
 {
     public partial class GestionarProductosViewModel : ObservableObject
     {
+        /*
         private readonly MainViewModel _shell;
         private readonly IMediator _mediator;
         private readonly INotificationService _notification;
@@ -93,6 +94,7 @@ namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Productos
                 IsBusy = false;
             }
         }
+
 
         [RelayCommand(CanExecute = nameof(HaySeleccion))]
         private void Editar()
@@ -174,7 +176,9 @@ namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Productos
         }
 
         private bool HaySeleccion() => ProductosSeleccionados.Any();
+        */
     }
+
 
     // Clase auxiliar para ComboBox
     public class TipoProductoOption

@@ -9,11 +9,10 @@ namespace TeejoshSystem.Domain.Ports.Outbound.Repositories
         // Consultas
         Task<IReadOnlyList<Producto>> GetAllAsync();
         Task<Producto?> GetByIdAsync(int id);
-        Task<IReadOnlyList<Producto>> SearchByNameAsync(string nombre);
-        Task<IReadOnlyList<Producto>> SearchAsync(string? nombre, TipoProducto? tipo);
 
         // Obtener con detalles especificos
-        Task<(Producto producto, object? detalle)> GetByIdWithDetalleAsync(int id, TipoProducto tipo);
+        Task<Producto?> GetByIdWithDetalleAsync(int id);
+        Task<IReadOnlyList<Producto>> SearchAsync(string? nombre, TipoProducto? tipo);
 
         // Comandos - Producto
         Task<int> AddAsync(Producto producto);
@@ -37,6 +36,5 @@ namespace TeejoshSystem.Domain.Ports.Outbound.Repositories
 
         // Utilidades
         Task<bool> ExistsAsync(int id);
-        Task<TipoProducto?> GetTipoProductoAsync(int id);
     }
 }

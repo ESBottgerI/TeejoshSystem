@@ -12,8 +12,10 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Configurati
 
             builder.HasKey(p => p.Id);
 
-            builder.Property(p => p.Id)
-                .HasColumnName("id");
+            builder.Property(p => p.Tipo)
+                .HasColumnName("type")
+                .HasConversion<string>()  // guarda como texto, más legible
+                .IsRequired();
 
             // Value Object: Nombre
             builder.OwnsOne(p => p.Nombre, n =>
@@ -41,21 +43,11 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Configurati
                     .IsRequired();
             });
 
-            //builder.Ignore(p => p.Tipo);
-            /*
-            builder.Property(p => p.Tipo)
-                .HasConversion<int>()
-                .HasColumnName("tipo_producto");
-            */
+            // Descripcion es una navigation property resuelta en memoria por el repositorio.
+            // EF Core no la gestiona porque ProductoDetalle es abstracta (TPT sin tabla base).
+            // El repositorio carga el detalle por separado usando Producto.Tipo.
 
             builder.Ignore(p => p.Descripcion);
-
-            /*
-            builder.HasOne(p => p.Descripcion)
-                .WithOne()
-                .HasForeignKey<ProductoDetalle>(d => d.ProductoId)
-                .IsRequired();
-            */
         }
     }
 }

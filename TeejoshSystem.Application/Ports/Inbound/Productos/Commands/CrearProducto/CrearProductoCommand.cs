@@ -6,10 +6,10 @@ namespace TeejoshSystem.Application.Ports.Inbound.Productos.Commands.CrearProduc
 {
     public record CrearProductoCommand : IRequest<Result>
     {
-        public string Nombre { get; init; }
+        public TipoProducto Tipo { get; init; }
+        public required string Nombre { get; init; }
         public decimal Precio { get; init; }
         public int Unidades { get; init; }
-        public TipoProducto Tipo { get; init; }
 
         // Detalle especifico (sera uno de estos segun Tipo)
         public CrearHotWheelsDetalleDto? HotWheels { get; init; }

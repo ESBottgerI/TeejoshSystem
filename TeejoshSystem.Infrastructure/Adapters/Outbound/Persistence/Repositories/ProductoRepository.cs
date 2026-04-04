@@ -28,14 +28,6 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Repositorie
                 .FirstOrDefaultAsync(p => p.Id == id);
         }
 
-        public async Task<IReadOnlyList<Producto>> SearchByNameAsync(string nombre)
-        {
-            return await _context.Productos
-                .AsNoTracking()
-                .Where(p => p.Nombre.Value.Contains(nombre))
-                .ToListAsync();
-        }
-
         public async Task<IReadOnlyList<Producto>> SearchAsync(string? nombre, TipoProducto? tipo)
         {
             var query = _context.Productos.AsNoTracking();
@@ -46,66 +38,41 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Repositorie
                 query = query.Where(p => p.Nombre.Value.Contains(nombre));
             }
 
-            // Si NO hay filtro de tipo, devolver todos
-            if (!tipo.HasValue)
+            // Si hay filtro de tipo
+            if (tipo.HasValue)
             {
-                return await query.ToListAsync();
+                query = query.Where(p => p.Tipo == tipo.Value);
             }
 
-            // Si HAY filtro de tipo, hacer join con tabla correspondiente
-            var productos = await query.ToListAsync();
-
-            // Filtrar en memoria según el tipo
-            var productosFiltrados = new List<Producto>();
-
-            foreach (var producto in productos)
-            {
-                var tipoProducto = await GetTipoProductoAsync(producto.Id);
-
-                if (tipoProducto == tipo.Value)
-                {
-                    productosFiltrados.Add(producto);
-                }
-            }
-
-            return productosFiltrados;
+            return await query.ToListAsync();
         }
 
-        public async Task<(Producto producto, object? detalle)> GetByIdWithDetalleAsync(
-            int id,
-            TipoProducto tipo)
+        public async Task<Producto?> GetByIdWithDetalleAsync(int id)
         {
-            var producto = await GetByIdAsync(id);
+            var producto = await _context.Productos
+                .FirstOrDefaultAsync(p => p.Id == id);
 
-            if (producto is null)
-                return (null, null);
+            if (producto is null) return null;
 
-            object? detalle = tipo switch
+            ProductoDetalle? detalle = producto.Tipo switch
             {
                 TipoProducto.HotWheels => await _context.HotWheelsDetalles
-                    .AsNoTracking()
                     .FirstOrDefaultAsync(d => d.ProductoId == id),
-
                 TipoProducto.Funko => await _context.FunkoDetalles
-                    .AsNoTracking()
                     .FirstOrDefaultAsync(d => d.ProductoId == id),
-
                 TipoProducto.Tcg => await _context.TcgDetalles
-                    .AsNoTracking()
                     .FirstOrDefaultAsync(d => d.ProductoId == id),
-
                 TipoProducto.Toy => await _context.ToyDetalles
-                    .AsNoTracking()
                     .FirstOrDefaultAsync(d => d.ProductoId == id),
-
                 TipoProducto.Varios => await _context.VariosDetalles
-                    .AsNoTracking()
                     .FirstOrDefaultAsync(d => d.ProductoId == id),
-
                 _ => null
             };
 
-            return (producto, detalle);
+            if (detalle is not null)
+                producto.AsignarDescripcion(detalle);
+
+            return producto;
         }
 
         public async Task<int> AddAsync(Producto producto)
@@ -141,26 +108,6 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Repositorie
         {
             return await _context.Productos
                 .AnyAsync(p => p.Id == id);
-        }
-
-        public async Task<TipoProducto?> GetTipoProductoAsync(int id)
-        {
-            if (await _context.HotWheelsDetalles.AnyAsync(d => d.ProductoId == id))
-                return TipoProducto.HotWheels;
-
-            if (await _context.FunkoDetalles.AnyAsync(d => d.ProductoId == id))
-                return TipoProducto.Funko;
-
-            if (await _context.TcgDetalles.AnyAsync(d => d.ProductoId == id))
-                return TipoProducto.Tcg;
-
-            if (await _context.ToyDetalles.AnyAsync(d => d.ProductoId == id))
-                return TipoProducto.Toy;
-
-            if (await _context.VariosDetalles.AnyAsync(d => d.ProductoId == id))
-                return TipoProducto.Varios;
-
-            return null;
         }
 
         // Metodos auxiliares para manejar detalles

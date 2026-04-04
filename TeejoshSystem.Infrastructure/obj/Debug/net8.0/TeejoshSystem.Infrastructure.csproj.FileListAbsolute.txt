@@ -1,4 +1,5 @@
 C:\Users\Usuario\source\repos\TeejoshSystem\TeejoshSystem.Infrastructure\bin\Debug\net8.0\TeejoshSystem.Infrastructure.deps.json
+C:\Users\Usuario\source\repos\TeejoshSystem\TeejoshSystem.Infrastructure\bin\Debug\net8.0\TeejoshSystem.Infrastructure.runtimeconfig.json
 C:\Users\Usuario\source\repos\TeejoshSystem\TeejoshSystem.Infrastructure\bin\Debug\net8.0\TeejoshSystem.Infrastructure.dll
 C:\Users\Usuario\source\repos\TeejoshSystem\TeejoshSystem.Infrastructure\bin\Debug\net8.0\TeejoshSystem.Infrastructure.pdb
 C:\Users\Usuario\source\repos\TeejoshSystem\TeejoshSystem.Infrastructure\bin\Debug\net8.0\TeejoshSystem.Application.dll
@@ -15,4 +16,5 @@ C:\Users\Usuario\source\repos\TeejoshSystem\TeejoshSystem.Infrastructure\obj\Deb
 C:\Users\Usuario\source\repos\TeejoshSystem\TeejoshSystem.Infrastructure\obj\Debug\net8.0\TeejoshSystem.Infrastructure.dll
 C:\Users\Usuario\source\repos\TeejoshSystem\TeejoshSystem.Infrastructure\obj\Debug\net8.0\refint\TeejoshSystem.Infrastructure.dll
 C:\Users\Usuario\source\repos\TeejoshSystem\TeejoshSystem.Infrastructure\obj\Debug\net8.0\TeejoshSystem.Infrastructure.pdb
+C:\Users\Usuario\source\repos\TeejoshSystem\TeejoshSystem.Infrastructure\obj\Debug\net8.0\TeejoshSystem.Infrastructure.genruntimeconfig.cache
 C:\Users\Usuario\source\repos\TeejoshSystem\TeejoshSystem.Infrastructure\obj\Debug\net8.0\ref\TeejoshSystem.Infrastructure.dll

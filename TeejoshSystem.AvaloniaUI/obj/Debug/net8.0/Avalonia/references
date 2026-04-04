@@ -23,8 +23,6 @@ C:\Users\Usuario\.nuget\packages\avalonia\11.3.12\ref\net8.0\Avalonia.Vulkan.dll
 C:\Users\Usuario\.nuget\packages\avalonia.win32\11.3.12\lib\net8.0\Avalonia.Win32.Automation.dll
 C:\Users\Usuario\.nuget\packages\avalonia.win32\11.3.12\lib\net8.0\Avalonia.Win32.dll
 C:\Users\Usuario\.nuget\packages\avalonia.x11\11.3.12\lib\net8.0\Avalonia.X11.dll
-C:\Users\Usuario\.nuget\packages\azure.core\1.25.0\lib\net5.0\Azure.Core.dll
-C:\Users\Usuario\.nuget\packages\azure.identity\1.7.0\lib\netstandard2.0\Azure.Identity.dll
 C:\Users\Usuario\.nuget\packages\colortextblock.avalonia\11.0.0-d1\lib\net6.0\ColorTextBlock.Avalonia.dll
 C:\Users\Usuario\.nuget\packages\communitytoolkit.mvvm\8.2.2\lib\net6.0\CommunityToolkit.Mvvm.dll
 C:\Users\Usuario\.nuget\packages\dialoghost.avalonia\0.7.5\lib\netstandard2.0\DialogHost.Avalonia.dll
@@ -34,15 +32,12 @@ C:\Users\Usuario\.nuget\packages\markdown.avalonia.tight\11.0.0-d1\lib\net6.0\Ma
 C:\Users\Usuario\.nuget\packages\mediatr.contracts\2.0.1\lib\netstandard2.0\MediatR.Contracts.dll
 C:\Users\Usuario\.nuget\packages\mediatr\12.2.0\lib\net6.0\MediatR.dll
 C:\Users\Usuario\.nuget\packages\microcom.runtime\0.11.0\lib\net5.0\MicroCom.Runtime.dll
-C:\Users\Usuario\.nuget\packages\microsoft.bcl.asyncinterfaces\1.1.1\ref\netstandard2.1\Microsoft.Bcl.AsyncInterfaces.dll
 C:\Program Files\dotnet\packs\Microsoft.NETCore.App.Ref\8.0.25\ref\net8.0\Microsoft.CSharp.dll
-C:\Users\Usuario\.nuget\packages\microsoft.data.sqlclient\5.1.1\ref\net6.0\Microsoft.Data.SqlClient.dll
 C:\Users\Usuario\.nuget\packages\microsoft.data.sqlite.core\8.0.0\lib\net8.0\Microsoft.Data.Sqlite.dll
 C:\Users\Usuario\.nuget\packages\microsoft.entityframeworkcore.abstractions\8.0.0\lib\net8.0\Microsoft.EntityFrameworkCore.Abstractions.dll
 C:\Users\Usuario\.nuget\packages\microsoft.entityframeworkcore\8.0.0\lib\net8.0\Microsoft.EntityFrameworkCore.dll
 C:\Users\Usuario\.nuget\packages\microsoft.entityframeworkcore.relational\8.0.0\lib\net8.0\Microsoft.EntityFrameworkCore.Relational.dll
 C:\Users\Usuario\.nuget\packages\microsoft.entityframeworkcore.sqlite.core\8.0.0\lib\net8.0\Microsoft.EntityFrameworkCore.Sqlite.dll
-C:\Users\Usuario\.nuget\packages\microsoft.entityframeworkcore.sqlserver\8.0.0\lib\net8.0\Microsoft.EntityFrameworkCore.SqlServer.dll
 C:\Users\Usuario\.nuget\packages\microsoft.extensions.caching.abstractions\8.0.0\lib\net8.0\Microsoft.Extensions.Caching.Abstractions.dll
 C:\Users\Usuario\.nuget\packages\microsoft.extensions.caching.memory\8.0.0\lib\net8.0\Microsoft.Extensions.Caching.Memory.dll
 C:\Users\Usuario\.nuget\packages\microsoft.extensions.configuration.abstractions\8.0.0\lib\net8.0\Microsoft.Extensions.Configuration.Abstractions.dll
@@ -73,15 +68,6 @@ C:\Users\Usuario\.nuget\packages\microsoft.extensions.logging.eventsource\8.0.0\
 C:\Users\Usuario\.nuget\packages\microsoft.extensions.options.configurationextensions\8.0.0\lib\net8.0\Microsoft.Extensions.Options.ConfigurationExtensions.dll
 C:\Users\Usuario\.nuget\packages\microsoft.extensions.options\8.0.0\lib\net8.0\Microsoft.Extensions.Options.dll
 C:\Users\Usuario\.nuget\packages\microsoft.extensions.primitives\8.0.0\lib\net8.0\Microsoft.Extensions.Primitives.dll
-C:\Users\Usuario\.nuget\packages\microsoft.identity.client\4.47.2\lib\netcoreapp2.1\Microsoft.Identity.Client.dll
-C:\Users\Usuario\.nuget\packages\microsoft.identity.client.extensions.msal\2.19.3\lib\netcoreapp2.1\Microsoft.Identity.Client.Extensions.Msal.dll
-C:\Users\Usuario\.nuget\packages\microsoft.identitymodel.abstractions\6.24.0\lib\net6.0\Microsoft.IdentityModel.Abstractions.dll
-C:\Users\Usuario\.nuget\packages\microsoft.identitymodel.jsonwebtokens\6.24.0\lib\net6.0\Microsoft.IdentityModel.JsonWebTokens.dll
-C:\Users\Usuario\.nuget\packages\microsoft.identitymodel.logging\6.24.0\lib\net6.0\Microsoft.IdentityModel.Logging.dll
-C:\Users\Usuario\.nuget\packages\microsoft.identitymodel.protocols\6.24.0\lib\net6.0\Microsoft.IdentityModel.Protocols.dll
-C:\Users\Usuario\.nuget\packages\microsoft.identitymodel.protocols.openidconnect\6.24.0\lib\net6.0\Microsoft.IdentityModel.Protocols.OpenIdConnect.dll
-C:\Users\Usuario\.nuget\packages\microsoft.identitymodel.tokens\6.24.0\lib\net6.0\Microsoft.IdentityModel.Tokens.dll
-C:\Users\Usuario\.nuget\packages\microsoft.sqlserver.server\1.0.0\lib\netstandard2.0\Microsoft.SqlServer.Server.dll
 C:\Program Files\dotnet\packs\Microsoft.NETCore.App.Ref\8.0.25\ref\net8.0\Microsoft.VisualBasic.Core.dll
 C:\Program Files\dotnet\packs\Microsoft.NETCore.App.Ref\8.0.25\ref\net8.0\Microsoft.VisualBasic.dll
 C:\Program Files\dotnet\packs\Microsoft.NETCore.App.Ref\8.0.25\ref\net8.0\Microsoft.Win32.Primitives.dll
@@ -132,7 +118,6 @@ C:\Program Files\dotnet\packs\Microsoft.NETCore.App.Ref\8.0.25\ref\net8.0\System
 C:\Program Files\dotnet\packs\Microsoft.NETCore.App.Ref\8.0.25\ref\net8.0\System.Globalization.Calendars.dll
 C:\Program Files\dotnet\packs\Microsoft.NETCore.App.Ref\8.0.25\ref\net8.0\System.Globalization.dll
 C:\Program Files\dotnet\packs\Microsoft.NETCore.App.Ref\8.0.25\ref\net8.0\System.Globalization.Extensions.dll
-C:\Users\Usuario\.nuget\packages\system.identitymodel.tokens.jwt\6.24.0\lib\net6.0\System.IdentityModel.Tokens.Jwt.dll
 C:\Program Files\dotnet\packs\Microsoft.NETCore.App.Ref\8.0.25\ref\net8.0\System.IO.Compression.Brotli.dll
 C:\Program Files\dotnet\packs\Microsoft.NETCore.App.Ref\8.0.25\ref\net8.0\System.IO.Compression.dll
 C:\Program Files\dotnet\packs\Microsoft.NETCore.App.Ref\8.0.25\ref\net8.0\System.IO.Compression.FileSystem.dll
@@ -153,7 +138,6 @@ C:\Program Files\dotnet\packs\Microsoft.NETCore.App.Ref\8.0.25\ref\net8.0\System
 C:\Program Files\dotnet\packs\Microsoft.NETCore.App.Ref\8.0.25\ref\net8.0\System.Linq.Expressions.dll
 C:\Program Files\dotnet\packs\Microsoft.NETCore.App.Ref\8.0.25\ref\net8.0\System.Linq.Parallel.dll
 C:\Program Files\dotnet\packs\Microsoft.NETCore.App.Ref\8.0.25\ref\net8.0\System.Linq.Queryable.dll
-C:\Users\Usuario\.nuget\packages\system.memory.data\1.0.2\lib\netstandard2.0\System.Memory.Data.dll
 C:\Program Files\dotnet\packs\Microsoft.NETCore.App.Ref\8.0.25\ref\net8.0\System.Memory.dll
 C:\Program Files\dotnet\packs\Microsoft.NETCore.App.Ref\8.0.25\ref\net8.0\System.Net.dll
 C:\Program Files\dotnet\packs\Microsoft.NETCore.App.Ref\8.0.25\ref\net8.0\System.Net.Http.dll
@@ -215,7 +199,6 @@ C:\Program Files\dotnet\packs\Microsoft.NETCore.App.Ref\8.0.25\ref\net8.0\System
 C:\Program Files\dotnet\packs\Microsoft.NETCore.App.Ref\8.0.25\ref\net8.0\System.Security.Cryptography.Encoding.dll
 C:\Program Files\dotnet\packs\Microsoft.NETCore.App.Ref\8.0.25\ref\net8.0\System.Security.Cryptography.OpenSsl.dll
 C:\Program Files\dotnet\packs\Microsoft.NETCore.App.Ref\8.0.25\ref\net8.0\System.Security.Cryptography.Primitives.dll
-C:\Users\Usuario\.nuget\packages\system.security.cryptography.protecteddata\6.0.0\lib\net6.0\System.Security.Cryptography.ProtectedData.dll
 C:\Program Files\dotnet\packs\Microsoft.NETCore.App.Ref\8.0.25\ref\net8.0\System.Security.Cryptography.X509Certificates.dll
 C:\Program Files\dotnet\packs\Microsoft.NETCore.App.Ref\8.0.25\ref\net8.0\System.Security.dll
 C:\Program Files\dotnet\packs\Microsoft.NETCore.App.Ref\8.0.25\ref\net8.0\System.Security.Principal.dll

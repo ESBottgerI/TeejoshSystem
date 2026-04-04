@@ -1,14 +1,16 @@
 ﻿
 
+using TeejoshSystem.Domain.Enums;
+
 namespace TeejoshSystem.Domain.Entities.Detalles
 {
     public sealed class VariosDetalle : ProductoDetalle
     {
-        public string Marca { get; private set; }
+        public string Marca { get; private set; } = null!;
         public decimal Alto { get; private set; }
         public decimal Ancho { get; private set; }
         public decimal? Largo { get; private set; }
-        public string Material { get; private set; }
+        public string Material { get; private set; } = null!;
         public bool TieneIlustracion { get; private set; }
 
         private VariosDetalle() { }

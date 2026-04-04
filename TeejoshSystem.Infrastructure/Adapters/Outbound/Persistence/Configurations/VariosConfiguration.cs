@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using TeejoshSystem.Domain.Entities;
 using TeejoshSystem.Domain.Entities.Detalles;
 
 namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Configurations
@@ -8,12 +9,10 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Configurati
     {
         public void Configure(EntityTypeBuilder<VariosDetalle> builder)
         {
-            // ✅ Tratar como entidad independiente, NO como herencia
             builder.HasBaseType((Type)null);
 
             builder.ToTable("varios");
 
-            // ✅ Primary Key
             builder.HasKey(d => d.ProductoId);
 
             builder.Property(d => d.ProductoId)
@@ -21,31 +20,34 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Configurati
 
             builder.Property(d => d.Marca)
                 .HasColumnName("brand")
-                .HasMaxLength(50)
+                .HasMaxLength(100)
                 .IsRequired();
 
             builder.Property(d => d.Alto)
                 .HasColumnName("height")
-                .HasColumnType("decimal(5,2)")
                 .IsRequired();
 
             builder.Property(d => d.Ancho)
                 .HasColumnName("width")
-                .HasColumnType("decimal(5,2)")
                 .IsRequired();
 
             builder.Property(d => d.Largo)
                 .HasColumnName("length")
-                .HasColumnType("decimal(5,2)");
+                .IsRequired();
 
             builder.Property(d => d.Material)
                 .HasColumnName("material")
-                .HasMaxLength(50)
+                .HasMaxLength(100)
                 .IsRequired();
 
             builder.Property(d => d.TieneIlustracion)
-                .HasColumnName("illustration")
+                .HasColumnName("ilustration")
                 .IsRequired();
+
+            builder.HasOne<Producto>()
+                .WithOne()
+                .HasForeignKey<VariosDetalle>(d => d.ProductoId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

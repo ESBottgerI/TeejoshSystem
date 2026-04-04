@@ -1,4 +1,5 @@
 ﻿using MediatR;
+using TeejoshSystem.Application.Common.Dtos;
 using TeejoshSystem.Domain.Ports.Outbound.Repositories;
 
 namespace TeejoshSystem.Application.Ports.Inbound.Productos.Queries.ObtenerProductos
@@ -21,9 +22,12 @@ namespace TeejoshSystem.Application.Ports.Inbound.Productos.Queries.ObtenerProdu
             return productos.Select(p => new ProductoDto
             {
                 Id = p.Id,
+                Tipo = p.Tipo,
                 Nombre = p.Nombre.Value,
                 Precio = p.Precio.Value,
-                Unidades = p.Stock.Value
+                Unidades = p.Stock.Value,
+                TipoDescripcion = p.Tipo.ToString(),
+                DetalleResumen = ""
             }).ToList();
         }
     }

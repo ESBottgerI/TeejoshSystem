@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using TeejoshSystem.Domain.Entities;
 using TeejoshSystem.Domain.Entities.Detalles;
 
 namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Configurations
@@ -8,19 +9,17 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Configurati
     {
         public void Configure(EntityTypeBuilder<ToyDetalle> builder)
         {
-            // ✅ Tratar como entidad independiente, NO como herencia
             builder.HasBaseType((Type)null);
 
             builder.ToTable("toy");
 
-            // ✅ Primary Key
             builder.HasKey(d => d.ProductoId);
 
             builder.Property(d => d.ProductoId)
                 .HasColumnName("product_id");
 
             builder.Property(d => d.EdadMinima)
-                .HasColumnName("min_years")
+                .HasColumnName("min_years_old")
                 .IsRequired();
 
             builder.Property(d => d.JugadoresMin)
@@ -32,8 +31,13 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Configurati
                 .IsRequired();
 
             builder.Property(d => d.EsJuegoDeMesa)
-                .HasColumnName("board_game")
+                .HasColumnName("is_board_game")
                 .IsRequired();
+
+            builder.HasOne<Producto>()
+                .WithOne()
+                .HasForeignKey<ToyDetalle>(d => d.ProductoId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

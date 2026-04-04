@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using TeejoshSystem.Domain.Entities;
 using TeejoshSystem.Domain.Entities.Detalles;
 
 namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Configurations
@@ -8,12 +9,10 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Configurati
     {
         public void Configure(EntityTypeBuilder<TcgDetalle> builder)
         {
-            // ✅ Tratar como entidad independiente, NO como herencia
             builder.HasBaseType((Type)null);
 
             builder.ToTable("tcg");
 
-            // ✅ Primary Key
             builder.HasKey(d => d.ProductoId);
 
             builder.Property(d => d.ProductoId)
@@ -26,6 +25,11 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Configurati
             builder.Property(d => d.ExpansionId)
                 .HasColumnName("expansion_id")
                 .IsRequired();
+
+            builder.HasOne<Producto>()
+                .WithOne()
+                .HasForeignKey<TcgDetalle>(d => d.ProductoId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

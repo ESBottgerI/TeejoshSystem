@@ -11,14 +11,17 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Configurati
             builder.ToTable("funko_subtype");
 
             builder.HasKey(s => s.Id);
-            builder.Property(s => s.Id).HasColumnName("id");
+
+            builder.Property(s => s.Id)
+                .HasColumnName("id");
 
             builder.Property(s => s.Nombre)
                 .HasColumnName("name")
-                .HasMaxLength(50)
+                .HasMaxLength(100)
                 .IsRequired();
 
-            builder.HasIndex(s => s.Nombre).IsUnique();
+            builder.HasIndex(s => s.Nombre)
+                .IsUnique();
         }
     }
 }

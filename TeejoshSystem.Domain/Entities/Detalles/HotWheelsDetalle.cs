@@ -1,12 +1,14 @@
 ﻿
 
+using TeejoshSystem.Domain.Enums;
+
 namespace TeejoshSystem.Domain.Entities.Detalles
 {
     public sealed class HotWheelsDetalle : ProductoDetalle
     {
-        public string Modelo { get; private set; }
+        public string Modelo { get; private set; } = null!;
         public int Anio { get; private set; }
-        public string Serie { get; private set; }
+        public string Serie { get; private set; } = null!;
         public int CategoriaId { get; private set; }
 
         private HotWheelsDetalle() { }

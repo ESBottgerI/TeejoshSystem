@@ -1,5 +1,4 @@
-﻿using TeejoshSystem.Domain.Entities.Detalles;
-using TeejoshSystem.Domain.Enums;
+﻿using TeejoshSystem.Domain.Enums;
 
 namespace TeejoshSystem.Application.Common.Dtos
 {

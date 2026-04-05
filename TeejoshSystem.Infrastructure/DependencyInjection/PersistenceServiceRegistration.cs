@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+
 using TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence;
 
 namespace TeejoshSystem.Infrastructure.DependencyInjection

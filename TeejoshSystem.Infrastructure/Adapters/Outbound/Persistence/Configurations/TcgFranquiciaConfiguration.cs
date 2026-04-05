@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+
 using TeejoshSystem.Domain.Entities.Catalogos;
 
 namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Configurations
@@ -10,17 +11,17 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Configurati
         {
             builder.ToTable("tcg_franchise");
 
-            builder.HasKey(f => f.Id);
+            builder.HasKey(p => p.Id);
 
-            builder.Property(f => f.Id)
+            builder.Property(p => p.Id)
                 .HasColumnName("id");
 
-            builder.Property(f => f.Nombre)
+            builder.Property(p => p.Nombre)
                 .HasColumnName("name")
                 .HasMaxLength(100)
                 .IsRequired();
 
-            builder.HasIndex(f => f.Nombre)
+            builder.HasIndex(p => p.Nombre)
                 .IsUnique();
         }
     }

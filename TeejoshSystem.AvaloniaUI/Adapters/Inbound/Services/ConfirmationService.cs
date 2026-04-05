@@ -1,30 +1,16 @@
-﻿using System.Threading.Tasks;
-using Avalonia;
-using Avalonia.Controls;
-using Avalonia.Controls.ApplicationLifetimes;
-using MsBox.Avalonia;
+﻿using MsBox.Avalonia;
 using MsBox.Avalonia.Enums;
+using System.Threading.Tasks;
 
-namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.Services
+namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.Services;
+
+public class ConfirmationService : IConfirmationService
 {
-    public class ConfirmationService : IConfirmationService
+    public async Task<bool> ConfirmAsync(string message, string title = "Confirmación")
     {
-        private Window? GetMainWindow()
-        {
-            if (Avalonia.Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
-                return desktop.MainWindow;
-            return null;
-        }
-
-        public async Task<bool> Confirm(string message, string title = "Confirmar")
-        {
-            var window = GetMainWindow();
-            if (window == null)
-                return false;
-
-            var box = MessageBoxManager.GetMessageBoxStandard(title, message, ButtonEnum.YesNo, Icon.Question);
-            var result = await box.ShowAsync();
-            return result == ButtonResult.Yes;
-        }
+        var box = MessageBoxManager.GetMessageBoxStandard(
+            title, message, ButtonEnum.YesNo, Icon.Question);
+        var result = await box.ShowAsync();
+        return result == ButtonResult.Yes;
     }
 }

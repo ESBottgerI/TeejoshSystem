@@ -1,89 +1,64 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MediatR;
-using Microsoft.Extensions.DependencyInjection;
+
+using System;
 using System.Collections.ObjectModel;
-using TeejoshSystem.Domain.Enums;
+using System.Threading.Tasks;
+
 using TeejoshSystem.Application.Ports.Inbound.Productos.Queries.BuscarProductos;
-using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Menu;
-using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Shell;
+using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Common;
+using TeejoshSystem.Domain.Enums;
 
-namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Productos
+namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Productos;
+
+public partial class InventarioViewModel : ViewModelBase
 {
-    public partial class InventarioViewModel : ObservableObject
+    private readonly IMediator _mediator;
+    private readonly Action _volver;
+
+    [ObservableProperty]
+    private ObservableCollection<ProductoBusquedaDto> _productos = new();
+
+    [ObservableProperty]
+    private string _busqueda = string.Empty;
+
+    [ObservableProperty]
+    private TipoProductoFiltroItem? _tipoFiltro;
+
+    public ObservableCollection<TipoProductoFiltroItem> TiposDisponibles { get; } = new()
     {
-        private readonly MainViewModel _shell;
-        private readonly IMediator _mediator;
-        private readonly IServiceProvider _serviceProvider;
+        new TipoProductoFiltroItem("Todos", null),
+        new TipoProductoFiltroItem("Hot Wheels", TipoProducto.HotWheels),
+        new TipoProductoFiltroItem("Funko", TipoProducto.Funko),
+        new TipoProductoFiltroItem("TCG", TipoProducto.Tcg),
+        new TipoProductoFiltroItem("Toy", TipoProducto.Toy),
+        new TipoProductoFiltroItem("Varios", TipoProducto.Varios)
+    };
 
-        [ObservableProperty]
-        private string? textoBusqueda;
-
-        [ObservableProperty]
-        private TipoProducto? tipoFiltro;
-
-        [ObservableProperty]
-        private bool isBusy;
-
-        public ObservableCollection<ProductoBusquedaDto> Productos { get; } = new();
-
-        public List<TipoProductoOption> TiposDisponibles { get; } = new()
-        {
-            new TipoProductoOption { Nombre = "Todos", Valor = null },
-            new TipoProductoOption { Nombre = "Hot Wheels", Valor = TipoProducto.HotWheels },
-            new TipoProductoOption { Nombre = "Funko", Valor = TipoProducto.Funko },
-            new TipoProductoOption { Nombre = "TCG", Valor = TipoProducto.Tcg },
-            new TipoProductoOption { Nombre = "Toy", Valor = TipoProducto.Toy },
-            new TipoProductoOption { Nombre = "Varios", Valor = TipoProducto.Varios }
-        };
-
-        public InventarioViewModel(
-            MainViewModel shell,
-            IMediator mediator,
-            IServiceProvider serviceProvider)
-        {
-            _shell = shell;
-            _mediator = mediator;
-            _serviceProvider = serviceProvider;
-
-            _ = CargarAsync();
-        }
-
-        [RelayCommand]
-        private async Task CargarAsync()
-        {
-            if (IsBusy) return;
-
-            try
-            {
-                IsBusy = true;
-
-                var query = new BuscarProductosQuery(TextoBusqueda, TipoFiltro);
-                var resultados = await _mediator.Send(query);
-
-                Productos.Clear();
-                foreach (var producto in resultados)
-                    Productos.Add(producto);
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error cargar inventario: {ex}");
-            }
-            finally
-            {
-                IsBusy = false;
-            }
-        }
-
-        [RelayCommand]
-        private void Volver()
-        {
-            var menuVm = _serviceProvider.GetRequiredService<MenuPrincipalViewModel>();
-            _shell.CurrentView = menuVm;
-        }
+    public InventarioViewModel(IMediator mediator, Action volver)
+    {
+        _mediator = mediator;
+        _volver = volver;
+        _tipoFiltro = TiposDisponibles[0]; // "Todos" por defecto
     }
+
+    public async Task CargarProductosAsync()
+    {
+        IsBusy = true;
+
+        var resultado = await _mediator.Send(new BuscarProductosQuery(
+            string.IsNullOrWhiteSpace(Busqueda) ? null : Busqueda,
+            TipoFiltro?.Valor
+        ));
+
+        Productos = new ObservableCollection<ProductoBusquedaDto>(resultado);
+        IsBusy = false;
+    }
+
+    [RelayCommand]
+    private async Task Cargar() => await CargarProductosAsync();
+
+    [RelayCommand]
+    private void Volver() => _volver();
 }

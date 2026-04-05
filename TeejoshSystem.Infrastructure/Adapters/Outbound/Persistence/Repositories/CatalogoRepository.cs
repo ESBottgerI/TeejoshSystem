@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+
 using TeejoshSystem.Domain.Entities.Catalogos;
 using TeejoshSystem.Domain.Ports.Outbound.Repositories;
 

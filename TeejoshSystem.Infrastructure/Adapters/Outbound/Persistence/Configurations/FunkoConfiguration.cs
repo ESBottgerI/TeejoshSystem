@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+
 using TeejoshSystem.Domain.Entities;
 using TeejoshSystem.Domain.Entities.Detalles;
 
@@ -9,35 +10,35 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Configurati
     {
         public void Configure(EntityTypeBuilder<FunkoDetalle> builder)
         {
-            builder.HasBaseType((Type)null);
+            builder.HasBaseType((Type?)null);
 
             builder.ToTable("funko");
 
-            builder.HasKey(d => d.ProductoId);
+            builder.HasKey(p => p.ProductoId);
 
-            builder.Property(d => d.ProductoId)
+            builder.Property(p => p.ProductoId)
                 .HasColumnName("product_id");
 
-            builder.Property(d => d.NumeroCaja)
+            builder.Property(p => p.NumeroCaja)
                 .HasColumnName("box_number")
                 .IsRequired();
 
-            builder.Property(d => d.Licencia)
+            builder.Property(p => p.Licencia)
                 .HasColumnName("license")
                 .HasMaxLength(100)
                 .IsRequired();
 
-            builder.Property(d => d.SubtipoId)
+            builder.Property(p => p.SubtipoId)
                 .HasColumnName("subtype")
                 .IsRequired();
 
-            builder.Property(d => d.CaracteristicaEspecialId)
+            builder.Property(p => p.CaracteristicaEspecialId)
                 .HasColumnName("special_caracteristic")
                 .IsRequired();
 
             builder.HasOne<Producto>()
                 .WithOne()
-                .HasForeignKey<FunkoDetalle>(d => d.ProductoId)
+                .HasForeignKey<FunkoDetalle>(p => p.ProductoId)
                 .OnDelete(DeleteBehavior.Cascade);
         }
     }

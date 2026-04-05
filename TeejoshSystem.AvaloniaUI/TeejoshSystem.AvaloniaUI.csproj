@@ -33,4 +33,13 @@
     <ProjectReference Include="..\TeejoshSystem.Application\TeejoshSystem.Application.csproj" />
     <ProjectReference Include="..\TeejoshSystem.Infrastructure\TeejoshSystem.Infrastructure.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Adapters\Inbound\Views\Productos\GestionarProductosView.axaml.cs">
+      <DependentUpon>GestionarProductosView.axaml</DependentUpon>
+    </Compile>
+    <Compile Update="Adapters\Inbound\Views\Productos\EditarProductoView.axaml.cs">
+      <DependentUpon>EditarProductoView.axaml</DependentUpon>
+    </Compile>
+  </ItemGroup>
 </Project>

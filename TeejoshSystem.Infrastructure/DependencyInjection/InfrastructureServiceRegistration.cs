@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+
 using TeejoshSystem.Domain.Ports.Outbound.Repositories;
 using TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Repositories;
 

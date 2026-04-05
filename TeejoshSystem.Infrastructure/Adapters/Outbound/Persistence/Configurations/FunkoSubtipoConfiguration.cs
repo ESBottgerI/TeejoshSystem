@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+
 using TeejoshSystem.Domain.Entities.Catalogos;
 
 namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Configurations
@@ -10,17 +11,17 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Configurati
         {
             builder.ToTable("funko_subtype");
 
-            builder.HasKey(s => s.Id);
+            builder.HasKey(p => p.Id);
 
-            builder.Property(s => s.Id)
+            builder.Property(p => p.Id)
                 .HasColumnName("id");
 
-            builder.Property(s => s.Nombre)
+            builder.Property(p => p.Nombre)
                 .HasColumnName("name")
                 .HasMaxLength(100)
                 .IsRequired();
 
-            builder.HasIndex(s => s.Nombre)
+            builder.HasIndex(p => p.Nombre)
                 .IsUnique();
         }
     }

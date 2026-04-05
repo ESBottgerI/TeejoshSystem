@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+
 using TeejoshSystem.Domain.Entities;
 using TeejoshSystem.Domain.Entities.Detalles;
 
@@ -9,26 +10,26 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Configurati
     {
         public void Configure(EntityTypeBuilder<TcgDetalle> builder)
         {
-            builder.HasBaseType((Type)null);
+            builder.HasBaseType((Type?)null);
 
             builder.ToTable("tcg");
 
-            builder.HasKey(d => d.ProductoId);
+            builder.HasKey(p => p.ProductoId);
 
-            builder.Property(d => d.ProductoId)
+            builder.Property(p => p.ProductoId)
                 .HasColumnName("product_id");
 
-            builder.Property(d => d.PackId)
+            builder.Property(p => p.PackId)
                 .HasColumnName("pack_id")
                 .IsRequired();
 
-            builder.Property(d => d.ExpansionId)
+            builder.Property(p => p.ExpansionId)
                 .HasColumnName("expansion_id")
                 .IsRequired();
 
             builder.HasOne<Producto>()
                 .WithOne()
-                .HasForeignKey<TcgDetalle>(d => d.ProductoId)
+                .HasForeignKey<TcgDetalle>(p => p.ProductoId)
                 .OnDelete(DeleteBehavior.Cascade);
         }
     }

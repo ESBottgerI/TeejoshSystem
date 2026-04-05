@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+
 using TeejoshSystem.Domain.Entities;
 using TeejoshSystem.Domain.Entities.Detalles;
 
@@ -9,44 +10,50 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Configurati
     {
         public void Configure(EntityTypeBuilder<VariosDetalle> builder)
         {
-            builder.HasBaseType((Type)null);
+            builder.HasBaseType((Type?)null);
 
             builder.ToTable("varios");
 
-            builder.HasKey(d => d.ProductoId);
+            builder.HasKey(p => p.ProductoId);
 
-            builder.Property(d => d.ProductoId)
+            builder.Property(p => p.ProductoId)
                 .HasColumnName("product_id");
 
-            builder.Property(d => d.Marca)
+            builder.Property(p => p.Marca)
                 .HasColumnName("brand")
                 .HasMaxLength(100)
                 .IsRequired();
 
-            builder.Property(d => d.Alto)
+            builder.Property(p => p.Alto)
                 .HasColumnName("height")
                 .IsRequired();
 
-            builder.Property(d => d.Ancho)
+            builder.Property(p => p.Ancho)
                 .HasColumnName("width")
                 .IsRequired();
 
-            builder.Property(d => d.Largo)
+            builder.Property(p => p.Largo)
                 .HasColumnName("length")
                 .IsRequired();
 
-            builder.Property(d => d.Material)
+            builder.Property(p => p.Material)
                 .HasColumnName("material")
                 .HasMaxLength(100)
                 .IsRequired();
 
-            builder.Property(d => d.TieneIlustracion)
+            builder.Property(p => p.TieneIlustracion)
                 .HasColumnName("ilustration")
                 .IsRequired();
 
+            builder.ToTable("varios", p =>
+            {
+                p.HasCheckConstraint("check_dimensions",
+                    "height > 0 AND width > 0 AND (length IS NULL OR length > 0)");
+            });
+
             builder.HasOne<Producto>()
                 .WithOne()
-                .HasForeignKey<VariosDetalle>(d => d.ProductoId)
+                .HasForeignKey<VariosDetalle>(p => p.ProductoId)
                 .OnDelete(DeleteBehavior.Cascade);
         }
     }

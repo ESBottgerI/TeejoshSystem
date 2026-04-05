@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+
 using TeejoshSystem.Domain.Entities;
 using TeejoshSystem.Domain.Entities.Catalogos;
 using TeejoshSystem.Domain.Entities.Detalles;
@@ -7,9 +8,7 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence
 {
     public class InventarioDbContext : DbContext
     {
-        public InventarioDbContext(DbContextOptions<InventarioDbContext> options) : base(options)
-        {
-        }
+        public InventarioDbContext(DbContextOptions<InventarioDbContext> options) : base(options) { }
 
         // DbSets principales
         public DbSet<Producto> Productos { get; set; }

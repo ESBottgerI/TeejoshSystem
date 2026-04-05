@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+
 using TeejoshSystem.Domain.Entities;
 
 namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Configurations
@@ -18,9 +19,9 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Configurati
                 .IsRequired();
 
             // Value Object: Nombre
-            builder.OwnsOne(p => p.Nombre, n =>
+            builder.OwnsOne(p => p.Nombre, p =>
             {
-                n.Property(x => x.Value)
+                p.Property(x => x.Value)
                     .HasColumnName("name")
                     .HasMaxLength(50)
                     .IsRequired();
@@ -36,9 +37,9 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Configurati
             });
 
             // Value Object: Stock
-            builder.OwnsOne(p => p.Stock, u =>
+            builder.OwnsOne(p => p.Stock, p =>
             {
-                u.Property(x => x.Value)
+                p.Property(x => x.Value)
                     .HasColumnName("units")
                     .IsRequired();
             });

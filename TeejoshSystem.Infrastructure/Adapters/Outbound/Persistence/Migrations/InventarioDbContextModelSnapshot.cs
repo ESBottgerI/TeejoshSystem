@@ -101,6 +101,9 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Migrations
                     b.HasIndex("Nombre")
                         .IsUnique();
 
+                    b.HasIndex("Nombre", "FranquiciaId")
+                        .IsUnique();
+
                     b.ToTable("tcg_expansion", (string)null);
                 });
 
@@ -144,6 +147,9 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("Nombre")
+                        .IsUnique();
+
+                    b.HasIndex("Nombre", "FranquiciaId")
                         .IsUnique();
 
                     b.ToTable("tcg_pack", (string)null);
@@ -259,7 +265,10 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Migrations
 
                     b.HasKey("ProductoId");
 
-                    b.ToTable("toy", (string)null);
+                    b.ToTable("toy", null, t =>
+                        {
+                            t.HasCheckConstraint("check_players", "max_players >= min_players");
+                        });
 
                     b.HasDiscriminator().HasValue("ToyDetalle");
                 });
@@ -301,7 +310,10 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Migrations
 
                     b.HasKey("ProductoId");
 
-                    b.ToTable("varios", (string)null);
+                    b.ToTable("varios", null, t =>
+                        {
+                            t.HasCheckConstraint("check_dimensions", "height > 0 AND width > 0 AND (length IS NULL OR length > 0)");
+                        });
 
                     b.HasDiscriminator().HasValue("VariosDetalle");
                 });

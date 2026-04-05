@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+
 using TeejoshSystem.Domain.Entities;
 using TeejoshSystem.Domain.Entities.Detalles;
 
@@ -9,34 +10,39 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Configurati
     {
         public void Configure(EntityTypeBuilder<ToyDetalle> builder)
         {
-            builder.HasBaseType((Type)null);
+            builder.HasBaseType((Type?)null);
 
             builder.ToTable("toy");
 
-            builder.HasKey(d => d.ProductoId);
+            builder.HasKey(p => p.ProductoId);
 
-            builder.Property(d => d.ProductoId)
+            builder.Property(p => p.ProductoId)
                 .HasColumnName("product_id");
 
-            builder.Property(d => d.EdadMinima)
+            builder.Property(p => p.EdadMinima)
                 .HasColumnName("min_years_old")
                 .IsRequired();
 
-            builder.Property(d => d.JugadoresMin)
+            builder.Property(p => p.JugadoresMin)
                 .HasColumnName("min_players")
                 .IsRequired();
 
-            builder.Property(d => d.JugadoresMax)
+            builder.Property(p => p.JugadoresMax)
                 .HasColumnName("max_players")
                 .IsRequired();
 
-            builder.Property(d => d.EsJuegoDeMesa)
+            builder.Property(p => p.EsJuegoDeMesa)
                 .HasColumnName("is_board_game")
                 .IsRequired();
 
+            builder.ToTable("toy", p =>
+            {
+                p.HasCheckConstraint("check_players", "max_players >= min_players");
+            });
+
             builder.HasOne<Producto>()
                 .WithOne()
-                .HasForeignKey<ToyDetalle>(d => d.ProductoId)
+                .HasForeignKey<ToyDetalle>(p => p.ProductoId)
                 .OnDelete(DeleteBehavior.Cascade);
         }
     }

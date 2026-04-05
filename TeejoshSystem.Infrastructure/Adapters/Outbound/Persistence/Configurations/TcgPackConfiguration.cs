@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+
 using TeejoshSystem.Domain.Entities.Catalogos;
 
 namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Configurations
@@ -21,6 +22,9 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Configurati
                 .IsRequired();
 
             builder.HasIndex(p => p.Nombre)
+                .IsUnique();
+
+            builder.HasIndex(p => new { p.Nombre, p.FranquiciaId })
                 .IsUnique();
         }
     }

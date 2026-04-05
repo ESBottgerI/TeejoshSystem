@@ -12,7 +12,7 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence
                 "TeejoshSystem",
                 "inventario.db");
 
-            Directory.CreateDirectory(Path.GetDirectoryName(dbPath)!); // ← faltaba
+            Directory.CreateDirectory(Path.GetDirectoryName(dbPath)!);
 
             var options = new DbContextOptionsBuilder<InventarioDbContext>()
                 .UseSqlite($"Data Source={dbPath}")

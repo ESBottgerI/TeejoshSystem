@@ -1,386 +1,320 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MediatR;
-using Microsoft.Extensions.DependencyInjection;
+
+using System;
 using System.Collections.ObjectModel;
-using TeejoshSystem.Domain.Entities.Catalogos;
-using TeejoshSystem.Domain.Enums;
+using System.Threading.Tasks;
+
+using TeejoshSystem.Application.Common.Dtos;
 using TeejoshSystem.Application.Ports.Inbound.Catalogos.Queries.ObtenerCatalogos;
 using TeejoshSystem.Application.Ports.Inbound.Catalogos.Queries.ObtenerExpansionesYPacks;
 using TeejoshSystem.Application.Ports.Inbound.Productos.Commands.CrearProducto;
 using TeejoshSystem.AvaloniaUI.Adapters.Inbound.Services;
 using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Common;
-using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Menu;
-using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Shell;
+using TeejoshSystem.Domain.Enums;
 
-namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Productos
+namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Productos;
+
+public partial class CrearProductoViewModel : ValidatableViewModel
 {
-    public partial class CrearProductoViewModel : ValidatableViewModel
+    private readonly IMediator _mediator;
+    private readonly INotificationService _notification;
+    private readonly IConfirmationService _confirmation;
+    private readonly INavigationService _navigation;
+
+    // Propiedades comunes
+    [ObservableProperty]
+    private string? _nombre;
+
+    [ObservableProperty]
+    private decimal _precio;
+
+    [ObservableProperty]
+    private int _unidades;
+
+    [ObservableProperty]
+    private TipoProductoFiltroItem? _tipoSeleccionado;
+
+    [ObservableProperty]
+    private bool _catalogosCargados;
+
+    // Hot Wheels
+    [ObservableProperty]
+    private string? _hwModelo;
+
+    [ObservableProperty]
+    private int _hwAnio = DateTime.Now.Year;
+
+    [ObservableProperty]
+    private string? _hwSerie;
+
+    [ObservableProperty]
+    private CatalogoItemDto? _hwCategoriaSeleccionada;
+
+    public ObservableCollection<CatalogoItemDto> CategoriasHotWheels { get; } = new();
+
+    // Funko
+    [ObservableProperty]
+    private int _funkoNumeroBox;
+
+    [ObservableProperty]
+    private string? _funkoLicencia;
+
+    [ObservableProperty]
+    private CatalogoItemDto? _funkoSubtipoSeleccionado;
+
+    [ObservableProperty]
+    private CatalogoItemDto? _funkoCaracteristicaSeleccionada;
+
+    public ObservableCollection<CatalogoItemDto> SubtiposFunko { get; } = new();
+    public ObservableCollection<CatalogoItemDto> CaracteristicasFunko { get; } = new();
+
+    // TCG
+    [ObservableProperty]
+    private CatalogoItemDto? _tcgFranquiciaSeleccionada;
+
+    [ObservableProperty]
+    private CatalogoItemDto? _tcgExpansionSeleccionada;
+
+    [ObservableProperty]
+    private CatalogoItemDto? _tcgPackSeleccionado;
+
+    public ObservableCollection<CatalogoItemDto> FranquiciasTcg { get; } = new();
+    public ObservableCollection<CatalogoItemDto> TcgExpansionesDisponibles { get; } = new();
+    public ObservableCollection<CatalogoItemDto> TcgPacksDisponibles { get; } = new();
+
+    // Toy
+    [ObservableProperty]
+    private int _toyEdadMinima;
+
+    [ObservableProperty]
+    private int _toyJugadoresMin = 1;
+
+    [ObservableProperty]
+    private int _toyJugadoresMax = 1;
+
+    [ObservableProperty]
+    private bool _toyEsJuegoMesa;
+
+    // Varios
+    [ObservableProperty]
+    private string? _variosMarca;
+
+    [ObservableProperty]
+    private decimal _variosAlto;
+
+    [ObservableProperty]
+    private decimal _variosAncho;
+
+    [ObservableProperty]
+    private decimal? _variosLargo;
+
+    [ObservableProperty]
+    private string? _variosMaterial;
+
+    [ObservableProperty]
+    private bool _variosTieneIlustracion;
+
+    // Visibilidad de paneles
+    public bool MostrarHotWheels => TipoSeleccionado?.Valor == TipoProducto.HotWheels;
+    public bool MostrarFunko => TipoSeleccionado?.Valor == TipoProducto.Funko;
+    public bool MostrarTcg => TipoSeleccionado?.Valor == TipoProducto.Tcg;
+    public bool MostrarToy => TipoSeleccionado?.Valor == TipoProducto.Toy;
+    public bool MostrarVarios => TipoSeleccionado?.Valor == TipoProducto.Varios;
+
+    public ObservableCollection<TipoProductoFiltroItem> TiposDisponibles { get; } = new()
     {
-        private readonly MainViewModel _shell;
-        private readonly IMediator _mediator;
-        private readonly INotificationService _notification;
-        private readonly IConfirmationService _confirmation;
-        private readonly IServiceProvider _serviceProvider;
+        new TipoProductoFiltroItem("Hot Wheels", TipoProducto.HotWheels),
+        new TipoProductoFiltroItem("Funko", TipoProducto.Funko),
+        new TipoProductoFiltroItem("TCG", TipoProducto.Tcg),
+        new TipoProductoFiltroItem("Toy", TipoProducto.Toy),
+        new TipoProductoFiltroItem("Varios", TipoProducto.Varios)
+    };
 
+    public CrearProductoViewModel(
+        IMediator mediator,
+        INotificationService notification,
+        IConfirmationService confirmation,
+        INavigationService navigation)
+    {
+        _mediator = mediator;
+        _notification = notification;
+        _confirmation = confirmation;
+        _navigation = navigation;
 
-        // Propiedades comunes
-        [ObservableProperty]
-        private string? nombre;
+        TipoSeleccionado = TiposDisponibles[0];
 
-        [ObservableProperty]
-        private decimal precio;
+        ErrorsChanged += (_, _) => GuardarCommand.NotifyCanExecuteChanged();
 
-        [ObservableProperty]
-        private int unidades;
-
-        [ObservableProperty]
-        private TipoProducto tipoSeleccionado;
-
-        [ObservableProperty]
-        private bool isBusy;
-
-        [ObservableProperty]
-        private bool catalogosCargados;
-
-
-        // Propiedades especificas de Hot Wheels
-        [ObservableProperty]
-        private string? hwModelo;
-
-        [ObservableProperty]
-        private int hwAnio = DateTime.Now.Year;
-
-        [ObservableProperty]
-        private string? hwSerie;
-
-        [ObservableProperty]
-        [NotifyPropertyChangedFor(nameof(CategoriasHotWheels))]
-        private HotWheelsCategoria? hwCategoriaSeleccionada;
-
-        public ObservableCollection<HotWheelsCategoria> CategoriasHotWheels { get; } = new();
-
-
-        // Propiedades especificas de Funko
-        [ObservableProperty]
-        private int funkoNumeroBox;
-
-        [ObservableProperty]
-        private string? funkoLicencia;
-
-        [ObservableProperty]
-        private FunkoSubtipo? funkoSubtipoSeleccionado;
-
-        [ObservableProperty]
-        private FunkoCaracteristica? funkoCaracteristicaSeleccionada;
-
-        public ObservableCollection<FunkoSubtipo> SubtiposFunko { get; } = new();
-        public ObservableCollection<FunkoCaracteristica> CaracteristicasFunko { get; } = new();
-
-
-        // Propiedades especificas de TCG
-        [ObservableProperty]
-        [NotifyPropertyChangedFor(nameof(TcgExpansionesDisponibles))]
-        [NotifyPropertyChangedFor(nameof(TcgPacksDisponibles))]
-        private TcgFranquicia? tcgFranquiciaSeleccionada;
-
-        [ObservableProperty]
-        private TcgExpansion? tcgExpansionSeleccionada;
-
-        [ObservableProperty]
-        private TcgPack? tcgPackSeleccionado;
-
-        public ObservableCollection<TcgFranquicia> FranquiciasTcg { get; } = new();
-        public ObservableCollection<TcgExpansion> TcgExpansionesDisponibles { get; } = new();
-        public ObservableCollection<TcgPack> TcgPacksDisponibles { get; } = new();
-
-
-        // Propiedades especificas de Toy
-        [ObservableProperty]
-        private int toyEdadMinima;
-
-        [ObservableProperty]
-        private int toyJugadoresMin = 1;
-
-        [ObservableProperty]
-        private int toyJugadoresMax = 1;
-
-        [ObservableProperty]
-        private bool toyEsJuegoMesa;
-
-
-        // Propiedades especificas de Varios
-        [ObservableProperty]
-        private string? variosMarca;
-
-        [ObservableProperty]
-        private decimal variosAlto;
-
-        [ObservableProperty]
-        private decimal variosAncho;
-
-        [ObservableProperty]
-        private decimal? variosLargo;
-
-        [ObservableProperty]
-        private string? variosMaterial;
-
-        [ObservableProperty]
-        private bool variosTieneIlustracion;
-
-
-        // Visibilidad de paneles segun tipo
-        public bool MostrarHotWheels => TipoSeleccionado == TipoProducto.HotWheels;
-        public bool MostrarFunko => TipoSeleccionado == TipoProducto.Funko;
-        public bool MostrarTcg => TipoSeleccionado == TipoProducto.Tcg;
-        public bool MostrarToy => TipoSeleccionado == TipoProducto.Toy;
-        public bool MostrarVarios => TipoSeleccionado == TipoProducto.Varios;
-
-        /*
-        // Lista de tipos disponibles
-        public ObservableCollection<TipoProductoOption> TiposDisponibles { get; } = new()
+        PropertyChanged += (_, e) =>
         {
-            new TipoProductoOption { Nombre = "Hot Wheels", Valor = TipoProducto.HotWheels },
-            new TipoProductoOption { Nombre = "Funko", Valor = TipoProducto.Funko },
-            new TipoProductoOption { Nombre = "TCG", Valor = TipoProducto.Tcg },
-            new TipoProductoOption { Nombre = "Toy", Valor = TipoProducto.Toy },
-            new TipoProductoOption { Nombre = "Varios", Valor = TipoProducto.Varios }
+            if (e.PropertyName == nameof(IsBusy) ||
+                e.PropertyName == nameof(CatalogosCargados))
+                GuardarCommand.NotifyCanExecuteChanged();
         };
-        
-        public CrearProductoViewModel(
-            MainViewModel shell,
-            IMediator mediator,
-            INotificationService notification,
-            IConfirmationService confirmation,
-            IServiceProvider serviceProvider)
+
+        _ = CargarCatalogosAsync();
+    }
+
+    private async Task CargarCatalogosAsync()
+    {
+        try
         {
-            _shell = shell;
-            _mediator = mediator;
-            _notification = notification;
-            _confirmation = confirmation;
-            _serviceProvider = serviceProvider;
+            IsBusy = true;
+            var catalogos = await _mediator.Send(new ObtenerCatalogosQuery());
 
-            TipoSeleccionado = TipoProducto.HotWheels;
+            foreach (var cat in catalogos.CategoriasHotWheels)
+                CategoriasHotWheels.Add(cat);
+            foreach (var sub in catalogos.SubtiposFunko)
+                SubtiposFunko.Add(sub);
+            foreach (var car in catalogos.CaracteristicasFunko)
+                CaracteristicasFunko.Add(car);
+            foreach (var fra in catalogos.FranquiciasTcg)
+                FranquiciasTcg.Add(fra);
 
-            ErrorsChanged += (_, __) => GuardarCommand.NotifyCanExecuteChanged();
-
-            // Cargar catalogos al inicializar
-            _ = CargarCatalogosAsync();
+            CatalogosCargados = true;
         }
-
-        private async Task CargarCatalogosAsync()
+        catch (Exception ex)
         {
-            try
-            {
-                IsBusy = true;
-
-                var query = new ObtenerCatalogosQuery();
-                var catalogos = await _mediator.Send(query);
-
-                // Hot Wheels
-                foreach (var cat in catalogos.CategoriasHotWheels)
-                    CategoriasHotWheels.Add(cat);
-
-                // Funko
-                foreach (var sub in catalogos.SubtiposFunko)
-                    SubtiposFunko.Add(sub);
-
-                foreach (var car in catalogos.CaracteristicasFunko)
-                    CaracteristicasFunko.Add(car);
-
-                // TCG
-                foreach (var fra in catalogos.FranquiciasTcg)
-                    FranquiciasTcg.Add(fra);
-
-                CatalogosCargados = true;
-            }
-            catch (Exception ex)
-            {
-                await _notification.ShowError("Error al cargar catalogos: " + ex.Message);
-            }
-            finally
-            {
-                IsBusy = false;
-            }
+            await _notification.ShowErrorAsync("Error al cargar catálogos: " + ex.Message);
         }
-
-        partial void OnTipoSeleccionadoChanged(TipoProducto value)
+        finally
         {
-            OnPropertyChanged(nameof(MostrarHotWheels));
-            OnPropertyChanged(nameof(MostrarFunko));
-            OnPropertyChanged(nameof(MostrarTcg));
-            OnPropertyChanged(nameof(MostrarToy));
-            OnPropertyChanged(nameof(MostrarVarios));
+            IsBusy = false;
         }
+    }
 
-        partial void OnTcgFranquiciaSeleccionadaChanged(TcgFranquicia? value)
+    partial void OnTipoSeleccionadoChanged(TipoProductoFiltroItem? value)
+    {
+        OnPropertyChanged(nameof(MostrarHotWheels));
+        OnPropertyChanged(nameof(MostrarFunko));
+        OnPropertyChanged(nameof(MostrarTcg));
+        OnPropertyChanged(nameof(MostrarToy));
+        OnPropertyChanged(nameof(MostrarVarios));
+    }
+
+    partial void OnTcgFranquiciaSeleccionadaChanged(CatalogoItemDto? value)
+    {
+        if (value is null)
         {
-            if (value is null)
-            {
-                TcgExpansionesDisponibles.Clear();
-                TcgPacksDisponibles.Clear();
-                return;
-            }
-
-            _ = CargarExpansionesYPacksAsync(value.Id);
+            TcgExpansionesDisponibles.Clear();
+            TcgPacksDisponibles.Clear();
+            return;
         }
+        _ = CargarExpansionesYPacksAsync(value.Id);
+    }
 
-        private async Task CargarExpansionesYPacksAsync(int franquiciaId)
+    private async Task CargarExpansionesYPacksAsync(int franquiciaId)
+    {
+        try
         {
-            try
+            var result = await _mediator.Send(
+                new ObtenerExpansionesYPacksQuery(franquiciaId));
+
+            TcgExpansionesDisponibles.Clear();
+            foreach (var exp in result.Expansiones)
+                TcgExpansionesDisponibles.Add(exp);
+
+            TcgPacksDisponibles.Clear();
+            foreach (var pack in result.Packs)
+                TcgPacksDisponibles.Add(pack);
+        }
+        catch (Exception ex)
+        {
+            await _notification.ShowErrorAsync("Error al cargar expansiones: " + ex.Message);
+        }
+    }
+
+    [RelayCommand(CanExecute = nameof(CanGuardar))]
+    private async Task GuardarAsync()
+    {
+        if (IsBusy) return;
+
+        var confirmar = await _confirmation.ConfirmAsync("¿Desea crear el producto?");
+        if (!confirmar) return;
+
+        try
+        {
+            IsBusy = true;
+            var command = ConstruirCommand();
+            var result = await _mediator.Send(command);
+
+            if (result.IsSuccess)
             {
-                var query = new ObtenerExpansionesYPacksQuery(franquiciaId);
-                var result = await _mediator.Send(query);
-
-                TcgExpansionesDisponibles.Clear();
-                foreach (var exp in result.Expansiones)
-                    TcgExpansionesDisponibles.Add(exp);
-
-                TcgPacksDisponibles.Clear();
-                foreach (var pack in result.Packs)
-                    TcgPacksDisponibles.Add(pack);
+                await _notification.ShowSuccessAsync("Producto creado exitosamente.");
+                _navigation.NavigateToMenu();
             }
-            catch (Exception ex)
+            else
             {
-                await _notification.ShowError("Error al cargar expansiones: " + ex.Message);
+                await _notification.ShowErrorAsync(result.Error ?? "Error al crear producto.");
             }
         }
-        */
-
-        [RelayCommand(CanExecute = nameof(CanGuardar))]
-        private async Task GuardarAsync()
+        finally
         {
-            if (IsBusy) return;
-
-            var confirmar = _confirmation.Confirm("¿Desea crear el producto?");
-
-            if (!await confirmar) return;
-
-            try
-            {
-                IsBusy = true;
-
-                var command = ConstruirCommand();
-                var result = await _mediator.Send(command);
-
-                if (result.IsSuccess)
-                {
-                    await _notification.ShowSuccess("Producto creado exitosamente");
-                    Volver();
-                }
-                else
-                {
-                    await _notification.ShowError(result.Error ?? "Error al crear producto");
-                }
-            }
-            finally
-            {
-                IsBusy = false;
-            }
+            IsBusy = false;
         }
+    }
 
-        private CrearProductoCommand ConstruirCommand()
-        {
-            return new CrearProductoCommand
-            {
-                Nombre = Nombre!,
-                Precio = Precio,
-                Unidades = Unidades,
-                Tipo = TipoSeleccionado,
+    private CrearProductoCommand ConstruirCommand() => new()
+    {
+        Nombre = Nombre!,
+        Precio = Precio,
+        Unidades = Unidades,
+        Tipo = TipoSeleccionado!.Valor!.Value,
 
-                HotWheels = TipoSeleccionado == TipoProducto.HotWheels && HwCategoriaSeleccionada != null
-                    ? new CrearHotWheelsDetalleDto(
-                        HwModelo!,
-                        HwAnio,
-                        HwSerie!,
-                        HwCategoriaSeleccionada.Id)
-                    : null,
+        HotWheels = MostrarHotWheels && HwCategoriaSeleccionada != null
+            ? new CrearHotWheelsDetalleDto(HwModelo!, HwAnio, HwSerie!, HwCategoriaSeleccionada.Id)
+            : null,
 
-                Funko = TipoSeleccionado == TipoProducto.Funko && FunkoSubtipoSeleccionado != null
-                    ? new CrearFunkoDetalleDto(
-                        FunkoNumeroBox,
-                        FunkoLicencia!,
-                        FunkoSubtipoSeleccionado.Id,
-                        FunkoCaracteristicaSeleccionada?.Id)
-                    : null,
+        Funko = MostrarFunko && FunkoSubtipoSeleccionado != null
+            ? new CrearFunkoDetalleDto(
+                FunkoNumeroBox, FunkoLicencia!,
+                FunkoSubtipoSeleccionado.Id,
+                FunkoCaracteristicaSeleccionada?.Id)
+            : null,
 
-                Tcg = TipoSeleccionado == TipoProducto.Tcg
-                      && TcgPackSeleccionado != null
-                      && TcgExpansionSeleccionada != null
-                    ? new CrearTcgDetalleDto(
-                        TcgPackSeleccionado.Id,
-                        TcgExpansionSeleccionada.Id)
-                    : null,
+        Tcg = MostrarTcg && TcgPackSeleccionado != null && TcgExpansionSeleccionada != null
+            ? new CrearTcgDetalleDto(TcgPackSeleccionado.Id, TcgExpansionSeleccionada.Id)
+            : null,
 
-                Toy = TipoSeleccionado == TipoProducto.Toy
-                    ? new CrearToyDetalleDto(
-                        ToyEdadMinima,
-                        ToyJugadoresMin,
-                        ToyJugadoresMax,
-                        ToyEsJuegoMesa)
-                    : null,
+        Toy = MostrarToy
+            ? new CrearToyDetalleDto(
+                ToyEdadMinima, ToyJugadoresMin, ToyJugadoresMax, ToyEsJuegoMesa)
+            : null,
 
-                Varios = TipoSeleccionado == TipoProducto.Varios
-                    ? new CrearVariosDetalleDto(
-                        VariosMarca!,
-                        VariosAlto,
-                        VariosAncho,
-                        VariosLargo,
-                        VariosMaterial!,
-                        VariosTieneIlustracion)
-                    : null
-            };
-        }
+        Varios = MostrarVarios
+            ? new CrearVariosDetalleDto(
+                VariosMarca!, VariosAlto, VariosAncho,
+                VariosLargo, VariosMaterial!, VariosTieneIlustracion)
+            : null
+    };
 
-        [RelayCommand]
-        private void Volver()
-        {
-            var menuVm = _serviceProvider.GetRequiredService<MenuPrincipalViewModel>();
-            _shell.CurrentView = menuVm;
-        }
+    [RelayCommand]
+    private void Volver() => _navigation.NavigateToMenu();
 
-        private bool CanGuardar()
-            => !HasErrors && !IsBusy && CatalogosCargados;
+    private bool CanGuardar() => !HasErrors && !IsBusy && CatalogosCargados;
 
-        partial void OnIsBusyChanged(bool value)
-        {
-            GuardarCommand.NotifyCanExecuteChanged();
-        }
+    partial void OnNombreChanged(string? value)
+    {
+        ClearErrors(nameof(Nombre));
+        if (string.IsNullOrWhiteSpace(value))
+            AddError(nameof(Nombre), "El nombre es obligatorio.");
+        else if (value.Length > 50)
+            AddError(nameof(Nombre), "Máximo 50 caracteres.");
+    }
 
-        partial void OnCatalogosCargadosChanged(bool value)
-        {
-            GuardarCommand.NotifyCanExecuteChanged();
-        }
+    partial void OnPrecioChanged(decimal value)
+    {
+        ClearErrors(nameof(Precio));
+        if (value < 0)
+            AddError(nameof(Precio), "El precio no puede ser negativo.");
+    }
 
-        // Validaciones
-        partial void OnNombreChanged(string? value)
-        {
-            ClearErrors(nameof(Nombre));
-
-            if (string.IsNullOrWhiteSpace(value))
-                AddError(nameof(Nombre), "El nombre es obligatorio");
-            else if (value.Length > 50)
-                AddError(nameof(Nombre), "Maximo 50 caracteres");
-        }
-
-        partial void OnPrecioChanged(decimal value)
-        {
-            ClearErrors(nameof(Precio));
-
-            if (value < 0)
-                AddError(nameof(Precio), "El precio no puede ser negativo");
-        }
-
-        partial void OnUnidadesChanged(int value)
-        {
-            ClearErrors(nameof(Unidades));
-
-            if (value < 0)
-                AddError(nameof(Unidades), "Las unidades no pueden ser negativas");
-        }
+    partial void OnUnidadesChanged(int value)
+    {
+        ClearErrors(nameof(Unidades));
+        if (value < 0)
+            AddError(nameof(Unidades), "Las unidades no pueden ser negativas.");
     }
 }

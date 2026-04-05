@@ -1,7 +1,5 @@
 ﻿
 
-using TeejoshSystem.Domain.Enums;
-
 namespace TeejoshSystem.Domain.Entities.Detalles
 {
     public sealed class HotWheelsDetalle : ProductoDetalle

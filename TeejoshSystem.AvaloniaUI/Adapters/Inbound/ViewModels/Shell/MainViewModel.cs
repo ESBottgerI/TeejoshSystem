@@ -1,11 +1,11 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
-using Microsoft.Extensions.DependencyInjection;
+using CommunityToolkit.Mvvm.ComponentModel;
 using System;
-using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Menu;
+
+using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Common;
 
 namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Shell
 {
-    public partial class MainViewModel : ObservableObject
+    public partial class MainViewModel : ViewModelBase
     {
         private readonly IServiceProvider _serviceProvider;
 
@@ -15,21 +15,6 @@ namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Shell
         public MainViewModel(IServiceProvider serviceProvider)
         {
             _serviceProvider = serviceProvider;
-            // Evitamos el ciclo usando el constructor vacío de MenuPrincipalViewModel
-            CurrentView = new MenuPrincipalViewModel();
         }
-
-        // public MainViewModel(IServiceProvider serviceProvider)
-        // {
-        //     _serviceProvider = serviceProvider;
-        //     // Resolver el menú principal desde DI
-        //     CurrentView = _serviceProvider.GetRequiredService<MenuPrincipalViewModel>();
-        // }
-
-        // partial void OnCurrentViewChanged(object? value)
-        // {
-        //     if (value is ILoadable loadable)
-        //         loadable.OnLoaded();
-        // }
     }
 }

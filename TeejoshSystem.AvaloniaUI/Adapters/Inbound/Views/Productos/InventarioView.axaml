@@ -3,7 +3,7 @@
              xmlns:vm="clr-namespace:TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Productos"
              xmlns:busqueda="clr-namespace:TeejoshSystem.Application.Ports.Inbound.Productos.Queries.BuscarProductos;assembly=TeejoshSystem.Application"
              x:Class="TeejoshSystem.AvaloniaUI.Adapters.Inbound.Views.Productos.InventarioView"
-             x:DataType="vm:InventarioViewModel">
+			 x:CompileBindings="False">
 
 	<Grid RowDefinitions="Auto,*,Auto">
 
@@ -56,7 +56,7 @@
 				<DataGrid Grid.Row="1"
                           ItemsSource="{Binding Productos}"
                           SelectionMode="Single"
-                          AutoGenerateColumns="False"
+                          AutoGenerateColumns="True"
                           IsReadOnly="True"
                           Margin="24,0,24,24">
 					<DataGrid.Columns>

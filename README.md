@@ -29,7 +29,7 @@ El objetivo no es solo gestionar inventario, sino construir una base sólida que
 |---|---|
 |**Versión**|0.4 — beta|
 |**Estado**|Activo|
-|**UI**|Avalonia (migración desde WPF parcial)|
+|**UI**|Avalonia (migración desde WPF completada parcialmente)|
 |**Plataformas verificadas**|Windows, Linux (Fedora 43)|
 |**Persistencia**|SQLite — Code-First con migraciones EF Core|
 |**Arquitectura**|Estable|
@@ -275,6 +275,7 @@ TeejoshSystem/
 │   └── Ports/
 │       └── Outbound/
 │           └── Repositories/
+│               ├── ProductoBusquedaResult.cs
 │               ├── IProductoRepository.cs
 │               └── ICatalogoRepository.cs
 │
@@ -309,15 +310,15 @@ TeejoshSystem/
 │       └── PersistenceServiceRegistration.cs
 │
 └── TeejoshSystem.AvaloniaUI/
+    ├── Program.cs
     ├── App.axaml / App.axaml.cs
     ├── MainWindow.axaml / MainWindow.axaml.cs
-    ├── Program.cs
     ├── appsettings.json
     └── Adapters/
         └── Inbound/
             ├── ViewModels/     # Shell, Menu, Productos, Common
             ├── Views/          # Menu, Productos
-            └── Services/       # INotificationService, IConfirmationService
+            └── Services/       # INotificationService, IConfirmationService...
 ```
 
 ---
@@ -367,10 +368,10 @@ __EFMigrationsHistory  # Control interno de EF Core — no modificar manualmente
 
 ### Por qué Table-Per-Container (TPC) y no Table-Per-Type (TPT) ó Table-Per-Hierarchy (TPH)
 
-- TPH almacena todos los subtipos en una sola tabla con columnas nullable. Con 5 tipos de coleccionable estructuralmente muy distintos, generaría una tabla con mayoría de NULLs e integridad referencial débil.
-- TPT estándar requiere una tabla base para ProductoDetalle con solo ProductoId — una tabla de una columna que solo sirve de pivot, y EF Core falla al intentar crearla para una clase abstracta.
-- TPC — cada subtipo concreto tiene su propia tabla completa, sin tabla base. La herencia existe en C# para compartir comportamiento (ProductoId, AsignarProductoId), pero no se refleja en el esquema. La relación con product se gestiona via ProductoId y el repositorio resuelve el detalle correcto usando Producto.Tipo.
-Se implementa en EF Core con builder.HasBaseType((Type)null) en la configuración de cada detalle.
+- `TPH` almacena todos los subtipos en una sola tabla con columnas `nullable`. Con 5 tipos de coleccionable estructuralmente muy distintos, generaría una tabla con mayoría de NULLs e integridad referencial débil.
+- `TPT` estándar requiere una tabla base para `ProductoDetalle` con solo `ProductoId` — una tabla de una columna que solo sirve de pivot, y EF Core falla al intentar crearla para una clase abstracta.
+- `TPC` — cada subtipo concreto tiene su propia tabla completa, sin tabla base. La herencia existe en C# para compartir comportamiento (`ProductoId`, `AsignarProductoId`), pero no se refleja en el esquema. La relación con product se gestiona via `ProductoId` y el repositorio resuelve el detalle correcto usando `Producto.Tipo`.
+Se implementa en EF Core con `builder.HasBaseType((Type)null)` en la configuración de cada detalle.
 
 ---
 
@@ -391,7 +392,9 @@ Se implementa en EF Core con builder.HasBaseType((Type)null) en la configuració
 
 |Librería|Versión|Propósito|
 |---|---|---|
-|Avalonia|-|UI multiplataforma (Windows, Linux, macOS)|
+|Avalonia|11.3.12|UI multiplataforma (Windows, Linux, macOS)|
+|Avalonia.Controls.DataGrid|11.3.12|DataGrid (paquete separado, requiere StyleInclude)|
+|~~MsBox.Avalonia~~|-|Diálogos de notificación y confirmación|
 |CommunityToolkit.Mvvm|8.2.2|ObservableObject, RelayCommand|
 |Microsoft.Extensions.Hosting|8.0.0|DI container|
 |Microsoft.Extensions.Configuration|8.0.0|appsettings.json|
@@ -429,7 +432,7 @@ dotnet ef migrations remove \
 ```
 
 ### Aplicación automática al arrancar
-App.axaml.cs llama db.Database.Migrate() en el startup. En una instalación nueva, crea la BD y aplica todas las migraciones. En instalaciones existentes, aplica solo las pendientes.
+`App.axaml.cs` llama `db.Database.Migrate()` en el startup. En una instalación nueva, crea la BD y aplica todas las migraciones. En instalaciones existentes, aplica solo las pendientes.
 
 ---
 
@@ -517,6 +520,13 @@ La migración de WPF a Avalonia está **parcialmente completada**. El proyecto `
 
 ---
 
+### ~~DataGrid requiere StyleInclude explícito~~ — Resuelto
+
+**Causa:** `Avalonia.Controls.DataGrid` es un paquete separado que requiere `<StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml"/>` en `App.axaml`.
+**Solución:** Aplicada. Documentado para futuros controles externos.
+
+---
+
 ## Extensibilidad
 
 La arquitectura hexagonal permite conectar nuevos adaptadores sin modificar el core.
@@ -559,7 +569,7 @@ Solo se necesita implementar `IProductoRepository` o `ICatalogoRepository` con l
 - Entidades de dominio → nunca cruzan hacia la UI
 - Validaciones de negocio → en Domain (value objects)
 - Validaciones de presentación → en la UI (INotifyDataErrorInfo)
-- Propiedades string en entidades EF → `= null!` (constructor privado para EF)
+- Propiedades string en entidades EF → `/= null!` (constructor privado para EF)
 - Propiedades string en DTOs → `required`
 
 ### Buenas prácticas de código
@@ -578,17 +588,20 @@ Solo se necesita implementar `IProductoRepository` o `ICatalogoRepository` con l
 ### Alta prioridad 🔴
 
 - [X] Migración a Code-First + SQLite
+- [X] Columna discriminadora `type` en tabla `product`
+- [X] Completar Views de productos (migración WPF → Avalonia)
 - [ ] Módulo de ventas
 - [ ] Validaciones adicionales (stock no negativo tras venta)
-- [ ] Completar Views de productos (migración WPF → Avalonia)
-- [ ] Implementar ObtenerProductoPorId (Query + Handler)
-- [X] Columna discriminadora `type` en tabla `product`
+- [ ] Implementar `ObtenerProductoPorId` (Query + Handler + OnLoaded)
 
 ### Media prioridad 🟡
 
+- [ ] Inicio de sesión con hasheo de contraseña
+- [ ] APIs de catálogos (TCGdex, Scryfall, YGOPRODeck)
 - [ ] Importación y exportación desde Excel
 - [ ] Historial de cambios (audit log)
 - [ ] Imágenes de productos
+- [ ] Mejorar UI
 
 ### Baja prioridad 🟢
 

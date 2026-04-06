@@ -2,6 +2,8 @@
 
 #nullable disable
 
+#pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
+
 namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Migrations
 {
     /// <inheritdoc />
@@ -180,6 +182,7 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_toy", x => x.product_id);
+                    table.CheckConstraint("check_players", "max_players >= min_players");
                     table.ForeignKey(
                         name: "FK_toy_product_product_id",
                         column: x => x.product_id,
@@ -203,12 +206,122 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_varios", x => x.product_id);
+                    table.CheckConstraint("check_dimensions", "height > 0 AND width > 0 AND (length IS NULL OR length > 0)");
                     table.ForeignKey(
                         name: "FK_varios_product_product_id",
                         column: x => x.product_id,
                         principalTable: "product",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.InsertData(
+                table: "funko_special_feature",
+                columns: new[] { "id", "name" },
+                values: new object[,]
+                {
+                    { 1, "Chase" },
+                    { 2, "Glow in the Dark" },
+                    { 3, "Flocked" },
+                    { 4, "Metallic" },
+                    { 5, "Diamond / Glitter" },
+                    { 6, "Black Light" },
+                    { 7, "Chrome" },
+                    { 8, "Translucent" },
+                    { 9, "Exclusivo" }
+                });
+
+            migrationBuilder.InsertData(
+                table: "funko_subtype",
+                columns: new[] { "id", "name" },
+                values: new object[,]
+                {
+                    { 1, "Pop! Vinyl" },
+                    { 2, "Pop! Deluxe" },
+                    { 3, "Pop! Super" },
+                    { 4, "Pop! Mega" },
+                    { 5, "Pop! Rides" },
+                    { 6, "Pop! Moments" },
+                    { 7, "Pop! Albums" },
+                    { 8, "Bitty Pop!" },
+                    { 9, "Funko Soda" },
+                    { 10, "Mystery Minis" }
+                });
+
+            migrationBuilder.InsertData(
+                table: "hot_wheels_category",
+                columns: new[] { "id", "name" },
+                values: new object[,]
+                {
+                    { 1, "Basic Car" },
+                    { 2, "Treasure Hunt" },
+                    { 3, "Super Treasure Hunt" },
+                    { 4, "Car Culture" },
+                    { 5, "Premium" },
+                    { 6, "Boulevard" },
+                    { 7, "Pop Culture" },
+                    { 8, "Team Transport" },
+                    { 9, "Mystery Models" },
+                    { 10, "HWC / RLC" }
+                });
+
+            migrationBuilder.InsertData(
+                table: "tcg_expansion",
+                columns: new[] { "id", "FranquiciaId", "name" },
+                values: new object[,]
+                {
+                    { 1, 1, "Escarlata y Púrpura Base" },
+                    { 2, 1, "151" },
+                    { 3, 1, "Obsidiana Llameante" },
+                    { 4, 1, "Destinos de Paldea" },
+                    { 5, 1, "Fuerza Temporal" },
+                    { 6, 2, "Legendary Collection" },
+                    { 7, 2, "Age of Overlord" },
+                    { 8, 2, "Phantom Nightmare" },
+                    { 9, 3, "Wilds of Eldraine" },
+                    { 10, 3, "The Lost Caverns of Ixalan" },
+                    { 11, 3, "Murders at Karlov Manor" },
+                    { 12, 4, "Romance Dawn" },
+                    { 13, 4, "Paramount War" },
+                    { 14, 4, "Pillars of Strength" },
+                    { 15, 4, "Kingdoms of Intrigue" },
+                    { 16, 5, "Serie Base" }
+                });
+
+            migrationBuilder.InsertData(
+                table: "tcg_franchise",
+                columns: new[] { "id", "name" },
+                values: new object[,]
+                {
+                    { 1, "Pokémon" },
+                    { 2, "Yu-Gi-Oh!" },
+                    { 3, "Magic: The Gathering" },
+                    { 4, "One Piece" },
+                    { 5, "Bluey" }
+                });
+
+            migrationBuilder.InsertData(
+                table: "tcg_pack",
+                columns: new[] { "id", "FranquiciaId", "name" },
+                values: new object[,]
+                {
+                    { 1, 1, "Sobre Individual" },
+                    { 2, 1, "Blister 3 Sobres" },
+                    { 3, 1, "Elite Trainer Box" },
+                    { 4, 1, "Caja de 36 Sobres" },
+                    { 5, 1, "Colección Premium" },
+                    { 6, 2, "Sobre Individual" },
+                    { 7, 2, "Caja de 24 Sobres" },
+                    { 8, 2, "Structure Deck" },
+                    { 9, 3, "Draft Booster" },
+                    { 10, 3, "Set Booster" },
+                    { 11, 3, "Collector Booster" },
+                    { 12, 3, "Bundle" },
+                    { 13, 4, "Sobre Individual" },
+                    { 14, 4, "Caja de 24 Sobres" },
+                    { 15, 4, "Starter Deck" },
+                    { 16, 5, "Sobre Individual" },
+                    { 17, 5, "Starter Pack" }
                 });
 
             migrationBuilder.CreateIndex(
@@ -230,9 +343,9 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_tcg_expansion_name",
+                name: "IX_tcg_expansion_name_FranquiciaId",
                 table: "tcg_expansion",
-                column: "name",
+                columns: new[] { "name", "FranquiciaId" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
@@ -242,9 +355,9 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_tcg_pack_name",
+                name: "IX_tcg_pack_name_FranquiciaId",
                 table: "tcg_pack",
-                column: "name",
+                columns: new[] { "name", "FranquiciaId" },
                 unique: true);
         }
 

@@ -23,6 +23,19 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Configurati
 
             builder.HasIndex(p => p.Nombre)
                 .IsUnique();
+
+            // Temporal
+            builder.HasData(
+                new FunkoCaracteristica { Id = 1, Nombre = "Chase" },
+                new FunkoCaracteristica { Id = 2, Nombre = "Glow in the Dark" },
+                new FunkoCaracteristica { Id = 3, Nombre = "Flocked" },
+                new FunkoCaracteristica { Id = 4, Nombre = "Metallic" },
+                new FunkoCaracteristica { Id = 5, Nombre = "Diamond / Glitter" },
+                new FunkoCaracteristica { Id = 6, Nombre = "Black Light" },
+                new FunkoCaracteristica { Id = 7, Nombre = "Chrome" },
+                new FunkoCaracteristica { Id = 8, Nombre = "Translucent" },
+                new FunkoCaracteristica { Id = 9, Nombre = "Exclusivo" }
+            );
         }
     }
 }

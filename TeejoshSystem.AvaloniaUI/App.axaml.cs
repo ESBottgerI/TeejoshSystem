@@ -52,7 +52,7 @@ public partial class App : Avalonia.Application
                 // ViewModels
                 services.AddSingleton<MainViewModel>();
                 services.AddSingleton<MenuPrincipalViewModel>();
-                services.AddTransient<InventarioViewModel>();
+                // services.AddTransient<InventarioViewModel>();
                 services.AddTransient<GestionarProductosViewModel>();
                 services.AddTransient<CrearProductoViewModel>();
                 // services.AddTransient<EditarProductoViewModel>();

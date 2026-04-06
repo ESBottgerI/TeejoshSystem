@@ -19,28 +19,18 @@ namespace TeejoshSystem.Application.Ports.Inbound.Productos.Queries.BuscarProduc
             BuscarProductosQuery request,
             CancellationToken cancellationToken)
         {
-            var productos = await _repository.SearchAsync(request.Nombre, request.Tipo);
+            var resultados = await _repository.SearchWithDetalleAsync(
+                request.Nombre, request.Tipo);
 
-            return productos.Select(p => new ProductoBusquedaDto
+            return resultados.Select(p => new ProductoBusquedaDto
             {
                 Id = p.Id,
                 Tipo = p.Tipo,
-                Nombre = p.Nombre.Value,
-                Precio = p.Precio.Value,
-                Unidades = p.Stock.Value,
-                DetalleResumen = GenerarResumen(p)
+                Nombre = p.Nombre,
+                Precio = p.Precio,
+                Unidades = p.Unidades,
+                DetalleResumen = p.DetalleResumen
             }).ToList();
         }
-
-        private static string GenerarResumen(Producto p) => p.Descripcion switch
-        {
-            HotWheelsDetalle hw => $"{hw.Modelo} · {hw.Anio} · {hw.Serie}",
-            FunkoDetalle fu => $"#{fu.NumeroCaja} · {fu.Licencia}",
-            TcgDetalle tcg => $"Pack {tcg.PackId} · Expansión {tcg.ExpansionId}",
-            ToyDetalle toy => $"{toy.JugadoresMin}-{toy.JugadoresMax} jugadores",
-            VariosDetalle v => $"{v.Marca} · {v.Material}",
-            null => "Sin detalle",
-            _ => "Detalle desconocido"
-        };
     }
 }

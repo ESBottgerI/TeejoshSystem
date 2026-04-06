@@ -10,7 +10,7 @@
 		<Button Content="Ver Inventario" Command="{Binding VisualizarInventarioCommand}"
                 Width="200" HorizontalAlignment="Center" Margin="0,10"/>
 
-		<Button Content="Gestionar Productos" Command="{Binding VisualizarInventarioCommand}" 
+		<Button Content="Gestionar Productos" Command="{Binding ModificarProductoCommand}" 
                 Width="200" HorizontalAlignment="Center"/>
 
 		<Button Content="Añadir Producto" Command="{Binding AnadirProductoCommand}" 

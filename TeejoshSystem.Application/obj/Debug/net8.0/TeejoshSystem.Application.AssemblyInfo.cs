@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("TeejoshSystem.Application")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+a33d972b8f72bfb297ab0b7b5aa20abbf344316c")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+6fd716a4cbf993d1390a72d3ca57286b87444b02")]
 [assembly: System.Reflection.AssemblyProductAttribute("TeejoshSystem.Application")]
 [assembly: System.Reflection.AssemblyTitleAttribute("TeejoshSystem.Application")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

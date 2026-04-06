@@ -17,8 +17,12 @@ public partial class InventarioViewModel : ViewModelBase
     private readonly IMediator _mediator;
     private readonly Action _volver;
 
+    /*
     [ObservableProperty]
     private ObservableCollection<ProductoBusquedaDto> _productos = new();
+    */
+
+    public ObservableCollection<ProductoBusquedaDto> Productos { get; } = new();
 
     [ObservableProperty]
     private string _busqueda = string.Empty;
@@ -41,6 +45,8 @@ public partial class InventarioViewModel : ViewModelBase
         _mediator = mediator;
         _volver = volver;
         _tipoFiltro = TiposDisponibles[0]; // "Todos" por defecto
+
+        _ = CargarProductosAsync();
     }
 
     public async Task CargarProductosAsync()
@@ -52,8 +58,14 @@ public partial class InventarioViewModel : ViewModelBase
             TipoFiltro?.Valor
         ));
 
-        Productos = new ObservableCollection<ProductoBusquedaDto>(resultado);
-        IsBusy = false;
+        await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
+        {
+            Productos.Clear();
+            foreach (var item in resultado)
+                Productos.Add(item);
+
+            IsBusy = false;
+        });
     }
 
     [RelayCommand]

@@ -36,6 +36,53 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Migrations
                         .IsUnique();
 
                     b.ToTable("funko_special_feature", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Nombre = "Chase"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Nombre = "Glow in the Dark"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Nombre = "Flocked"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Nombre = "Metallic"
+                        },
+                        new
+                        {
+                            Id = 5,
+                            Nombre = "Diamond / Glitter"
+                        },
+                        new
+                        {
+                            Id = 6,
+                            Nombre = "Black Light"
+                        },
+                        new
+                        {
+                            Id = 7,
+                            Nombre = "Chrome"
+                        },
+                        new
+                        {
+                            Id = 8,
+                            Nombre = "Translucent"
+                        },
+                        new
+                        {
+                            Id = 9,
+                            Nombre = "Exclusivo"
+                        });
                 });
 
             modelBuilder.Entity("TeejoshSystem.Domain.Entities.Catalogos.FunkoSubtipo", b =>
@@ -57,6 +104,58 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Migrations
                         .IsUnique();
 
                     b.ToTable("funko_subtype", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Nombre = "Pop! Vinyl"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Nombre = "Pop! Deluxe"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Nombre = "Pop! Super"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Nombre = "Pop! Mega"
+                        },
+                        new
+                        {
+                            Id = 5,
+                            Nombre = "Pop! Rides"
+                        },
+                        new
+                        {
+                            Id = 6,
+                            Nombre = "Pop! Moments"
+                        },
+                        new
+                        {
+                            Id = 7,
+                            Nombre = "Pop! Albums"
+                        },
+                        new
+                        {
+                            Id = 8,
+                            Nombre = "Bitty Pop!"
+                        },
+                        new
+                        {
+                            Id = 9,
+                            Nombre = "Funko Soda"
+                        },
+                        new
+                        {
+                            Id = 10,
+                            Nombre = "Mystery Minis"
+                        });
                 });
 
             modelBuilder.Entity("TeejoshSystem.Domain.Entities.Catalogos.HotWheelsCategoria", b =>
@@ -78,6 +177,58 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Migrations
                         .IsUnique();
 
                     b.ToTable("hot_wheels_category", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Nombre = "Basic Car"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Nombre = "Treasure Hunt"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Nombre = "Super Treasure Hunt"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Nombre = "Car Culture"
+                        },
+                        new
+                        {
+                            Id = 5,
+                            Nombre = "Premium"
+                        },
+                        new
+                        {
+                            Id = 6,
+                            Nombre = "Boulevard"
+                        },
+                        new
+                        {
+                            Id = 7,
+                            Nombre = "Pop Culture"
+                        },
+                        new
+                        {
+                            Id = 8,
+                            Nombre = "Team Transport"
+                        },
+                        new
+                        {
+                            Id = 9,
+                            Nombre = "Mystery Models"
+                        },
+                        new
+                        {
+                            Id = 10,
+                            Nombre = "HWC / RLC"
+                        });
                 });
 
             modelBuilder.Entity("TeejoshSystem.Domain.Entities.Catalogos.TcgExpansion", b =>
@@ -98,13 +249,108 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Nombre")
-                        .IsUnique();
-
                     b.HasIndex("Nombre", "FranquiciaId")
                         .IsUnique();
 
                     b.ToTable("tcg_expansion", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            FranquiciaId = 1,
+                            Nombre = "Escarlata y Púrpura Base"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            FranquiciaId = 1,
+                            Nombre = "151"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            FranquiciaId = 1,
+                            Nombre = "Obsidiana Llameante"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            FranquiciaId = 1,
+                            Nombre = "Destinos de Paldea"
+                        },
+                        new
+                        {
+                            Id = 5,
+                            FranquiciaId = 1,
+                            Nombre = "Fuerza Temporal"
+                        },
+                        new
+                        {
+                            Id = 6,
+                            FranquiciaId = 2,
+                            Nombre = "Legendary Collection"
+                        },
+                        new
+                        {
+                            Id = 7,
+                            FranquiciaId = 2,
+                            Nombre = "Age of Overlord"
+                        },
+                        new
+                        {
+                            Id = 8,
+                            FranquiciaId = 2,
+                            Nombre = "Phantom Nightmare"
+                        },
+                        new
+                        {
+                            Id = 9,
+                            FranquiciaId = 3,
+                            Nombre = "Wilds of Eldraine"
+                        },
+                        new
+                        {
+                            Id = 10,
+                            FranquiciaId = 3,
+                            Nombre = "The Lost Caverns of Ixalan"
+                        },
+                        new
+                        {
+                            Id = 11,
+                            FranquiciaId = 3,
+                            Nombre = "Murders at Karlov Manor"
+                        },
+                        new
+                        {
+                            Id = 12,
+                            FranquiciaId = 4,
+                            Nombre = "Romance Dawn"
+                        },
+                        new
+                        {
+                            Id = 13,
+                            FranquiciaId = 4,
+                            Nombre = "Paramount War"
+                        },
+                        new
+                        {
+                            Id = 14,
+                            FranquiciaId = 4,
+                            Nombre = "Pillars of Strength"
+                        },
+                        new
+                        {
+                            Id = 15,
+                            FranquiciaId = 4,
+                            Nombre = "Kingdoms of Intrigue"
+                        },
+                        new
+                        {
+                            Id = 16,
+                            FranquiciaId = 5,
+                            Nombre = "Serie Base"
+                        });
                 });
 
             modelBuilder.Entity("TeejoshSystem.Domain.Entities.Catalogos.TcgFranquicia", b =>
@@ -126,6 +372,33 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Migrations
                         .IsUnique();
 
                     b.ToTable("tcg_franchise", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Nombre = "Pokémon"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Nombre = "Yu-Gi-Oh!"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Nombre = "Magic: The Gathering"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Nombre = "One Piece"
+                        },
+                        new
+                        {
+                            Id = 5,
+                            Nombre = "Bluey"
+                        });
                 });
 
             modelBuilder.Entity("TeejoshSystem.Domain.Entities.Catalogos.TcgPack", b =>
@@ -146,13 +419,114 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Nombre")
-                        .IsUnique();
-
                     b.HasIndex("Nombre", "FranquiciaId")
                         .IsUnique();
 
                     b.ToTable("tcg_pack", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            FranquiciaId = 1,
+                            Nombre = "Sobre Individual"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            FranquiciaId = 1,
+                            Nombre = "Blister 3 Sobres"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            FranquiciaId = 1,
+                            Nombre = "Elite Trainer Box"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            FranquiciaId = 1,
+                            Nombre = "Caja de 36 Sobres"
+                        },
+                        new
+                        {
+                            Id = 5,
+                            FranquiciaId = 1,
+                            Nombre = "Colección Premium"
+                        },
+                        new
+                        {
+                            Id = 6,
+                            FranquiciaId = 2,
+                            Nombre = "Sobre Individual"
+                        },
+                        new
+                        {
+                            Id = 7,
+                            FranquiciaId = 2,
+                            Nombre = "Caja de 24 Sobres"
+                        },
+                        new
+                        {
+                            Id = 8,
+                            FranquiciaId = 2,
+                            Nombre = "Structure Deck"
+                        },
+                        new
+                        {
+                            Id = 9,
+                            FranquiciaId = 3,
+                            Nombre = "Draft Booster"
+                        },
+                        new
+                        {
+                            Id = 10,
+                            FranquiciaId = 3,
+                            Nombre = "Set Booster"
+                        },
+                        new
+                        {
+                            Id = 11,
+                            FranquiciaId = 3,
+                            Nombre = "Collector Booster"
+                        },
+                        new
+                        {
+                            Id = 12,
+                            FranquiciaId = 3,
+                            Nombre = "Bundle"
+                        },
+                        new
+                        {
+                            Id = 13,
+                            FranquiciaId = 4,
+                            Nombre = "Sobre Individual"
+                        },
+                        new
+                        {
+                            Id = 14,
+                            FranquiciaId = 4,
+                            Nombre = "Caja de 24 Sobres"
+                        },
+                        new
+                        {
+                            Id = 15,
+                            FranquiciaId = 4,
+                            Nombre = "Starter Deck"
+                        },
+                        new
+                        {
+                            Id = 16,
+                            FranquiciaId = 5,
+                            Nombre = "Sobre Individual"
+                        },
+                        new
+                        {
+                            Id = 17,
+                            FranquiciaId = 5,
+                            Nombre = "Starter Pack"
+                        });
                 });
 
             modelBuilder.Entity("TeejoshSystem.Domain.Entities.Detalles.FunkoDetalle", b =>

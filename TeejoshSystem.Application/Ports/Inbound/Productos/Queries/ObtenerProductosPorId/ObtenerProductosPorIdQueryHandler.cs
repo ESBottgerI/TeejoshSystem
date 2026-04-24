@@ -1,5 +1,6 @@
 ﻿using MediatR;
 
+using TeejoshSystem.Application.Common;
 using TeejoshSystem.Application.Common.Dtos;
 using TeejoshSystem.Domain.Entities.Detalles;
 using TeejoshSystem.Domain.Enums;
@@ -8,7 +9,8 @@ using TeejoshSystem.Domain.Ports.Outbound.Repositories;
 namespace TeejoshSystem.Application.Ports.Inbound.Productos.Queries.ObtenerProductosPorId
 {
     public class ObtenerProductosPorIdQueryHandler
-        : IRequestHandler<ObtenerProductosPorIdQuery, ProductoDetalladoDto?>
+        : IRequestHandler<ObtenerProductosPorIdQuery,
+          Result<ProductoDetalladoDto>>
     {
         private readonly IProductoRepository _productoRepository;
         private readonly ICatalogoRepository _catalogoRepository;
@@ -21,16 +23,16 @@ namespace TeejoshSystem.Application.Ports.Inbound.Productos.Queries.ObtenerProdu
             _catalogoRepository = catalogoRepository;
         }
 
-        public async Task<ProductoDetalladoDto?> Handle(
+        public async Task<Result<ProductoDetalladoDto>> Handle(
             ObtenerProductosPorIdQuery request,
             CancellationToken cancellationToken)
         {
             var producto = await _productoRepository.GetByIdWithDetalleAsync(request.Id);
 
             if (producto is null)
-                return null;
+                return Result.Failure<ProductoDetalladoDto>($"Producto con ID {request.Id} no encontrado.");
 
-            return new ProductoDetalladoDto
+            var dto = new ProductoDetalladoDto
             {
                 Id = producto.Id,
                 Tipo = producto.Tipo,
@@ -39,6 +41,8 @@ namespace TeejoshSystem.Application.Ports.Inbound.Productos.Queries.ObtenerProdu
                 Unidades = producto.Stock.Value,
                 Detalle = await MapearDetalleAsync(producto.Descripcion, producto.Tipo)
             };
+
+            return Result.Success(dto);
         }
 
         private async Task<DetalleBaseDto?> MapearDetalleAsync(

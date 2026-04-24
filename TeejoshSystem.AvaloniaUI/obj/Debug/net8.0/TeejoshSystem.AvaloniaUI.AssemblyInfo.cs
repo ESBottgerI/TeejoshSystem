@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("TeejoshSystem.AvaloniaUI")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+6fd716a4cbf993d1390a72d3ca57286b87444b02")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+4df3da382a5dec0380cf926aece09fc9d4d5916f")]
 [assembly: System.Reflection.AssemblyProductAttribute("TeejoshSystem.AvaloniaUI")]
 [assembly: System.Reflection.AssemblyTitleAttribute("TeejoshSystem.AvaloniaUI")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

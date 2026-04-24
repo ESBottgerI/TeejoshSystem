@@ -50,10 +50,5 @@ namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Common
 
             OnPropertyChanged(nameof(HasErrors));
         }
-
-        public interface ILoadable
-        {
-            void OnLoaded();
-        }
     }
 }

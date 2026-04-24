@@ -1,14 +1,14 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MediatR;
-
+using System;
 using System.Threading.Tasks;
 
 using TeejoshSystem.Application.Ports.Inbound.Productos.Commands.ActualizarProducto;
+using TeejoshSystem.Application.Ports.Inbound.Productos.Queries.ObtenerProductosPorId;
 using TeejoshSystem.AvaloniaUI.Adapters.Inbound.Services;
 using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Common;
 using TeejoshSystem.Domain.Enums;
-using static TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Common.ValidatableViewModel;
 
 namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Productos;
 
@@ -59,7 +59,39 @@ public partial class EditarProductoViewModel : ValidatableViewModel, ILoadable
 
     public void OnLoaded()
     {
-        // Se implementará cuando exista ObtenerProductoPorIdQuery
+        _ = CargarProductoAsync();
+    }
+
+    private async Task CargarProductoAsync()
+    {
+        try
+        {
+            IsBusy = true;
+
+            var result = await _mediator.Send(
+                new ObtenerProductosPorIdQuery(_productoId));
+
+            if (!result.IsSuccess)
+            {
+                await _notification.ShowErrorAsync(
+                    result.Error ?? "No se pudo cargar el producto.");
+                return;
+            }
+
+            var dto = result.Value;
+            Nombre = dto.Nombre;
+            Precio = dto.Precio;
+            Unidades = dto.Unidades;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine(ex);
+            await _notification.ShowErrorAsync("Error inesperado al cargar el producto.");
+        }
+        finally
+        {
+            IsBusy = false;
+        }
     }
 
     [RelayCommand]

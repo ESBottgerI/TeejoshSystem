@@ -37,7 +37,7 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Configurati
                 .HasColumnType("decimal(10,2)")
                 .IsRequired();
 
-            // Subtotal es calculado — no se persiste
+            // Subtotal es calculado - no se persiste
             builder.Ignore(d => d.Subtotal);
         }
     }

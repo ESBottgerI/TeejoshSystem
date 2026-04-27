@@ -133,7 +133,7 @@ public partial class RegistrarVentaViewModel : ViewModelBase
     private async Task ConfirmarVentaAsync()
     {
         var confirmar = await _confirmation.ConfirmAsync(
-            $"¿Confirmar venta por {TotalVenta:C2}?");
+            $"¿Confirmar venta por {TotalVenta:C}?");
         if (!confirmar) return;
 
         try

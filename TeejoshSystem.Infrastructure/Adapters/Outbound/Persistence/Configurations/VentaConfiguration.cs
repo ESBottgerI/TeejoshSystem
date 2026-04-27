@@ -27,7 +27,7 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Configurati
             // Punto de extensión para autenticación
             // builder.Property(v => v.UsuarioId).HasColumnName("user_id");
 
-            // Backing field — EF Core usa _detalles, no la propiedad Detalles
+            // Backing field - EF Core usa _detalles, no la propiedad Detalles
             builder.Navigation(v => v.Detalles)
                 .UsePropertyAccessMode(PropertyAccessMode.Field);
 

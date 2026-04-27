@@ -7,7 +7,9 @@
              xmlns:vmProductos="clr-namespace:TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Productos"
              xmlns:viewsMenu="clr-namespace:TeejoshSystem.AvaloniaUI.Adapters.Inbound.Views.Menu"
              xmlns:viewsProductos="clr-namespace:TeejoshSystem.AvaloniaUI.Adapters.Inbound.Views.Productos"
-             x:Class="TeejoshSystem.AvaloniaUI.App">
+             xmlns:vmVentas="clr-namespace:TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Ventas"
+			 xmlns:viewsVentas="clr-namespace:TeejoshSystem.AvaloniaUI.Adapters.Inbound.Views.Ventas"
+			 x:Class="TeejoshSystem.AvaloniaUI.App">
 	
 	<Application.RequestedThemeVariant>Light</Application.RequestedThemeVariant>
 	<Application.Styles>
@@ -32,5 +34,11 @@
         <DataTemplate DataType="{x:Type vmProductos:EditarProductoViewModel}">
             <viewsProductos:EditarProductoView />
         </DataTemplate>
+		<DataTemplate DataType="{x:Type vmVentas:RegistrarVentaViewModel}">
+			<viewsVentas:RegistrarVentaView />
+		</DataTemplate>
+		<DataTemplate DataType="{x:Type vmVentas:HistorialVentasViewModel}">
+			<viewsVentas:HistorialVentasView />
+		</DataTemplate>
 	</Application.DataTemplates>
 </Application>

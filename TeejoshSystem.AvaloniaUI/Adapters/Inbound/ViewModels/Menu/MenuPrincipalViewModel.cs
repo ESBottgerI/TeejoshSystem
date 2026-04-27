@@ -7,6 +7,7 @@ using System;
 using TeejoshSystem.AvaloniaUI.Adapters.Inbound.Services;
 using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Common;
 using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Productos;
+using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Ventas;
 
 namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Menu
 {
@@ -43,6 +44,27 @@ namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Menu
         private void AnadirProducto()
         {
             var vm = _serviceProvider.GetRequiredService<CrearProductoViewModel>();
+            _navigation.NavigateTo(vm);
+        }
+
+        [RelayCommand]
+        private void RegistrarVenta()
+        {
+            var vm = new RegistrarVentaViewModel(
+                _serviceProvider.GetRequiredService<IMediator>(),
+                _serviceProvider.GetRequiredService<INotificationService>(),
+                _serviceProvider.GetRequiredService<IConfirmationService>(),
+                _navigation);
+            _navigation.NavigateTo(vm);
+        }
+
+        [RelayCommand]
+        private void VerHistorialVentas()
+        {
+            var vm = new HistorialVentasViewModel(
+                _serviceProvider.GetRequiredService<IMediator>(),
+                _serviceProvider.GetRequiredService<INotificationService>(),
+                _navigation);
             _navigation.NavigateTo(vm);
         }
     }

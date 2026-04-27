@@ -9,7 +9,7 @@ namespace TeejoshSystem.Domain.Entities
         public DateTime Fecha { get; private set; }
         public decimal Total { get; private set; }
 
-        // Punto de extensión para autenticación — activar cuando exista login
+        // Punto de extensión para autenticación - activar cuando exista login
         // public int UsuarioId { get; private set; }
 
         private readonly List<VentaDetalle> _detalles = new();

@@ -22,7 +22,7 @@ namespace TeejoshSystem.Application.Ports.Inbound.Ventas.Queries.ObtenerVentas
                 request.Desde,
                 request.Hasta);
 
-            // Orden descendente por fecha — más reciente primero
+            // Orden descendente por fecha - más reciente primero
             return ventas
                 .OrderByDescending(v => v.Fecha)
                 .Select(v => new VentaDto

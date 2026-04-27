@@ -10,7 +10,7 @@ namespace TeejoshSystem.Domain.Entities.Detalles
         public string NombreProducto { get; private set; } = null!;
         public int Cantidad { get; private set; }
 
-        // Precio capturado en el momento de la venta — inmutable
+        // Precio capturado en el momento de la venta - inmutable
         public decimal PrecioUnitario { get; private set; }
         public decimal Subtotal => Cantidad * PrecioUnitario;
 

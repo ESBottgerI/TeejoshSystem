@@ -59,7 +59,7 @@ namespace TeejoshSystem.Application.Ports.Inbound.Ventas.Commands.RegistrarVenta
                     venta.AgregarDetalle(detalle);
                 }
 
-                // 3. Persistir la venta (atómico — dentro del mismo DbContext)
+                // 3. Persistir la venta (atómico - dentro del mismo DbContext)
                 var ventaId = await _ventaRepository.AddAsync(venta);
 
                 // 4. Decrementar stock de cada producto

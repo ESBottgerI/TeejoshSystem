@@ -237,7 +237,7 @@
 							</StackPanel>
 
 							<StackPanel Grid.Column="4" Spacing="4">
-								<TextBlock Text="Largo (cm) — opcional"/>
+								<TextBlock Text="Largo (cm) - opcional"/>
 								<NumericUpDown Value="{Binding VariosLargo}"
                                                Minimum="0"
                                                FormatString="F2"

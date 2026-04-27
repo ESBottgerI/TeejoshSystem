@@ -15,5 +15,13 @@
 
 		<Button Content="Añadir Producto" Command="{Binding AnadirProductoCommand}" 
                 Width="200" HorizontalAlignment="Center"/>
+		
+		<Button Content="Registrar Venta"
+				Command="{Binding RegistrarVentaCommand}"
+				Width="200" HorizontalAlignment="Center"/>
+		
+		<Button Content="Historial de Ventas"
+				Command="{Binding VerHistorialVentasCommand}"
+				Width="200" HorizontalAlignment="Center"/>
 	</StackPanel>
 </UserControl>

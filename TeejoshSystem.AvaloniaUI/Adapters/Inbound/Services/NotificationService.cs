@@ -16,10 +16,26 @@ public class NotificationService : INotificationService
         => MostrarDialogoAsync("Error", message, "#E53935");
 
     private static async Task MostrarDialogoAsync(
-        string titulo, string mensaje, string colorHeader)
+    string titulo, string mensaje, string colorHeader)
     {
         var ventana = ObtenerVentanaPrincipal();
         if (ventana is null) return;
+
+        var botonAceptar = new Button
+        {
+            Content = "Aceptar",
+            Width = 90,
+            Height = 36,
+            HorizontalAlignment = HorizontalAlignment.Right
+        };
+
+        var botonCopiar = new Button
+        {
+            Content = "Copiar",
+            Width = 90,
+            Height = 36,
+            HorizontalAlignment = HorizontalAlignment.Right
+        };
 
         var dialogo = new Window
         {
@@ -30,48 +46,53 @@ public class NotificationService : INotificationService
             WindowStartupLocation = WindowStartupLocation.CenterOwner,
         };
 
-        var botonAceptar = new Button
-        {
-            Content = "Aceptar",
-            Width = 90,
-            Height = 36,
-            HorizontalAlignment = HorizontalAlignment.Right
-        };
         botonAceptar.Click += (_, _) => dialogo.Close();
+        botonCopiar.Click += async (_, _) =>
+        {
+            var clipboard = ventana.Clipboard;
+            if (clipboard is not null)
+                await clipboard.SetTextAsync(mensaje);
+        };
 
         dialogo.Content = new Grid
         {
             RowDefinitions = new RowDefinitions("Auto,*,Auto"),
             Children =
+        {
+            new Border
             {
-                new Border
+                [Grid.RowProperty] = 0,
+                Background        = SolidColorBrush.Parse(colorHeader),
+                Padding           = new Thickness(16, 10),
+                Child             = new TextBlock
                 {
-                    [Grid.RowProperty] = 0,
-                    Background        = SolidColorBrush.Parse(colorHeader),
-                    Padding           = new Thickness(16, 10),
-                    Child             = new TextBlock
-                    {
-                        Text       = titulo,
-                        Foreground = Brushes.White,
-                        FontSize   = 16,
-                        FontWeight = FontWeight.SemiBold
-                    }
-                },
-                new TextBlock
+                    Text       = titulo,
+                    Foreground = Brushes.White,
+                    FontSize   = 16,
+                    FontWeight = FontWeight.SemiBold
+                }
+            },
+            new TextBlock
+            {
+                [Grid.RowProperty] = 1,
+                Text               = mensaje,
+                TextWrapping       = TextWrapping.Wrap,
+                Margin             = new Thickness(16),
+                VerticalAlignment  = VerticalAlignment.Center
+            },
+            new Border
+            {
+                [Grid.RowProperty] = 2,
+                Padding            = new Thickness(16, 8),
+                Child              = new StackPanel
                 {
-                    [Grid.RowProperty] = 1,
-                    Text               = mensaje,
-                    TextWrapping       = TextWrapping.Wrap,
-                    Margin             = new Thickness(16),
-                    VerticalAlignment  = VerticalAlignment.Center
-                },
-                new Border
-                {
-                    [Grid.RowProperty] = 2,
-                    Padding            = new Thickness(16, 8),
-                    Child              = botonAceptar
+                    Orientation         = Orientation.Horizontal,
+                    HorizontalAlignment = HorizontalAlignment.Right,
+                    Spacing             = 8,
+                    Children            = { botonCopiar, botonAceptar }
                 }
             }
+        }
         };
 
         await dialogo.ShowDialog(ventana);

@@ -1,6 +1,5 @@
 .vs/
 bin/
 obj/
-Tests/
 *.user
 *.suo

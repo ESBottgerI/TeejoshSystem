@@ -5,18 +5,18 @@ using TeejoshSystem.Application.Common;
 
 namespace TeejoshSystem.Application.Ports.Inbound.Productos.Commands.EliminarProducto
 {
-    public class EliminarProductosCommandHandler
-        : IRequestHandler<EliminarProductosCommand, Result>
+    public class EliminarProductoCommandHandler
+        : IRequestHandler<EliminarProductoCommand, Result>
     {
         private readonly IProductoRepository _repository;
 
-        public EliminarProductosCommandHandler(IProductoRepository repository)
+        public EliminarProductoCommandHandler(IProductoRepository repository)
         {
             _repository = repository;
         }
 
         public async Task<Result> Handle(
-            EliminarProductosCommand request,
+            EliminarProductoCommand request,
             CancellationToken cancellationToken)
         {
             try

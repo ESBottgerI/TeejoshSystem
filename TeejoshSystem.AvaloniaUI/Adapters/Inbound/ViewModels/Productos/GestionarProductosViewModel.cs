@@ -106,7 +106,7 @@ public partial class GestionarProductosViewModel : ViewModelBase
             IsBusy = true;
 
             var result = await _mediator.Send(
-                new EliminarProductosCommand(new List<int> { ProductoSeleccionado!.Id }));
+                new EliminarProductoCommand(new List<int> { ProductoSeleccionado!.Id }));
 
             if (result.IsSuccess)
             {

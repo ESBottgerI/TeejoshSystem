@@ -1,9 +1,9 @@
-using FluentAssertions;
-using NSubstitute;
 using TeejoshSystem.Application.Common;
 using TeejoshSystem.Application.Common.Dtos;
-using TeejoshSystem.Application.Ports.Inbound.Productos.Commands;
-using TeejoshSystem.Application.Ports.Inbound.Productos.Queries;
+using TeejoshSystem.Application.Ports.Inbound.Productos.Commands.CrearProducto;
+using TeejoshSystem.Application.Ports.Inbound.Productos.Commands.EliminarProducto;
+using TeejoshSystem.Application.Ports.Inbound.Productos.Queries.BuscarProductos;
+using TeejoshSystem.Application.Ports.Inbound.Productos.Queries.ObtenerProductos;
 using TeejoshSystem.Domain.Entities;
 using TeejoshSystem.Domain.Enums;
 using TeejoshSystem.Domain.Ports.Outbound.Repositories;
@@ -11,13 +11,12 @@ using TeejoshSystem.Domain.ValueObjects;
 
 namespace TeejoshSystem.Application.Tests.Productos;
 
-/// <summary>
-/// Tests de los handlers de Productos.
-/// El repositorio se mockea con NSubstitute — no hay base de datos real.
-///
-/// AJUSTE REQUERIDO: si los namespaces de tus handlers difieren,
-/// actualiza los using correspondientes.
-/// </summary>
+// ═══════════════════════════════════════════════════════════════════════════
+// CrearProductoCommandHandler
+// Retorna Result (no Result<T>)
+// El detalle se pasa en propiedades anidadas (HotWheels, Funko, etc.)
+// ═══════════════════════════════════════════════════════════════════════════
+
 public class CrearProductoCommandHandlerTests
 {
     private readonly IProductoRepository _repo;
@@ -25,22 +24,22 @@ public class CrearProductoCommandHandlerTests
 
     public CrearProductoCommandHandlerTests()
     {
-        _repo = Substitute.For<IProductoRepository>();
+        _repo    = Substitute.For<IProductoRepository>();
         _handler = new CrearProductoCommandHandler(_repo);
     }
 
     [Fact]
-    public async Task Handle_CommandValido_DebeGuardarYRetornarSuccess()
+    public async Task Handle_CommandHotWheelsValido_DebeGuardarYRetornarSuccess()
     {
-        _repo.AddAsync(Arg.Any<Producto>()).Returns(Task.CompletedTask);
+        _repo.AddAsync(Arg.Any<Producto>()).Returns(Task.FromResult(1));
 
         var command = new CrearProductoCommand
         {
-            Tipo    = TipoProducto.HotWheels,
-            Nombre  = "Camaro 1969",
-            Precio  = 25.00m,
-            Stock   = 3
-            // Ajustar campos del detalle según el DTO de tu comando
+            Tipo     = TipoProducto.HotWheels,
+            Nombre   = "Camaro 1969",
+            Precio   = 25m,
+            Unidades = 3,
+            HotWheels = new CrearHotWheelsDetalleDto("Camaro", 2020, "Muscle Mania", 1)
         };
 
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -52,15 +51,15 @@ public class CrearProductoCommandHandlerTests
     [Theory]
     [InlineData("")]
     [InlineData("   ")]
-    [InlineData(null!)]
-    public async Task Handle_NombreInvalido_DebeRetornarFailureSinPersistir(string? nombre)
+    public async Task Handle_NombreInvalido_DebeRetornarFailureSinPersistir(string nombre)
     {
         var command = new CrearProductoCommand
         {
-            Tipo   = TipoProducto.Funko,
-            Nombre = nombre!,
-            Precio = 15m,
-            Stock  = 1
+            Tipo     = TipoProducto.HotWheels,
+            Nombre   = nombre,
+            Precio   = 15m,
+            Unidades = 1,
+            HotWheels = new CrearHotWheelsDetalleDto("Camaro", 2020, "Test", 1)
         };
 
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -75,10 +74,11 @@ public class CrearProductoCommandHandlerTests
     {
         var command = new CrearProductoCommand
         {
-            Tipo   = TipoProducto.Toy,
-            Nombre = "Test",
-            Precio = -5m,
-            Stock  = 1
+            Tipo     = TipoProducto.HotWheels,
+            Nombre   = "Test",
+            Precio   = -5m,
+            Unidades = 1,
+            HotWheels = new CrearHotWheelsDetalleDto("Camaro", 2020, "Test", 1)
         };
 
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -88,6 +88,11 @@ public class CrearProductoCommandHandlerTests
     }
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// ObtenerProductosQueryHandler
+// Retorna IReadOnlyList<ProductoDto> directamente — sin Result wrapper
+// ═══════════════════════════════════════════════════════════════════════════
+
 public class ObtenerProductosQueryHandlerTests
 {
     private readonly IProductoRepository _repo;
@@ -95,40 +100,43 @@ public class ObtenerProductosQueryHandlerTests
 
     public ObtenerProductosQueryHandlerTests()
     {
-        _repo = Substitute.For<IProductoRepository>();
+        _repo    = Substitute.For<IProductoRepository>();
         _handler = new ObtenerProductosQueryHandler(_repo);
     }
 
     [Fact]
-    public async Task Handle_ExistenProductos_DebeRetornarDtosDeLosMismos()
+    public async Task Handle_ExistenProductos_DebeRetornarUnDtoPorProducto()
     {
         var productos = new List<Producto>
         {
-            FabricarProducto("Supra MK4",   TipoProducto.HotWheels),
-            FabricarProducto("Pikachu 25°", TipoProducto.Funko)
+            new(TipoProducto.HotWheels, new NombreProducto("Supra MK4"),   new Precio(10m), new Unidades(1)),
+            new(TipoProducto.Funko,     new NombreProducto("Pikachu 25°"), new Precio(15m), new Unidades(2))
         };
         _repo.GetAllAsync().Returns(productos);
 
+        // Retorna IReadOnlyList<ProductoDto>, no Result<>
         var result = await _handler.Handle(new ObtenerProductosQuery(), CancellationToken.None);
 
-        result.IsSuccess.Should().BeTrue();
-        result.Value.Should().HaveCount(2);
+        result.Should().HaveCount(2);
+        result.Should().ContainSingle(d => d.Nombre == "Supra MK4");
     }
 
     [Fact]
-    public async Task Handle_SinProductos_DebeRetornarListaVaciaConSuccess()
+    public async Task Handle_SinProductos_DebeRetornarListaVacia()
     {
         _repo.GetAllAsync().Returns(new List<Producto>());
 
         var result = await _handler.Handle(new ObtenerProductosQuery(), CancellationToken.None);
 
-        result.IsSuccess.Should().BeTrue();
-        result.Value.Should().BeEmpty();
+        result.Should().BeEmpty();
     }
-
-    private static Producto FabricarProducto(string nombre, TipoProducto tipo)
-        => new(tipo, new NombreProducto(nombre), new Precio(10m), new Unidades(1));
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// EliminarProductoCommandHandler
+// DeleteAsync recibe Producto, no int
+// Command acepta List<int>
+// ═══════════════════════════════════════════════════════════════════════════
 
 public class EliminarProductoCommandHandlerTests
 {
@@ -137,42 +145,45 @@ public class EliminarProductoCommandHandlerTests
 
     public EliminarProductoCommandHandlerTests()
     {
-        _repo = Substitute.For<IProductoRepository>();
+        _repo    = Substitute.For<IProductoRepository>();
         _handler = new EliminarProductoCommandHandler(_repo);
     }
 
     [Fact]
-    public async Task Handle_ProductoExistente_DebeEliminarYRetornarSuccess()
+    public async Task Handle_IdsValidos_DebeDelgarADeleteRangeYRetornarSuccess()
     {
-        var producto = new Producto(
-            TipoProducto.HotWheels,
-            new NombreProducto("Test"),
-            new Precio(10m),
-            new Unidades(1));
-
-        _repo.GetByIdAsync(1).Returns(producto);
-        _repo.DeleteAsync(1).Returns(Task.CompletedTask);
+        _repo.DeleteRangeAsync(Arg.Any<IEnumerable<int>>())
+             .Returns(Task.CompletedTask);
 
         var result = await _handler.Handle(
-            new EliminarProductoCommand { Id = 1 }, CancellationToken.None);
+            new EliminarProductoCommand(new List<int> { 1, 2 }),
+            CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
-        await _repo.Received(1).DeleteAsync(1);
+        await _repo.Received(1)
+                   .DeleteRangeAsync(Arg.Is<IEnumerable<int>>(ids =>
+                       ids.SequenceEqual(new[] { 1, 2 })));
     }
 
     [Fact]
-    public async Task Handle_ProductoInexistente_DebeRetornarFailureSinEliminar()
+    public async Task Handle_ExcepcionEnRepositorio_DebeRetornarFailure()
     {
-        _repo.GetByIdAsync(99).Returns((Producto?)null);
+        _repo.DeleteRangeAsync(Arg.Any<IEnumerable<int>>())
+             .Throw(new Exception("Error de BD"));
 
         var result = await _handler.Handle(
-            new EliminarProductoCommand { Id = 99 }, CancellationToken.None);
+            new EliminarProductoCommand(new List<int> { 99 }),
+            CancellationToken.None);
 
         result.IsSuccess.Should().BeFalse();
         result.Error.Should().NotBeNullOrEmpty();
-        await _repo.DidNotReceive().DeleteAsync(Arg.Any<int>());
     }
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// BuscarProductosQueryHandler
+// Retorna IReadOnlyList<ProductoBusquedaDto> directamente (sin Result)
+// ═══════════════════════════════════════════════════════════════════════════
 
 public class BuscarProductosQueryHandlerTests
 {
@@ -181,21 +192,35 @@ public class BuscarProductosQueryHandlerTests
 
     public BuscarProductosQueryHandlerTests()
     {
-        _repo = Substitute.For<IProductoRepository>();
+        _repo    = Substitute.For<IProductoRepository>();
         _handler = new BuscarProductosQueryHandler(_repo);
     }
 
     [Fact]
-    public async Task Handle_ConTerminoYTipo_DebeDelegarAlRepositorioConAmbosParametros()
+    public async Task Handle_ConTerminoYTipo_DebeDelegarConAmbosParametros()
     {
-        var esperados = new List<ProductoBusquedaResult>(); // vacío es suficiente
-        _repo.SearchAsync("Ford", TipoProducto.HotWheels).Returns(esperados);
+        _repo.SearchWithDetalleAsync("Ford", TipoProducto.HotWheels)
+             .Returns(new List<ProductoBusquedaResult>());
 
         var result = await _handler.Handle(
-            new BuscarProductosQuery { Termino = "Ford", Tipo = TipoProducto.HotWheels },
+            new BuscarProductosQuery("Ford", TipoProducto.HotWheels),
             CancellationToken.None);
 
-        result.IsSuccess.Should().BeTrue();
-        await _repo.Received(1).SearchAsync("Ford", TipoProducto.HotWheels);
+        result.Should().NotBeNull();
+        await _repo.Received(1).SearchWithDetalleAsync("Ford", TipoProducto.HotWheels);
+    }
+
+    [Fact]
+    public async Task Handle_SinFiltros_DebeLlamarConNulos()
+    {
+        _repo.SearchWithDetalleAsync(null, null)
+             .Returns(new List<ProductoBusquedaResult>());
+
+        var result = await _handler.Handle(
+            new BuscarProductosQuery(null, null),
+            CancellationToken.None);
+
+        result.Should().BeEmpty();
+        await _repo.Received(1).SearchWithDetalleAsync(null, null);
     }
 }

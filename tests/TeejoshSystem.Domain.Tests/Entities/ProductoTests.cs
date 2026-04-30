@@ -1,176 +1,223 @@
-using FluentAssertions;
 using TeejoshSystem.Domain.Entities;
 using TeejoshSystem.Domain.Entities.Detalles;
 using TeejoshSystem.Domain.Enums;
 using TeejoshSystem.Domain.ValueObjects;
 
 namespace TeejoshSystem.Domain.Tests.Entities;
-
+ 
 /// <summary>
 /// Cubre las invariantes de la entidad raíz Producto.
-/// No se testean getters triviales ni el constructor de EF (privado).
+///
+/// NOTA sobre constructores de detalles:
+/// Todos tienen constructor privado sin parámetros (para EF) y constructor
+/// público con parámetros requeridos. No se pueden instanciar con new().
+/// Los helpers de este archivo usan valores mínimos válidos según las
+/// validaciones de cada constructor.
 /// </summary>
 public class ProductoTests
 {
     // ── Helpers ───────────────────────────────────────────────────────────────
-
-    private static Producto CrearProducto(TipoProducto tipo, string nombre = "Test", decimal precio = 10m, int stock = 5)
+ 
+    private static Producto CrearProducto(
+        TipoProducto tipo,
+        string nombre = "Test",
+        decimal precio = 10m,
+        int stock = 5)
         => new(tipo,
                new NombreProducto(nombre),
                new Precio(precio),
                new Unidades(stock));
-
-    // ── AsignarDescripcion ────────────────────────────────────────────────────
-
+ 
+    // HotWheels: (modelo, anio, serie, categoriaId)
+    private static HotWheelsDetalle HotWheels()
+        => new("Modelo Test", 2020, "Serie Test", 1);
+ 
+    // Funko: (numeroCaja, licencia, subtipoId, caracteristicaEspecialId)
+    private static FunkoDetalle Funko()
+        => new(1, "Licencia Test", 1, null);
+ 
+    // Tcg: (packId, expansionId)
+    private static TcgDetalle Tcg()
+        => new(1, 1);
+ 
+    // Toy: (edadMinima, jugadoresMin, jugadoresMax, esJuegoDeMesa)
+    private static ToyDetalle Toy()
+        => new(3, 2, 4, false);
+ 
+    // Varios: (marca, alto, ancho, largo, material, tieneIlustracion)
+    private static VariosDetalle Varios()
+        => new("Marca Test", 10m, 5m, null, "Plástico", false);
+ 
+    // ── AsignarDescripcion — tipo correcto ────────────────────────────────────
+ 
     [Fact]
     public void AsignarDescripcion_HotWheelsEnProductoHotWheels_DebeAsignar()
     {
         var producto = CrearProducto(TipoProducto.HotWheels);
-        var detalle = new HotWheelsDetalle(); // ajustar propiedades si el constructor lo requiere
-
+        var detalle  = HotWheels();
+ 
         var act = () => producto.AsignarDescripcion(detalle);
-
+ 
         act.Should().NotThrow();
         producto.Descripcion.Should().BeSameAs(detalle);
     }
-
+ 
     [Fact]
-    public void AsignarDescripcion_FunkoEnProductoHotWheels_DebeArrojarInvalidOperationException()
+    public void AsignarDescripcion_FunkoEnProductoFunko_DebeAsignar()
+    {
+        var producto = CrearProducto(TipoProducto.Funko);
+        var detalle  = Funko();
+ 
+        var act = () => producto.AsignarDescripcion(detalle);
+ 
+        act.Should().NotThrow();
+        producto.Descripcion.Should().BeSameAs(detalle);
+    }
+ 
+    // ── AsignarDescripcion — tipo incorrecto ──────────────────────────────────
+ 
+    [Fact]
+    public void AsignarDescripcion_FunkoEnProductoHotWheels_DebeArrojarConMensajeDescriptivo()
     {
         var producto = CrearProducto(TipoProducto.HotWheels);
-        var detalleIncorrecto = new FunkoDetalle();
-
-        var act = () => producto.AsignarDescripcion(detalleIncorrecto);
-
+ 
+        var act = () => producto.AsignarDescripcion(Funko());
+ 
         act.Should().Throw<InvalidOperationException>()
-           .WithMessage("*FunkoDetalle*")
-           .And.Message.Should().Contain("HotWheels");
+           .WithMessage("*FunkoDetalle*");
     }
-
+ 
     [Theory]
     [MemberData(nameof(DetalleTipoIncorrectoCasos))]
-    public void AsignarDescripcion_ConDetalleTipoIncorrecto_SiempreArrojaExcepcion(
-        TipoProducto tipoProducto, ProductoDetalle detalleIncorrecto)
+    public void AsignarDescripcion_ConDetalleTipoIncorrecto_SiempreArrojaInvalidOperationException(
+        TipoProducto tipoProducto,
+        ProductoDetalle detalleIncorrecto)
     {
         var producto = CrearProducto(tipoProducto);
-
+ 
         var act = () => producto.AsignarDescripcion(detalleIncorrecto);
-
+ 
         act.Should().Throw<InvalidOperationException>();
     }
-
+ 
+    /// <summary>
+    /// Cada fila: (tipo del producto, detalle incompatible con ese tipo).
+    /// Se usan dos detalles distintos por tipo para verificar que la
+    /// validación no es accidental.
+    /// </summary>
     public static IEnumerable<object[]> DetalleTipoIncorrectoCasos()
     {
-        yield return [TipoProducto.HotWheels, new FunkoDetalle()];
-        yield return [TipoProducto.HotWheels, new TcgDetalle()];
-        yield return [TipoProducto.Funko,     new HotWheelsDetalle()];
-        yield return [TipoProducto.Tcg,       new ToyDetalle()];
-        yield return [TipoProducto.Toy,       new VariosDetalle()];
-        yield return [TipoProducto.Varios,    new HotWheelsDetalle()];
+        yield return [TipoProducto.HotWheels, Funko()];
+        yield return [TipoProducto.HotWheels, Tcg()];
+        yield return [TipoProducto.Funko,     HotWheels()];
+        yield return [TipoProducto.Funko,     Toy()];
+        yield return [TipoProducto.Tcg,       Funko()];
+        yield return [TipoProducto.Toy,       Varios()];
+        yield return [TipoProducto.Varios,    HotWheels()];
     }
-
+ 
     [Fact]
     public void AsignarDescripcion_ConNull_DebeArrojarArgumentNullException()
     {
         var producto = CrearProducto(TipoProducto.Funko);
-
+ 
         var act = () => producto.AsignarDescripcion(null!);
-
+ 
         act.Should().Throw<ArgumentNullException>();
     }
-
+ 
     // ── ReducirStock ──────────────────────────────────────────────────────────
-
+ 
     [Fact]
     public void ReducirStock_ConStockSuficiente_DebeActualizarStock()
     {
         var producto = CrearProducto(TipoProducto.HotWheels, stock: 10);
-
+ 
         producto.ReducirStock(3);
-
+ 
         producto.Stock.Value.Should().Be(7);
     }
-
+ 
     [Fact]
     public void ReducirStock_CantidadExacta_DebeDejarStockEnCero()
     {
         var producto = CrearProducto(TipoProducto.HotWheels, stock: 5);
-
+ 
         producto.ReducirStock(5);
-
+ 
         producto.Stock.Value.Should().Be(0);
     }
-
+ 
     [Fact]
-    public void ReducirStock_SinStockSuficiente_DebeArrojarInvalidOperationException()
+    public void ReducirStock_CantidadMayorAlStock_DebeArrojarInvalidOperationException()
     {
         // Invariante crítica: nunca stock negativo
         var producto = CrearProducto(TipoProducto.HotWheels, stock: 2);
-
+ 
         var act = () => producto.ReducirStock(5);
-
+ 
         act.Should().Throw<InvalidOperationException>()
            .WithMessage("*Stock insuficiente*");
     }
-
+ 
     [Fact]
     public void ReducirStock_StockEnCero_DebeArrojar()
     {
         var producto = CrearProducto(TipoProducto.HotWheels, stock: 0);
-
+ 
         var act = () => producto.ReducirStock(1);
-
+ 
         act.Should().Throw<InvalidOperationException>();
     }
-
+ 
     // ── AgregarStock ──────────────────────────────────────────────────────────
-
+ 
     [Fact]
     public void AgregarStock_DebeIncrementarStock()
     {
         var producto = CrearProducto(TipoProducto.Funko, stock: 3);
-
+ 
         producto.AgregarStock(7);
-
+ 
         producto.Stock.Value.Should().Be(10);
     }
-
+ 
     // ── ActualizarDatos ───────────────────────────────────────────────────────
-
+ 
     [Fact]
     public void ActualizarDatos_ConDatosValidos_DebeReemplazarPropiedades()
     {
         var producto = CrearProducto(TipoProducto.HotWheels, nombre: "Original", precio: 10m, stock: 1);
-
+ 
         producto.ActualizarDatos(
             new NombreProducto("Actualizado"),
             new Precio(99.99m),
             new Unidades(50));
-
+ 
         producto.Nombre.Value.Should().Be("Actualizado");
         producto.Precio.Value.Should().Be(99.99m);
         producto.Stock.Value.Should().Be(50);
     }
-
+ 
     [Fact]
     public void ActualizarDatos_ConNombreNull_DebeArrojarArgumentNullException()
     {
         var producto = CrearProducto(TipoProducto.Funko);
-
+ 
         var act = () => producto.ActualizarDatos(null!, new Precio(10m), new Unidades(1));
-
+ 
         act.Should().Throw<ArgumentNullException>();
     }
-
+ 
     // ── CambiarPrecio ─────────────────────────────────────────────────────────
-
+ 
     [Fact]
     public void CambiarPrecio_DebeReemplazarPrecio()
     {
         var producto = CrearProducto(TipoProducto.Toy, precio: 5m);
-
+ 
         producto.CambiarPrecio(new Precio(25m));
-
+ 
         producto.Precio.Value.Should().Be(25m);
     }
 }

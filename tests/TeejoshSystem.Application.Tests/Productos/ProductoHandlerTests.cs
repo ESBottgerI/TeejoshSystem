@@ -168,7 +168,8 @@ public class EliminarProductoCommandHandlerTests
     [Fact]
     public async Task Handle_ExcepcionEnRepositorio_DebeRetornarFailure()
     {
-        _repo.DeleteRangeAsync(Arg.Any<IEnumerable<int>>())
+        // NSubstitute: When(...).Throw(...) para simular excepciones en async
+        _repo.When(x => x.DeleteRangeAsync(Arg.Any<IEnumerable<int>>()))
              .Throw(new Exception("Error de BD"));
 
         var result = await _handler.Handle(

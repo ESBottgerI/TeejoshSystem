@@ -1,4 +1,4 @@
-using FluentAssertions;
+using Microsoft.EntityFrameworkCore;
 using TeejoshSystem.Domain.Entities;
 using TeejoshSystem.Domain.Entities.Detalles;
 using TeejoshSystem.Domain.Enums;
@@ -9,13 +9,14 @@ using TeejoshSystem.Infrastructure.Tests.Fixtures;
 namespace TeejoshSystem.Infrastructure.Tests.Repositories;
 
 /// <summary>
-/// Tests de integración de ProductoRepository contra SQLite real.
-/// IClassFixture comparte una sola BD por clase; LimpiarDatos() aísla cada test.
+/// Tests de integración contra SQLite real.
+/// IClassFixture comparte una BD por clase; LimpiarDatos() aísla cada test.
 ///
-/// Qué se verifica aquí que los tests de Application NO pueden:
-/// - Que el SQL raw de SearchAsync funciona con la columna discriminadora `type`
-/// - Que ON DELETE CASCADE elimina los detalles al eliminar el producto
-/// - Que las configuraciones Fluent API mapean correctamente a columnas SQLite
+/// Qué se verifica aquí que Application.Tests no puede:
+/// - SQL raw de SearchWithDetalleAsync funciona con la columna discriminadora `type`
+/// - ON DELETE CASCADE elimina detalles al eliminar el producto
+/// - Configuraciones Fluent API mapean correctamente a las tablas SQLite
+/// - AddAsync persiste producto Y detalle en la misma transacción
 /// </summary>
 public class ProductoRepositoryTests : IClassFixture<DatabaseFixture>
 {
@@ -29,7 +30,7 @@ public class ProductoRepositoryTests : IClassFixture<DatabaseFixture>
         _fixture.LimpiarDatos();
     }
 
-    // ── AddAsync ──────────────────────────────────────────────────────────────
+    // ── AddAsync + GetByIdWithDetalleAsync ────────────────────────────────────
 
     [Fact]
     public async Task AddAsync_ProductoHotWheels_DebePersistitrProductoYDetalle()
@@ -37,9 +38,8 @@ public class ProductoRepositoryTests : IClassFixture<DatabaseFixture>
         var producto = FabricarHotWheels("Ford Mustang 1968");
 
         await _repo.AddAsync(producto);
-        await _fixture.Context.SaveChangesAsync();
 
-        var enBd = await _repo.GetByIdAsync(producto.Id);
+        var enBd = await _repo.GetByIdWithDetalleAsync(producto.Id);
         enBd.Should().NotBeNull();
         enBd!.Nombre.Value.Should().Be("Ford Mustang 1968");
         enBd.Tipo.Should().Be(TipoProducto.HotWheels);
@@ -53,9 +53,8 @@ public class ProductoRepositoryTests : IClassFixture<DatabaseFixture>
         var producto = FabricarFunko("Pikachu Oversized");
 
         await _repo.AddAsync(producto);
-        await _fixture.Context.SaveChangesAsync();
 
-        var enBd = await _repo.GetByIdAsync(producto.Id);
+        var enBd = await _repo.GetByIdWithDetalleAsync(producto.Id);
         enBd.Should().NotBeNull();
         enBd!.Tipo.Should().Be(TipoProducto.Funko);
         enBd.Descripcion.Should().BeOfType<FunkoDetalle>();
@@ -69,7 +68,6 @@ public class ProductoRepositoryTests : IClassFixture<DatabaseFixture>
         await _repo.AddAsync(FabricarHotWheels("A"));
         await _repo.AddAsync(FabricarHotWheels("B"));
         await _repo.AddAsync(FabricarFunko("C"));
-        await _fixture.Context.SaveChangesAsync();
 
         var todos = await _repo.GetAllAsync();
 
@@ -84,73 +82,108 @@ public class ProductoRepositoryTests : IClassFixture<DatabaseFixture>
         todos.Should().BeEmpty();
     }
 
-    // ── SearchAsync ───────────────────────────────────────────────────────────
-    // Estos tests son los más críticos: verifican el SQL raw con la columna `type`
+    // ── GetByIdAsync ──────────────────────────────────────────────────────────
 
     [Fact]
-    public async Task SearchAsync_PorNombre_DebeRetornarSoloCoincidencias()
+    public async Task GetByIdAsync_IdExistente_DebeRetornarProducto()
+    {
+        var producto = FabricarHotWheels("BMW M3");
+        await _repo.AddAsync(producto);
+
+        var enBd = await _repo.GetByIdAsync(producto.Id);
+
+        enBd.Should().NotBeNull();
+        enBd!.Nombre.Value.Should().Be("BMW M3");
+    }
+
+    [Fact]
+    public async Task GetByIdAsync_IdInexistente_DebeRetornarNull()
+    {
+        var enBd = await _repo.GetByIdAsync(99999);
+
+        enBd.Should().BeNull();
+    }
+
+    // ── SearchWithDetalleAsync ────────────────────────────────────────────────
+    // Estos tests son los más críticos: verifican el SQL raw con JOIN
+    // y la columna discriminadora `type`
+
+    [Fact]
+    public async Task SearchWithDetalleAsync_PorNombre_DebeRetornarSoloCoincidencias()
     {
         await _repo.AddAsync(FabricarHotWheels("Ford GT"));
         await _repo.AddAsync(FabricarHotWheels("Ford Mustang"));
         await _repo.AddAsync(FabricarHotWheels("Toyota Supra"));
-        await _fixture.Context.SaveChangesAsync();
 
-        var resultado = await _repo.SearchAsync("Ford", null);
+        var resultado = await _repo.SearchWithDetalleAsync("Ford", null);
 
         resultado.Should().HaveCount(2);
-        resultado.Should().AllSatisfy(p => p.Nombre.Should().Contain("Ford"));
+        resultado.Should().AllSatisfy(p =>
+            p.Nombre.Should().Contain("Ford"));
     }
 
     [Fact]
-    public async Task SearchAsync_PorTipo_DebeRetornarSoloEseTipo()
+    public async Task SearchWithDetalleAsync_PorTipo_DebeRetornarSoloEseTipo()
     {
         await _repo.AddAsync(FabricarHotWheels("HW Test"));
         await _repo.AddAsync(FabricarFunko("Funko Test"));
-        await _fixture.Context.SaveChangesAsync();
 
-        var resultado = await _repo.SearchAsync(null, TipoProducto.HotWheels);
+        var resultado = await _repo.SearchWithDetalleAsync(null, TipoProducto.HotWheels);
 
         resultado.Should().HaveCount(1);
-        resultado.First().Tipo.Should().Be(TipoProducto.HotWheels.ToString());
+        resultado.Single().Tipo.Should().Be(TipoProducto.HotWheels);
     }
 
     [Fact]
-    public async Task SearchAsync_PorNombreYTipo_DebeAplicarAmbosFiltos()
+    public async Task SearchWithDetalleAsync_PorNombreYTipo_DebeAplicarAmbosFiltros()
     {
         await _repo.AddAsync(FabricarHotWheels("Ford HotWheels"));
         await _repo.AddAsync(FabricarFunko("Ford Funko"));
-        await _fixture.Context.SaveChangesAsync();
 
-        var resultado = await _repo.SearchAsync("Ford", TipoProducto.HotWheels);
+        var resultado = await _repo.SearchWithDetalleAsync("Ford", TipoProducto.HotWheels);
 
         resultado.Should().HaveCount(1);
         resultado.Single().Nombre.Should().Contain("Ford");
-        resultado.Single().Tipo.Should().Be(TipoProducto.HotWheels.ToString());
+        resultado.Single().Tipo.Should().Be(TipoProducto.HotWheels);
     }
 
     [Fact]
-    public async Task SearchAsync_SinCoincidencias_DebeRetornarVacio()
+    public async Task SearchWithDetalleAsync_SinCoincidencias_DebeRetornarVacio()
     {
         await _repo.AddAsync(FabricarHotWheels("Toyota"));
-        await _fixture.Context.SaveChangesAsync();
 
-        var resultado = await _repo.SearchAsync("BMW", null);
+        var resultado = await _repo.SearchWithDetalleAsync("BMW", null);
 
         resultado.Should().BeEmpty();
     }
 
-    // ── DeleteAsync ───────────────────────────────────────────────────────────
+    [Fact]
+    public async Task SearchWithDetalleAsync_DebeRetornarProductoConResumen()
+    {
+        // Verifica que el resultado incluye el producto.
+        // DetalleResumen depende del JOIN con la tabla de detalles —
+        // si devuelve "Sin detalle" indica que la FK category_id no tiene
+        // dato en hot_wheels_category. El test valida que el campo existe.
+        await _repo.AddAsync(FabricarHotWheels("Camaro"));
+
+        var resultado = await _repo.SearchWithDetalleAsync("Camaro", null);
+
+        resultado.Should().HaveCount(1);
+        resultado.Single().DetalleResumen.Should().NotBeNull();
+        resultado.Single().Nombre.Should().Be("Camaro");
+    }
+
+    // ── DeleteAsync + CASCADE ─────────────────────────────────────────────────
 
     [Fact]
     public async Task DeleteAsync_DebeEliminarProductoYCascadearDetalle()
     {
         var producto = FabricarHotWheels("Para Eliminar");
         await _repo.AddAsync(producto);
-        await _fixture.Context.SaveChangesAsync();
         var id = producto.Id;
 
-        await _repo.DeleteAsync(id);
-        await _fixture.Context.SaveChangesAsync();
+        // DeleteAsync recibe la entidad completa
+        await _repo.DeleteAsync(producto);
 
         // El producto ya no existe
         var enBd = await _repo.GetByIdAsync(id);
@@ -158,9 +191,51 @@ public class ProductoRepositoryTests : IClassFixture<DatabaseFixture>
 
         // El detalle tampoco existe (ON DELETE CASCADE)
         var detalleEnBd = await _fixture.Context
-            .Set<HotWheelsDetalle>()
-            .FindAsync(id);
+            .HotWheelsDetalles
+            .FirstOrDefaultAsync(d => d.ProductoId == id);
         detalleEnBd.Should().BeNull();
+    }
+
+    // ── UpdateAsync ───────────────────────────────────────────────────────────
+
+    [Fact]
+    public async Task UpdateAsync_DebePersistitrCambiosEnBd()
+    {
+        var producto = FabricarHotWheels("Original");
+        await _repo.AddAsync(producto);
+
+        producto.ActualizarDatos(
+            new NombreProducto("Actualizado"),
+            new Precio(99m),
+            new Unidades(10));
+        await _repo.UpdateAsync(producto);
+
+        _fixture.Context.ChangeTracker.Clear();
+        var enBd = await _repo.GetByIdAsync(producto.Id);
+        enBd!.Nombre.Value.Should().Be("Actualizado");
+        enBd.Precio.Value.Should().Be(99m);
+        enBd.Stock.Value.Should().Be(10);
+    }
+
+    // ── ExistsAsync ───────────────────────────────────────────────────────────
+
+    [Fact]
+    public async Task ExistsAsync_IdExistente_DebeRetornarTrue()
+    {
+        var producto = FabricarHotWheels("Existe");
+        await _repo.AddAsync(producto);
+
+        var existe = await _repo.ExistsAsync(producto.Id);
+
+        existe.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task ExistsAsync_IdInexistente_DebeRetornarFalse()
+    {
+        var existe = await _repo.ExistsAsync(99999);
+
+        existe.Should().BeFalse();
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
@@ -172,12 +247,7 @@ public class ProductoRepositoryTests : IClassFixture<DatabaseFixture>
             new NombreProducto(nombre),
             new Precio(20m),
             new Unidades(5));
-        p.AsignarDescripcion(new HotWheelsDetalle
-        {
-            // Ajustar propiedades requeridas según tu entidad HotWheelsDetalle
-            Modelo = "Modelo Test",
-            Anio   = 2024
-        });
+        p.AsignarDescripcion(new HotWheelsDetalle("Modelo Test", 2024, "Serie Test", 1));
         return p;
     }
 
@@ -188,11 +258,7 @@ public class ProductoRepositoryTests : IClassFixture<DatabaseFixture>
             new NombreProducto(nombre),
             new Precio(15m),
             new Unidades(3));
-        p.AsignarDescripcion(new FunkoDetalle
-        {
-            NumCaja  = "001",
-            Licencia = "Test"
-        });
+        p.AsignarDescripcion(new FunkoDetalle(1, "Licencia Test", 1, null));
         return p;
     }
 }

@@ -1,5 +1,0 @@
-In "Tests." directory
-dotnet test --collect:"XPlat Code Coverage"
-
-In main directory
-dotnet test tests/TeejoshSystem.x.Tests/

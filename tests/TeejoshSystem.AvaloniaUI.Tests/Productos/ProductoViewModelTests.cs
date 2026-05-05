@@ -1,101 +1,120 @@
-using FluentAssertions;
-using MediatR;
-using NSubstitute;
-using TeejoshSystem.Application.Common;
 using TeejoshSystem.Application.Common.Dtos;
-using TeejoshSystem.Application.Ports.Inbound.Productos.Commands;
-using TeejoshSystem.Application.Ports.Inbound.Productos.Queries;
+using TeejoshSystem.Application.Ports.Inbound.Catalogos.Queries.ObtenerCatalogos;
+using TeejoshSystem.Application.Ports.Inbound.Productos.Commands.EliminarProducto;
+using TeejoshSystem.Application.Ports.Inbound.Productos.Queries.BuscarProductos;
 using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Productos;
 using TeejoshSystem.Domain.Enums;
+using System.Linq;
 
 namespace TeejoshSystem.AvaloniaUI.Tests.Productos;
 
-/// <summary>
-/// Tests de ViewModels de Productos.
-/// Los ViewModels son clases C# puras — no se levanta Avalonia.
-/// IMediator se mockea con NSubstitute.
-///
-/// Qué se verifica aquí:
-/// - Que OnLoadedAsync dispara la query correcta y popula la colección
-/// - Que BuscarAsync dispara la query con el término correcto
-/// - Que EliminarProductoAsync llama al command correcto y recarga
-/// - Que el estado de la colección refleja la respuesta del mediator
-///
-/// AJUSTE REQUERIDO: los namespaces de ViewModels pueden variar.
-/// Verifica con el árbol real de tu proyecto AvaloniaUI.
-/// </summary>
+// ═══════════════════════════════════════════════════════════════════════════
+// GestionarProductosViewModel
+//
+// El constructor dispara _ = BuscarAsync() → mock de BuscarProductosQuery
+// requerido antes de crear la instancia.
+// TipoFiltro es TipoProductoFiltroItem, no TipoProducto.
+// TextoBusqueda (no TerminoBusqueda).
+// EliminarAsync es un RelayCommand que internamente llama a IConfirmationService.
+// ═══════════════════════════════════════════════════════════════════════════
+
 public class GestionarProductosViewModelTests
 {
     private readonly IMediator _mediator;
-    private readonly GestionarProductosViewModel _vm;
+    private readonly INotificationService _notification;
+    private readonly IConfirmationService _confirmation;
+    private readonly INavigationService _navigation;
 
     public GestionarProductosViewModelTests()
     {
         _mediator = Substitute.For<IMediator>();
-        _vm = new GestionarProductosViewModel(_mediator);
+        _notification = Substitute.For<INotificationService>();
+        _confirmation = Substitute.For<IConfirmationService>();
+        _navigation = Substitute.For<INavigationService>();
+
+        // El constructor llama BuscarAsync() → necesita este mock
+        ConfigurarBusquedaVacia();
     }
 
-    // ── OnLoadedAsync ─────────────────────────────────────────────────────────
-
-    [Fact]
-    public async Task OnLoadedAsync_DebeCargarListaDeProductos()
-    {
-        var productos = new List<ProductoDto>
-        {
-            new() { Id = 1, Nombre = "Ford GT",      Tipo = "HotWheels", Precio = 25m, Stock = 5 },
-            new() { Id = 2, Nombre = "Pikachu 25°",  Tipo = "Funko",     Precio = 15m, Stock = 2 }
-        };
-
-        _mediator
-            .Send(Arg.Any<ObtenerProductosQuery>(), Arg.Any<CancellationToken>())
-            .Returns(Result.Success<IEnumerable<ProductoDto>>(productos));
-
-        await _vm.OnLoadedAsync();
-
-        _vm.Productos.Should().HaveCount(2);
-        _vm.Productos.Should().ContainSingle(p => p.Nombre == "Ford GT");
-    }
-
-    [Fact]
-    public async Task OnLoadedAsync_RespuestaVacia_DebeDejarColeccionVacia()
-    {
-        _mediator
-            .Send(Arg.Any<ObtenerProductosQuery>(), Arg.Any<CancellationToken>())
-            .Returns(Result.Success<IEnumerable<ProductoDto>>(Enumerable.Empty<ProductoDto>()));
-
-        await _vm.OnLoadedAsync();
-
-        _vm.Productos.Should().BeEmpty();
-    }
-
-    // ── Búsqueda ──────────────────────────────────────────────────────────────
-
-    [Fact]
-    public async Task BuscarAsync_ConTermino_DebeEnviarQueryConTerminoCorreto()
+    private void ConfigurarBusquedaVacia()
     {
         _mediator
             .Send(Arg.Any<BuscarProductosQuery>(), Arg.Any<CancellationToken>())
-            .Returns(Result.Success<IEnumerable<ProductoBusquedaResult>>(Enumerable.Empty<ProductoBusquedaResult>()));
+            .Returns(new List<ProductoBusquedaDto>());
+    }
 
-        _vm.TerminoBusqueda = "Ford";
-        await _vm.BuscarAsync();
+    private GestionarProductosViewModel CrearVm()
+        => new(_mediator, _notification, _confirmation, _navigation);
 
-        await _mediator.Received(1).Send(
-            Arg.Is<BuscarProductosQuery>(q => q.Termino == "Ford"),
+    // ── Constructor / BuscarAsync inicial ─────────────────────────────────────
+
+    [Fact]
+    public async Task Constructor_DebeLanzarBusquedaInicial()
+    {
+        var vm = CrearVm();
+
+        // Esperar que el fire-and-forget del constructor complete
+        await Task.Delay(100);
+
+        await _mediator.Received().Send(
+            Arg.Any<BuscarProductosQuery>(),
             Arg.Any<CancellationToken>());
     }
 
     [Fact]
-    public async Task BuscarAsync_ConFiltroTipo_DebeEnviarQueryConTipoCorrecto()
+    public async Task BuscarAsync_ResultadosDevueltos_DebePopularColeccion()
     {
+        var productos = new List<ProductoBusquedaDto>
+        {
+            new() { Id = 1, Tipo = TipoProducto.HotWheels, Nombre = "Ford GT",     Precio = 25m, Unidades = 5, DetalleResumen = "Test" },
+            new() { Id = 2, Tipo = TipoProducto.Funko,     Nombre = "Pikachu 25°", Precio = 15m, Unidades = 2, DetalleResumen = "Test" }
+        };
+
         _mediator
             .Send(Arg.Any<BuscarProductosQuery>(), Arg.Any<CancellationToken>())
-            .Returns(Result.Success<IEnumerable<ProductoBusquedaResult>>(Enumerable.Empty<ProductoBusquedaResult>()));
+            .Returns(productos);
 
-        _vm.TipoFiltro = TipoProducto.HotWheels;
-        await _vm.BuscarAsync();
+        var vm = CrearVm();
+        await vm.BuscarCommand.ExecuteAsync(null);
 
-        await _mediator.Received(1).Send(
+        vm.Productos.Should().HaveCount(2);
+        vm.Productos.Should().ContainSingle(p => p.Nombre == "Ford GT");
+    }
+
+    [Fact]
+    public async Task BuscarAsync_SinResultados_DebeDejarColeccionVacia()
+    {
+        var vm = CrearVm();
+        await vm.BuscarCommand.ExecuteAsync(null);
+
+        vm.Productos.Should().BeEmpty();
+    }
+
+    // ── Filtros ───────────────────────────────────────────────────────────────
+
+    [Fact]
+    public async Task BuscarAsync_ConTextoBusqueda_DebeEnviarTerminoAlQuery()
+    {
+        var vm = CrearVm();
+        vm.TextoBusqueda = "Ford";
+
+        await vm.BuscarCommand.ExecuteAsync(null);
+
+        await _mediator.Received().Send(
+            Arg.Is<BuscarProductosQuery>(q => q.Nombre == "Ford"),
+            Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task BuscarAsync_ConFiltroTipo_DebeEnviarTipoAlQuery()
+    {
+        var vm = CrearVm();
+        // TipoFiltro es TipoProductoFiltroItem, no TipoProducto directo
+        vm.TipoFiltro = new TipoProductoFiltroItem("Hot Wheels", TipoProducto.HotWheels);
+
+        await vm.BuscarCommand.ExecuteAsync(null);
+
+        await _mediator.Received().Send(
             Arg.Is<BuscarProductosQuery>(q => q.Tipo == TipoProducto.HotWheels),
             Arg.Any<CancellationToken>());
     }
@@ -103,49 +122,62 @@ public class GestionarProductosViewModelTests
     // ── Eliminación ───────────────────────────────────────────────────────────
 
     [Fact]
-    public async Task EliminarProductoAsync_Confirmado_DebeEnviarCommandYRecargarLista()
+    public async Task EliminarCommand_SinSeleccion_NoDebeEjecutarse()
     {
-        var productoSeleccionado = new ProductoDto { Id = 5, Nombre = "Test" };
-        _vm.ProductoSeleccionado = productoSeleccionado;
+        var vm = CrearVm();
+        vm.ProductoSeleccionado = null;
 
+        // EliminarCommand tiene CanExecute = HaySeleccion()
+        vm.EliminarCommand.CanExecute(null).Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task EliminarCommand_ConfirmadoPorUsuario_DebeEnviarCommandYRecargar()
+    {
+        var productoSeleccionado = new ProductoBusquedaDto
+        {
+            Id = 5,
+            Tipo = TipoProducto.Funko,
+            Nombre = "Test",
+            Precio = 10m,
+            Unidades = 1,
+            DetalleResumen = "Test"
+        };
+
+        _confirmation.ConfirmAsync(Arg.Any<string>(), Arg.Any<string>())
+                     .Returns(true);
         _mediator
             .Send(Arg.Any<EliminarProductoCommand>(), Arg.Any<CancellationToken>())
-            .Returns(Result.Success());
+            .Returns(TeejoshSystem.Application.Common.Result.Success());
 
-        _mediator
-            .Send(Arg.Any<ObtenerProductosQuery>(), Arg.Any<CancellationToken>())
-            .Returns(Result.Success<IEnumerable<ProductoDto>>(Enumerable.Empty<ProductoDto>()));
+        var vm = CrearVm();
+        vm.ProductoSeleccionado = productoSeleccionado;
 
-        await _vm.EliminarProductoAsync(confirmar: true);
+        await vm.EliminarCommand.ExecuteAsync(null);
 
         await _mediator.Received(1).Send(
-            Arg.Is<EliminarProductoCommand>(c => c.Id == 5),
-            Arg.Any<CancellationToken>());
-
-        // después de eliminar recarga la lista
-        await _mediator.Received(1).Send(
-            Arg.Any<ObtenerProductosQuery>(),
+            Arg.Is<EliminarProductoCommand>(c => c.ProductoIds.Contains(5)),
             Arg.Any<CancellationToken>());
     }
 
     [Fact]
-    public async Task EliminarProductoAsync_SinConfirmar_NuncaEnviaCommand()
+    public async Task EliminarCommand_RechazadoPorUsuario_NuncaEnviaCommand()
     {
-        _vm.ProductoSeleccionado = new ProductoDto { Id = 3 };
+        _confirmation.ConfirmAsync(Arg.Any<string>(), Arg.Any<string>())
+                     .Returns(false);
 
-        await _vm.EliminarProductoAsync(confirmar: false);
+        var vm = CrearVm();
+        vm.ProductoSeleccionado = new ProductoBusquedaDto
+        {
+            Id = 3,
+            Tipo = TipoProducto.HotWheels,
+            Nombre = "Test",
+            Precio = 10m,
+            Unidades = 1,
+            DetalleResumen = "Test"
+        };
 
-        await _mediator.DidNotReceive().Send(
-            Arg.Any<EliminarProductoCommand>(),
-            Arg.Any<CancellationToken>());
-    }
-
-    [Fact]
-    public async Task EliminarProductoAsync_SinProductoSeleccionado_NuncaEnviaCommand()
-    {
-        _vm.ProductoSeleccionado = null;
-
-        await _vm.EliminarProductoAsync(confirmar: true);
+        await vm.EliminarCommand.ExecuteAsync(null);
 
         await _mediator.DidNotReceive().Send(
             Arg.Any<EliminarProductoCommand>(),
@@ -153,54 +185,141 @@ public class GestionarProductosViewModelTests
     }
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// CrearProductoViewModel
+//
+// Hereda ValidatableViewModel — tiene HasErrors, AddError, ClearErrors.
+// Constructor dispara CargarCatalogosAsync() → mock de ObtenerCatalogosQuery.
+// CanGuardar() = !HasErrors && !IsBusy && CatalogosCargados.
+// Las validaciones se disparan en los partial OnXxxChanged().
+// ═══════════════════════════════════════════════════════════════════════════
+
 public class CrearProductoViewModelTests
 {
     private readonly IMediator _mediator;
-    private readonly CrearProductoViewModel _vm;
+    private readonly INotificationService _notification;
+    private readonly IConfirmationService _confirmation;
+    private readonly INavigationService _navigation;
 
     public CrearProductoViewModelTests()
     {
         _mediator = Substitute.For<IMediator>();
-        _vm = new CrearProductoViewModel(_mediator);
+        _notification = Substitute.For<INotificationService>();
+        _confirmation = Substitute.For<IConfirmationService>();
+        _navigation = Substitute.For<INavigationService>();
+
+        // Constructor dispara CargarCatalogosAsync() → mock mínimo
+        _mediator
+            .Send(Arg.Any<ObtenerCatalogosQuery>(), Arg.Any<CancellationToken>())
+            .Returns(new CatalogosDto
+            {
+                CategoriasHotWheels = new List<CatalogoItemDto>(),
+                SubtiposFunko = new List<CatalogoItemDto>(),
+                CaracteristicasFunko = new List<CatalogoItemDto>(),
+                FranquiciasTcg = new List<CatalogoItemDto>()
+            });
+    }
+
+    private CrearProductoViewModel CrearVm()
+        => new(_mediator, _notification, _confirmation, _navigation);
+
+    // ── Visibilidad de paneles ────────────────────────────────────────────────
+
+    [Fact]
+    public void TipoSeleccionado_HotWheels_SoloPanelHotWheelsVisible()
+    {
+        var vm = CrearVm();
+        vm.TipoSeleccionado = new TipoProductoFiltroItem("Hot Wheels", TipoProducto.HotWheels);
+
+        vm.MostrarHotWheels.Should().BeTrue();
+        vm.MostrarFunko.Should().BeFalse();
+        vm.MostrarTcg.Should().BeFalse();
+        vm.MostrarToy.Should().BeFalse();
+        vm.MostrarVarios.Should().BeFalse();
     }
 
     [Fact]
-    public async Task GuardarAsync_CommandExitoso_DebeNotificarExitoYLimpiarFormulario()
+    public void TipoSeleccionado_Funko_SoloPanelFunkoVisible()
     {
-        _mediator
-            .Send(Arg.Any<CrearProductoCommand>(), Arg.Any<CancellationToken>())
-            .Returns(Result.Success());
+        var vm = CrearVm();
+        vm.TipoSeleccionado = new TipoProductoFiltroItem("Funko", TipoProducto.Funko);
 
-        _vm.Nombre = "Ford Mustang";
-        _vm.Precio = 25m;
-        _vm.Stock  = 3;
-        _vm.Tipo   = TipoProducto.HotWheels;
+        vm.MostrarFunko.Should().BeTrue();
+        vm.MostrarHotWheels.Should().BeFalse();
+    }
 
-        await _vm.GuardarAsync();
+    // ── Validaciones ──────────────────────────────────────────────────────────
 
-        await _mediator.Received(1).Send(
-            Arg.Is<CrearProductoCommand>(c =>
-                c.Nombre == "Ford Mustang" &&
-                c.Precio == 25m &&
-                c.Stock  == 3),
-            Arg.Any<CancellationToken>());
+    [Fact]
+    public void Nombre_CuandoVacio_DebeAgregarError()
+    {
+        var vm = CrearVm();
+
+        vm.Nombre = "";
+
+        vm.HasErrors.Should().BeTrue();
     }
 
     [Fact]
-    public async Task GuardarAsync_CommandFallido_NoDebeLimpiarFormulario()
+    public void Nombre_CuandoValido_NoDebeAgregarError()
     {
-        _mediator
-            .Send(Arg.Any<CrearProductoCommand>(), Arg.Any<CancellationToken>())
-            .Returns(Result.Failure("Error de validación"));
+        var vm = CrearVm();
 
-        _vm.Nombre = "Test";
-        _vm.Precio = 10m;
-        _vm.Stock  = 1;
-        _vm.Tipo   = TipoProducto.Funko;
+        vm.Nombre = "Ford Mustang";
 
-        await _vm.GuardarAsync();
+        vm.GetErrors(nameof(vm.Nombre)).Cast<object>().Should().BeEmpty();
+    }
 
-        // El nombre debe seguir en el formulario — no limpiar en error
-        _vm.Nombre.Should().Be("Test");
+    [Fact]
+    public void Nombre_MayorA50Caracteres_DebeAgregarError()
+    {
+        var vm = CrearVm();
+
+        vm.Nombre = new string('A', 51);
+
+        vm.HasErrors.Should().BeTrue();
+    }
+
+    [Fact]
+    public void Precio_Negativo_DebeAgregarError()
+    {
+        var vm = CrearVm();
+
+        vm.Precio = -1m;
+
+        vm.HasErrors.Should().BeTrue();
+    }
+
+    [Fact]
+    public void Precio_Cero_NoDebeAgregarError()
+    {
+        var vm = CrearVm();
+
+        vm.Precio = 0m;
+
+        vm.GetErrors(nameof(vm.Precio)).Cast<object>().Should().BeEmpty();
+    }
+
+    [Fact]
+    public void Unidades_Negativas_DebeAgregarError()
+    {
+        var vm = CrearVm();
+
+        vm.Unidades = -1;
+
+        vm.HasErrors.Should().BeTrue();
+    }
+
+    // ── CanGuardar ────────────────────────────────────────────────────────────
+
+    [Fact]
+    public void CanGuardar_SinCatalogosCargados_DebeSerFalse()
+    {
+        var vm = CrearVm();
+
+        // CatalogosCargados empieza en false hasta que el async completa
+        vm.CatalogosCargados = false;
+
+        vm.GuardarCommand.CanExecute(null).Should().BeFalse();
     }
 }

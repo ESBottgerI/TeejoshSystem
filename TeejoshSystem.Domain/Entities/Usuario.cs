@@ -1,0 +1,14 @@
+
+
+namespace TeejoshSystem.Domain.Entities
+{
+    public class Usuario
+    {
+        public int Id { get; private set; }
+        public string NombreUsuario { get; private set; } = null!;
+        public string PasswordHash { get; private set; } = null!;
+        public bool Activo { get; private set; }
+
+        private Usuario() { } // Para EF Core
+    }
+}

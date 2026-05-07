@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿// Archivo: TeejoshSystem.Infrastructure/Adapters/Outbound/Persistence/Configurations/ProductoConfiguration.cs
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 using TeejoshSystem.Domain.Entities;
@@ -15,10 +16,9 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Configurati
 
             builder.Property(p => p.Tipo)
                 .HasColumnName("type")
-                .HasConversion<string>()  // guarda como texto, más legible
+                .HasConversion<string>()
                 .IsRequired();
 
-            // Value Object: Nombre
             builder.OwnsOne(p => p.Nombre, p =>
             {
                 p.Property(x => x.Value)
@@ -27,7 +27,6 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Configurati
                     .IsRequired();
             });
 
-            // Value Object: Precio
             builder.OwnsOne(p => p.Precio, p =>
             {
                 p.Property(x => x.Value)
@@ -36,7 +35,6 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Configurati
                     .IsRequired();
             });
 
-            // Value Object: Stock
             builder.OwnsOne(p => p.Stock, p =>
             {
                 p.Property(x => x.Value)
@@ -44,9 +42,10 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Configurati
                     .IsRequired();
             });
 
-            // Descripcion es una navigation property resuelta en memoria por el repositorio.
-            // EF Core no la gestiona porque ProductoDetalle es abstracta (TPT sin tabla base).
-            // El repositorio carga el detalle por separado usando Producto.Tipo.
+            // NUEVO
+            builder.Property(p => p.ImagePath)
+                .HasColumnName("image_path")
+                .IsRequired(false);
 
             builder.Ignore(p => p.Descripcion);
         }

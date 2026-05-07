@@ -1,4 +1,5 @@
-﻿using MediatR;
+﻿// Archivo: TeejoshSystem.Application/Ports/Inbound/Productos/Commands/CrearProducto/CrearProductoCommand.cs
+using MediatR;
 
 using TeejoshSystem.Domain.Enums;
 using TeejoshSystem.Application.Common;
@@ -11,8 +12,8 @@ namespace TeejoshSystem.Application.Ports.Inbound.Productos.Commands.CrearProduc
         public required string Nombre { get; init; }
         public decimal Precio { get; init; }
         public int Unidades { get; init; }
+        public string? ImagePath { get; init; }  // NUEVO - ruta temporal del archivo origen
 
-        // Detalle especifico (sera uno de estos segun Tipo)
         public CrearHotWheelsDetalleDto? HotWheels { get; init; }
         public CrearFunkoDetalleDto? Funko { get; init; }
         public CrearTcgDetalleDto? Tcg { get; init; }

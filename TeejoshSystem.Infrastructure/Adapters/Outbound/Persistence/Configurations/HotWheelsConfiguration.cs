@@ -37,6 +37,9 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Configurati
                 .HasColumnName("category_id")
                 .IsRequired();
 
+            builder.Property<string>("Discriminator")
+                .IsRequired(false);
+
             builder.HasOne<Producto>()
                 .WithOne()
                 .HasForeignKey<HotWheelsDetalle>(p => p.ProductoId)

@@ -1,4 +1,5 @@
-﻿using TeejoshSystem.Domain.Enums;
+﻿// Archivo: TeejoshSystem.Application/Ports/Inbound/Productos/Queries/BuscarProductos/ProductoBusquedaDto.cs
+using TeejoshSystem.Domain.Enums;
 
 namespace TeejoshSystem.Application.Ports.Inbound.Productos.Queries.BuscarProductos
 {
@@ -10,5 +11,6 @@ namespace TeejoshSystem.Application.Ports.Inbound.Productos.Queries.BuscarProduc
         public decimal Precio { get; set; }
         public int Unidades { get; set; }
         public required string DetalleResumen { get; set; }
+        public string? ImagePath { get; set; }  // NUEVO
     }
 }

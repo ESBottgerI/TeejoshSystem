@@ -7,7 +7,7 @@ using TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence;
 
 #nullable disable
 
-namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Migrations
+namespace TeejoshSystem.Infrastructure.Migrations
 {
     [DbContext(typeof(InventarioDbContext))]
     partial class InventarioDbContextModelSnapshot : ModelSnapshot
@@ -540,6 +540,9 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Migrations
                         .HasColumnType("INTEGER")
                         .HasColumnName("special_caracteristic");
 
+                    b.Property<string>("Discriminator")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("Licencia")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -575,6 +578,9 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Migrations
                         .HasColumnType("INTEGER")
                         .HasColumnName("category_id");
 
+                    b.Property<string>("Discriminator")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("Modelo")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -600,6 +606,9 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Migrations
                         .HasColumnType("INTEGER")
                         .HasColumnName("product_id");
 
+                    b.Property<string>("Discriminator")
+                        .HasColumnType("TEXT");
+
                     b.Property<int>("ExpansionId")
                         .HasColumnType("INTEGER")
                         .HasColumnName("expansion_id");
@@ -620,6 +629,9 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Migrations
                     b.Property<int>("ProductoId")
                         .HasColumnType("INTEGER")
                         .HasColumnName("product_id");
+
+                    b.Property<string>("Discriminator")
+                        .HasColumnType("TEXT");
 
                     b.Property<int>("EdadMinima")
                         .HasColumnType("INTEGER")
@@ -660,6 +672,9 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Migrations
                     b.Property<decimal>("Ancho")
                         .HasColumnType("TEXT")
                         .HasColumnName("width");
+
+                    b.Property<string>("Discriminator")
+                        .HasColumnType("TEXT");
 
                     b.Property<decimal?>("Largo")
                         .IsRequired()
@@ -733,6 +748,10 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Migrations
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
+
+                    b.Property<string>("ImagePath")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("image_path");
 
                     b.Property<string>("Tipo")
                         .IsRequired()

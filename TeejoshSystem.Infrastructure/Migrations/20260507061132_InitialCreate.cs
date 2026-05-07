@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
 
-namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Migrations
+namespace TeejoshSystem.Infrastructure.Migrations
 {
     /// <inheritdoc />
     public partial class InitialCreate : Migration
@@ -61,7 +61,8 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Migrations
                     type = table.Column<string>(type: "TEXT", nullable: false),
                     name = table.Column<string>(type: "TEXT", maxLength: 50, nullable: false),
                     price = table.Column<decimal>(type: "decimal(10,2)", nullable: false),
-                    units = table.Column<int>(type: "INTEGER", nullable: false)
+                    units = table.Column<int>(type: "INTEGER", nullable: false),
+                    image_path = table.Column<string>(type: "TEXT", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -131,7 +132,8 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Migrations
                     box_number = table.Column<int>(type: "INTEGER", nullable: false),
                     license = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
                     subtype = table.Column<int>(type: "INTEGER", nullable: false),
-                    special_caracteristic = table.Column<int>(type: "INTEGER", nullable: false)
+                    special_caracteristic = table.Column<int>(type: "INTEGER", nullable: false),
+                    Discriminator = table.Column<string>(type: "TEXT", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -152,7 +154,8 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Migrations
                     model = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
                     year = table.Column<int>(type: "INTEGER", nullable: false),
                     serie = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
-                    category_id = table.Column<int>(type: "INTEGER", nullable: false)
+                    category_id = table.Column<int>(type: "INTEGER", nullable: false),
+                    Discriminator = table.Column<string>(type: "TEXT", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -171,7 +174,8 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Migrations
                 {
                     product_id = table.Column<int>(type: "INTEGER", nullable: false),
                     pack_id = table.Column<int>(type: "INTEGER", nullable: false),
-                    expansion_id = table.Column<int>(type: "INTEGER", nullable: false)
+                    expansion_id = table.Column<int>(type: "INTEGER", nullable: false),
+                    Discriminator = table.Column<string>(type: "TEXT", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -192,7 +196,8 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Migrations
                     min_years_old = table.Column<int>(type: "INTEGER", nullable: false),
                     min_players = table.Column<int>(type: "INTEGER", nullable: false),
                     max_players = table.Column<int>(type: "INTEGER", nullable: false),
-                    is_board_game = table.Column<bool>(type: "INTEGER", nullable: false)
+                    is_board_game = table.Column<bool>(type: "INTEGER", nullable: false),
+                    Discriminator = table.Column<string>(type: "TEXT", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -216,7 +221,8 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Migrations
                     width = table.Column<decimal>(type: "TEXT", nullable: false),
                     length = table.Column<decimal>(type: "TEXT", nullable: false),
                     material = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
-                    ilustration = table.Column<bool>(type: "INTEGER", nullable: false)
+                    ilustration = table.Column<bool>(type: "INTEGER", nullable: false),
+                    Discriminator = table.Column<string>(type: "TEXT", nullable: true)
                 },
                 constraints: table =>
                 {

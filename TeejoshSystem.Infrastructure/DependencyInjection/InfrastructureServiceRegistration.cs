@@ -1,8 +1,11 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿// Archivo: TeejoshSystem.Infrastructure/DependencyInjection/InfrastructureServiceRegistration.cs
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
+using TeejoshSystem.Domain.Ports.Outbound;
 using TeejoshSystem.Domain.Ports.Outbound.Repositories;
 using TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Repositories;
+using TeejoshSystem.Infrastructure.Adapters.Outbound.Storage;
 
 namespace TeejoshSystem.Infrastructure.DependencyInjection
 {
@@ -17,6 +20,9 @@ namespace TeejoshSystem.Infrastructure.DependencyInjection
             services.AddScoped<IProductoRepository, ProductoRepository>();
             services.AddScoped<ICatalogoRepository, CatalogoRepository>();
             services.AddScoped<IVentaRepository, VentaRepository>();
+
+            // NUEVO
+            services.AddSingleton<IImageStorageService, LocalImageStorageService>();
 
             return services;
         }

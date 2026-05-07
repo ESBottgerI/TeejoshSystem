@@ -11,11 +11,27 @@
         
         <!-- Barra de título -->
         <Border Grid.Row="0" Background="#2C3E50" Height="50">
-            <TextBlock Text="TeejoshSystem - Gestión de Inventario" 
-                       Foreground="White" 
-                       FontSize="16"
-                       VerticalAlignment="Center"
-                       Margin="20,0"/>
+            <Grid ColumnDefinitions="*,Auto">
+                <TextBlock Text="TeejoshSystem - Gestión de Inventario" 
+                           Foreground="White" 
+                           FontSize="16"
+                           VerticalAlignment="Center"
+                           Margin="20,0"/>
+                
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="0,0,20,0" Spacing="10">
+                    <TextBlock Text="Tema:" Foreground="White" VerticalAlignment="Center"/>
+                    <ComboBox ItemsSource="{Binding ThemeOptions}"
+                              SelectedItem="{Binding SelectedThemeOption}"
+                              VerticalAlignment="Center"
+                              Width="120">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Name}"/>
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+                </StackPanel>
+            </Grid>
         </Border>
         
         <!-- Contenido dinámico -->

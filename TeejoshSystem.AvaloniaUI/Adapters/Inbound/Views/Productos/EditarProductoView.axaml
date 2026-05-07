@@ -14,37 +14,43 @@
 		</Border>
 
 		<!-- Formulario -->
-		<Border Grid.Row="1" Margin="16" Background="White" CornerRadius="4">
+		<Border Grid.Row="1" Margin="16" Background="{DynamicResource TeejoshSurfaceBrush}" CornerRadius="4">
 			<StackPanel Margin="24" Spacing="16">
 				<TextBlock Text="Datos del Producto"
                            FontSize="16" FontWeight="SemiBold"/>
 
 				<StackPanel Spacing="4">
 					<TextBlock Text="Nombre"/>
-					<TextBox Text="{Binding Nombre}"
-                             Watermark="Nombre del producto"/>
+					<DataValidationErrors>
+						<TextBox Text="{Binding Nombre, UpdateSourceTrigger=PropertyChanged}"
+								 Watermark="Nombre del producto"/>
+					</DataValidationErrors>
 				</StackPanel>
 
 				<StackPanel Spacing="4">
 					<TextBlock Text="Precio"/>
-					<NumericUpDown Value="{Binding Precio}"
-                                   Minimum="0"
-                                   FormatString="F2"
-                                   Increment="0.5"/>
+					<DataValidationErrors>
+						<NumericUpDown Value="{Binding Precio}"
+									   Minimum="0"
+									   FormatString="F2"
+									   Increment="0.5"/>
+					</DataValidationErrors>
 				</StackPanel>
 
 				<StackPanel Spacing="4">
 					<TextBlock Text="Unidades en stock"/>
-					<NumericUpDown Value="{Binding Unidades}"
-                                   Minimum="0"
-                                   Increment="1"
-                                   FormatString="F0"/>
+					<DataValidationErrors>
+						<NumericUpDown Value="{Binding Unidades}"
+									   Minimum="0"
+									   Increment="1"
+									   FormatString="F0"/>
+					</DataValidationErrors>
 				</StackPanel>
 			</StackPanel>
 		</Border>
 
 		<!-- Footer -->
-		<Border Grid.Row="2" Margin="16,0,16,16" Background="White" Padding="16">
+		<Border Grid.Row="2" Margin="16,0,16,16" Background="{DynamicResource TeejoshSurfaceBrush}" Padding="16">
 			<Grid ColumnDefinitions="*,Auto,8,Auto">
 				<Button Grid.Column="1"
                         Command="{Binding GuardarCommand}"

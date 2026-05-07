@@ -1,10 +1,13 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MediatR;
 
 using System;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
+using System.ComponentModel.DataAnnotations;
+using System.Collections.Generic;
+using System.Linq;
 
 using TeejoshSystem.Application.Common.Dtos;
 using TeejoshSystem.Application.Ports.Inbound.Catalogos.Queries.ObtenerCatalogos;
@@ -25,12 +28,16 @@ public partial class CrearProductoViewModel : ValidatableViewModel
 
     // Propiedades comunes
     [ObservableProperty]
+    [Required(ErrorMessage = "El nombre es obligatorio.")]
+    [StringLength(50, ErrorMessage = "Máximo 50 caracteres.")]
     private string? _nombre;
 
     [ObservableProperty]
+    [Range(0, double.MaxValue, ErrorMessage = "El precio no puede ser negativo.")]
     private decimal _precio;
 
     [ObservableProperty]
+    [Range(0, int.MaxValue, ErrorMessage = "Las unidades no pueden ser negativas.")]
     private int _unidades;
 
     [ObservableProperty]
@@ -41,12 +48,15 @@ public partial class CrearProductoViewModel : ValidatableViewModel
 
     // Hot Wheels
     [ObservableProperty]
+    [CustomValidation(typeof(CrearProductoViewModel), nameof(ValidarModeloHw))]
     private string? _hwModelo;
 
     [ObservableProperty]
+    [CustomValidation(typeof(CrearProductoViewModel), nameof(ValidarAnioHw))]
     private int _hwAnio = DateTime.Now.Year;
 
     [ObservableProperty]
+    [CustomValidation(typeof(CrearProductoViewModel), nameof(ValidarSerieHw))]
     private string? _hwSerie;
 
     [ObservableProperty]
@@ -59,6 +69,7 @@ public partial class CrearProductoViewModel : ValidatableViewModel
     private int _funkoNumeroBox;
 
     [ObservableProperty]
+    [CustomValidation(typeof(CrearProductoViewModel), nameof(ValidarLicenciaFunko))]
     private string? _funkoLicencia;
 
     [ObservableProperty]
@@ -99,6 +110,7 @@ public partial class CrearProductoViewModel : ValidatableViewModel
 
     // Varios
     [ObservableProperty]
+    [CustomValidation(typeof(CrearProductoViewModel), nameof(ValidarMarcaVarios))]
     private string? _variosMarca;
 
     [ObservableProperty]
@@ -131,6 +143,8 @@ public partial class CrearProductoViewModel : ValidatableViewModel
         new TipoProductoFiltroItem("Toy", TipoProducto.Toy),
         new TipoProductoFiltroItem("Varios", TipoProducto.Varios)
     };
+
+    private bool _isLoaded;
 
     public CrearProductoViewModel(
         IMediator mediator,
@@ -174,6 +188,8 @@ public partial class CrearProductoViewModel : ValidatableViewModel
                 FranquiciasTcg.Add(fra);
 
             CatalogosCargados = true;
+            await Task.Delay(100);
+            _isLoaded = true;
         }
         catch (Exception ex)
         {
@@ -192,7 +208,20 @@ public partial class CrearProductoViewModel : ValidatableViewModel
         OnPropertyChanged(nameof(MostrarTcg));
         OnPropertyChanged(nameof(MostrarToy));
         OnPropertyChanged(nameof(MostrarVarios));
+        
+        // Re-validar campos dependientes del tipo solo si ya está cargado
+        if (_isLoaded)
+            ValidateAllProperties();
     }
+
+    partial void OnNombreChanged(string? value) { if (_isLoaded) ValidateProperty(value, nameof(Nombre)); }
+    partial void OnPrecioChanged(decimal value) { if (_isLoaded) ValidateProperty(value, nameof(Precio)); }
+    partial void OnUnidadesChanged(int value) { if (_isLoaded) ValidateProperty(value, nameof(Unidades)); }
+    partial void OnHwModeloChanged(string? value) { if (_isLoaded) ValidateProperty(value, nameof(HwModelo)); }
+    partial void OnHwAnioChanged(int value) { if (_isLoaded) ValidateProperty(value, nameof(HwAnio)); }
+    partial void OnHwSerieChanged(string? value) { if (_isLoaded) ValidateProperty(value, nameof(HwSerie)); }
+    partial void OnFunkoLicenciaChanged(string? value) { if (_isLoaded) ValidateProperty(value, nameof(FunkoLicencia)); }
+    partial void OnVariosMarcaChanged(string? value) { if (_isLoaded) ValidateProperty(value, nameof(VariosMarca)); }
 
     partial void OnTcgFranquiciaSeleccionadaChanged(CatalogoItemDto? value)
     {
@@ -229,7 +258,8 @@ public partial class CrearProductoViewModel : ValidatableViewModel
     [RelayCommand(CanExecute = nameof(CanGuardar))]
     private async Task GuardarAsync()
     {
-        if (IsBusy) return;
+        ValidateAllProperties();
+        if (HasErrors || IsBusy) return;
 
         var confirmar = await _confirmation.ConfirmAsync("¿Desea crear el producto?");
         if (!confirmar) return;
@@ -295,26 +325,52 @@ public partial class CrearProductoViewModel : ValidatableViewModel
 
     private bool CanGuardar() => !HasErrors && !IsBusy && CatalogosCargados;
 
-    partial void OnNombreChanged(string? value)
+    // Validaciones Personalizadas
+    public static ValidationResult? ValidarModeloHw(string? value, ValidationContext context)
     {
-        ClearErrors(nameof(Nombre));
-        if (string.IsNullOrWhiteSpace(value))
-            AddError(nameof(Nombre), "El nombre es obligatorio.");
-        else if (value.Length > 50)
-            AddError(nameof(Nombre), "Máximo 50 caracteres.");
+        var vm = (CrearProductoViewModel)context.ObjectInstance;
+        if (vm.MostrarHotWheels && string.IsNullOrWhiteSpace(value))
+            return new ValidationResult("El modelo es obligatorio.");
+        if (value?.Length > 50)
+            return new ValidationResult("Máximo 50 caracteres.");
+        return ValidationResult.Success;
     }
 
-    partial void OnPrecioChanged(decimal value)
+    public static ValidationResult? ValidarAnioHw(int value, ValidationContext context)
     {
-        ClearErrors(nameof(Precio));
-        if (value < 0)
-            AddError(nameof(Precio), "El precio no puede ser negativo.");
+        var vm = (CrearProductoViewModel)context.ObjectInstance;
+        if (vm.MostrarHotWheels && value > DateTime.Now.Year + 1)
+            return new ValidationResult($"El año no puede ser superior a {DateTime.Now.Year + 1}.");
+        return ValidationResult.Success;
     }
 
-    partial void OnUnidadesChanged(int value)
+    public static ValidationResult? ValidarSerieHw(string? value, ValidationContext context)
     {
-        ClearErrors(nameof(Unidades));
-        if (value < 0)
-            AddError(nameof(Unidades), "Las unidades no pueden ser negativas.");
+        var vm = (CrearProductoViewModel)context.ObjectInstance;
+        if (vm.MostrarHotWheels && string.IsNullOrWhiteSpace(value))
+            return new ValidationResult("La serie es obligatoria.");
+        if (value?.Length > 50)
+            return new ValidationResult("Máximo 50 caracteres.");
+        return ValidationResult.Success;
+    }
+
+    public static ValidationResult? ValidarLicenciaFunko(string? value, ValidationContext context)
+    {
+        var vm = (CrearProductoViewModel)context.ObjectInstance;
+        if (vm.MostrarFunko && string.IsNullOrWhiteSpace(value))
+            return new ValidationResult("La licencia es obligatoria.");
+        if (value?.Length > 50)
+            return new ValidationResult("Máximo 50 caracteres.");
+        return ValidationResult.Success;
+    }
+
+    public static ValidationResult? ValidarMarcaVarios(string? value, ValidationContext context)
+    {
+        var vm = (CrearProductoViewModel)context.ObjectInstance;
+        if (vm.MostrarVarios && string.IsNullOrWhiteSpace(value))
+            return new ValidationResult("La marca es obligatoria.");
+        if (value?.Length > 50)
+            return new ValidationResult("Máximo 50 caracteres.");
+        return ValidationResult.Success;
     }
 }

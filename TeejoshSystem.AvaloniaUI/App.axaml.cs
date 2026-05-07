@@ -1,6 +1,9 @@
-using Avalonia;
+ï»¿using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
+using Avalonia.Threading;
+using System.ComponentModel;
+using System.Threading.Tasks;
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -45,6 +48,7 @@ public partial class App : Avalonia.Application
                 // UI Services
                 services.AddSingleton<INotificationService, NotificationService>();
                 services.AddSingleton<IConfirmationService, ConfirmationService>();
+                services.AddSingleton<IThemePreferenceService, ThemePreferenceService>();
                 services.AddSingleton<NavigationService>();
                 services.AddSingleton<INavigationService>(sp =>
                     sp.GetRequiredService<NavigationService>());
@@ -66,22 +70,38 @@ public partial class App : Avalonia.Application
             db.Database.Migrate();
         }
 
-        // Configurar navegación
+        // Configurar navegacion
         var navService = _host.Services.GetRequiredService<NavigationService>();
         var mainVm = _host.Services.GetRequiredService<MainViewModel>();
+
+        // Sincronizar tema con la App (ya que RequestedThemeVariant no soporta bindings directos)
+        mainVm.PropertyChanged += (object? sender, PropertyChangedEventArgs e) =>
+        {
+            if (e.PropertyName == nameof(MainViewModel.ThemeVariant))
+            {
+                Dispatcher.UIThread.Post(() => this.RequestedThemeVariant = mainVm.ThemeVariant);
+            }
+        };
+
+        // Inicializar tema de forma asÃ­ncrona para evitar deadlocks en el arranque
+        _ = Task.Run(async () => 
+        {
+            await mainVm.InitializeAsync();
+            Dispatcher.UIThread.Post(() => this.RequestedThemeVariant = mainVm.ThemeVariant);
+        });
 
         navService.Configure(
             vm => mainVm.CurrentView = vm,
             () => mainVm.CurrentView = _host.Services.GetRequiredService<MenuPrincipalViewModel>()
         );
 
-        // Navegar al menú inicial
+        // Navegar al menu inicial
         mainVm.CurrentView = _host.Services.GetRequiredService<MenuPrincipalViewModel>();
 
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             var mainWindow = new MainWindow();
-            mainWindow.DataContext = _host.Services.GetRequiredService<MainViewModel>();
+            mainWindow.DataContext = mainVm;
 
             desktop.MainWindow = mainWindow;
 

@@ -1,8 +1,9 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MediatR;
 using System;
 using System.Threading.Tasks;
+using System.ComponentModel.DataAnnotations;
 
 using TeejoshSystem.Application.Ports.Inbound.Productos.Commands.ActualizarProducto;
 using TeejoshSystem.Application.Ports.Inbound.Productos.Queries.ObtenerProductosPorId;
@@ -23,12 +24,16 @@ public partial class EditarProductoViewModel : ValidatableViewModel, ILoadable
     private readonly TipoProducto _tipo;
 
     [ObservableProperty]
+    [Required(ErrorMessage = "El nombre es obligatorio.")]
+    [StringLength(50, ErrorMessage = "Máximo 50 caracteres.")]
     private string? _nombre;
 
     [ObservableProperty]
+    [Range(0, double.MaxValue, ErrorMessage = "El precio no puede ser negativo.")]
     private decimal _precio;
 
     [ObservableProperty]
+    [Range(0, int.MaxValue, ErrorMessage = "Las unidades no pueden ser negativas.")]
     private int _unidades;
 
     public EditarProductoViewModel(
@@ -57,6 +62,8 @@ public partial class EditarProductoViewModel : ValidatableViewModel, ILoadable
         };
     }
 
+    private bool _isLoaded;
+
     public void OnLoaded()
     {
         _ = CargarProductoAsync();
@@ -82,6 +89,9 @@ public partial class EditarProductoViewModel : ValidatableViewModel, ILoadable
             Nombre = dto.Nombre;
             Precio = dto.Precio;
             Unidades = dto.Unidades;
+            
+            await Task.Delay(100);
+            _isLoaded = true;
         }
         catch (Exception ex)
         {
@@ -100,7 +110,8 @@ public partial class EditarProductoViewModel : ValidatableViewModel, ILoadable
     [RelayCommand(CanExecute = nameof(CanGuardar))]
     private async Task GuardarAsync()
     {
-        if (IsBusy) return;
+        ValidateAllProperties();
+        if (HasErrors || IsBusy) return;
 
         var confirmar = await _confirmation.ConfirmAsync(
             "¿Desea guardar los cambios del producto?");
@@ -137,26 +148,7 @@ public partial class EditarProductoViewModel : ValidatableViewModel, ILoadable
 
     private bool CanGuardar() => !HasErrors && !IsBusy;
 
-    partial void OnNombreChanged(string? value)
-    {
-        ClearErrors(nameof(Nombre));
-        if (string.IsNullOrWhiteSpace(value))
-            AddError(nameof(Nombre), "El nombre es obligatorio.");
-        else if (value.Length > 50)
-            AddError(nameof(Nombre), "Máximo 50 caracteres.");
-    }
-
-    partial void OnPrecioChanged(decimal value)
-    {
-        ClearErrors(nameof(Precio));
-        if (value < 0)
-            AddError(nameof(Precio), "El precio no puede ser negativo.");
-    }
-
-    partial void OnUnidadesChanged(int value)
-    {
-        ClearErrors(nameof(Unidades));
-        if (value < 0)
-            AddError(nameof(Unidades), "Las unidades no pueden ser negativas.");
-    }
+    partial void OnNombreChanged(string? value) { if (_isLoaded) ValidateProperty(value, nameof(Nombre)); }
+    partial void OnPrecioChanged(decimal value) { if (_isLoaded) ValidateProperty(value, nameof(Precio)); }
+    partial void OnUnidadesChanged(int value) { if (_isLoaded) ValidateProperty(value, nameof(Unidades)); }
 }

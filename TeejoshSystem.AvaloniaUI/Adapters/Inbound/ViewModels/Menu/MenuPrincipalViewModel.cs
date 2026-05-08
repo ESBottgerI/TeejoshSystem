@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using System;
 using TeejoshSystem.AvaloniaUI.Adapters.Inbound.Services;
 using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Admin;
+using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Auth;
 using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Common;
 using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Productos;
 using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Ventas;
@@ -92,5 +93,18 @@ namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Menu
         [RelayCommand]
         private void IrACambiarPassword()
             => _navigation.NavigateTo(_serviceProvider.GetRequiredService<CambiarPasswordViewModel>());
+
+        [RelayCommand]
+        private void CerrarSesion()
+        {
+            _sesionContext.CerrarSesion();
+
+            var loginVm = _serviceProvider.GetRequiredService<LoginViewModel>();
+
+            loginVm.OnLoginExitoso = () =>
+                _navigation.NavigateTo(_serviceProvider.GetRequiredService<MenuPrincipalViewModel>());
+
+            _navigation.NavigateTo(loginVm);
+        }
     }
 }

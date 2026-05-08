@@ -4,6 +4,9 @@ using Microsoft.Extensions.DependencyInjection;
 using TeejoshSystem.Domain.Ports.Outbound.Repositories;
 using TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Repositories;
 
+using TeejoshSystem.Domain.Ports.Outbound.Auth;
+using TeejoshSystem.Infrastructure.Adapters.Outbound.Auth;
+
 namespace TeejoshSystem.Infrastructure.DependencyInjection
 {
     public static class InfrastructureServiceRegistration
@@ -14,9 +17,11 @@ namespace TeejoshSystem.Infrastructure.DependencyInjection
         {
             services.AddPersistence(configuration);
 
+            services.AddScoped<IUsuarioRepository, UsuarioRepository>();
             services.AddScoped<IProductoRepository, ProductoRepository>();
             services.AddScoped<ICatalogoRepository, CatalogoRepository>();
             services.AddScoped<IVentaRepository, VentaRepository>();
+            services.AddScoped<IAuthService, LocalAuthService>();
 
             return services;
         }

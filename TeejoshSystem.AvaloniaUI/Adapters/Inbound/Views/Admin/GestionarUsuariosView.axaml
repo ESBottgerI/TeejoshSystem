@@ -1,0 +1,88 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Admin"
+             x:Class="TeejoshSystem.AvaloniaUI.Adapters.Inbound.Views.Admin.GestionarUsuariosView"
+             x:DataType="vm:GestionarUsuariosViewModel">
+
+	<Grid RowDefinitions="Auto,*,Auto" Margin="24">
+
+		<!-- Encabezado -->
+		<TextBlock Grid.Row="0"
+                   Text="Gestión de usuarios"
+                   FontSize="20"
+                   FontWeight="Bold"
+                   Margin="0,0,0,16"/>
+
+		<Grid Grid.Row="1" ColumnDefinitions="*,Auto" ColumnSpacing="24">
+
+			<!-- Lista de usuarios -->
+			<DataGrid Grid.Column="0"
+                      ItemsSource="{Binding Usuarios}"
+                      IsReadOnly="True"
+                      AutoGenerateColumns="False">
+				<DataGrid.Columns>
+					<DataGridTextColumn Header="Usuario" Binding="{Binding NombreUsuario}" Width="*"/>
+					<DataGridTextColumn Header="Rol" Binding="{Binding Rol}" Width="120"/>
+					<DataGridCheckBoxColumn Header="Activo" Binding="{Binding Activo}" Width="80"/>
+					<DataGridTemplateColumn Header="Acciones" Width="120">
+						<DataGridTemplateColumn.CellTemplate>
+							<DataTemplate>
+								<Button Content="Desactivar"
+                                        Command="{Binding $parent[UserControl].((vm:GestionarUsuariosViewModel)DataContext).DesactivarUsuarioCommand}"
+                                        CommandParameter="{Binding}"
+                                        IsEnabled="{Binding Activo}"/>
+							</DataTemplate>
+						</DataGridTemplateColumn.CellTemplate>
+					</DataGridTemplateColumn>
+				</DataGrid.Columns>
+			</DataGrid>
+
+			<!-- Formulario nuevo usuario -->
+			<StackPanel Grid.Column="1" Spacing="8" Width="220">
+
+				<TextBlock Text="Nuevo usuario"
+                           FontWeight="SemiBold"
+                           Margin="0,0,0,4"/>
+
+				<TextBox Text="{Binding NuevoUsuario}"
+                         Watermark="Nombre de usuario"
+                         IsEnabled="{Binding !IsBusy}"/>
+
+				<TextBox x:Name="NuevaPasswordBox"
+                         PasswordChar="●"
+                         Watermark="Contraseña"
+                         IsEnabled="{Binding !IsBusy}"/>
+
+				<TextBox x:Name="ConfirmarPasswordBox"
+                         PasswordChar="●"
+                         Watermark="Confirmar contraseña"
+                         IsEnabled="{Binding !IsBusy}"/>
+
+				<ComboBox ItemsSource="{Binding Roles}"
+                          SelectedItem="{Binding RolSeleccionado}"
+                          HorizontalAlignment="Stretch"/>
+
+				<TextBlock Text="{Binding MensajeError}"
+                           Foreground="Red"
+                           TextWrapping="Wrap"
+                           IsVisible="{Binding MensajeError,
+                                       Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+
+				<Button Content="Crear usuario"
+                        Command="{Binding CrearUsuarioCommand}"
+                        HorizontalAlignment="Stretch"
+                        HorizontalContentAlignment="Center"/>
+
+				<ProgressBar IsIndeterminate="True"
+                             IsVisible="{Binding IsBusy}"
+                             Height="4"/>
+			</StackPanel>
+		</Grid>
+
+		<!-- Botón volver -->
+		<Button Grid.Row="2"
+                Content="Volver"
+                Command="{Binding VolverCommand}"
+                Margin="0,16,0,0"/>
+	</Grid>
+</UserControl>

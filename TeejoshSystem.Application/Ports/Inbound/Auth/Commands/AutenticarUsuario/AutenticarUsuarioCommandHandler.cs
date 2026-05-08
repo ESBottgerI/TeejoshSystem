@@ -37,7 +37,7 @@ namespace TeejoshSystem.Application.Ports.Inbound.Auth.Commands.AutenticarUsuari
                         resultado.MensajeError ?? "Credenciales inválidas.");
 
                 return Result.Success(
-                    new SesionDto(resultado.UsuarioId!.Value, resultado.NombreUsuario!));
+                    new SesionDto(resultado.UsuarioId!.Value, resultado.NombreUsuario!, resultado.Rol!.Value));
             }
             catch (Exception ex)
             {

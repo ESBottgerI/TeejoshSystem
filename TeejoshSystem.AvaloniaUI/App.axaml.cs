@@ -1,14 +1,13 @@
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
-using System;
-
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-
+using System;
 using TeejoshSystem.AvaloniaUI.Adapters.Inbound.Services;
+using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Admin;
 using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Auth;
 using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Menu;
 using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Productos;
@@ -65,6 +64,8 @@ public partial class App : Avalonia.Application
                 // Auth
                 services.AddSingleton<SesionContext>();
                 services.AddTransient<LoginViewModel>();
+                services.AddTransient<GestionarUsuariosViewModel>();
+                services.AddTransient<CambiarPasswordViewModel>();
             })
             .Build();
 
@@ -73,6 +74,7 @@ public partial class App : Avalonia.Application
         {
             var db = scope.ServiceProvider.GetRequiredService<InventarioDbContext>();
             db.Database.Migrate();
+            DatabaseSeeder.SeedUsuarioAdmin(db);
         }
 
         // Configurar navegación

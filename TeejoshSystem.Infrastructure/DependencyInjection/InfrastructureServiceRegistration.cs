@@ -17,6 +17,7 @@ namespace TeejoshSystem.Infrastructure.DependencyInjection
         {
             services.AddPersistence(configuration);
 
+            services.AddScoped<IUsuarioRepository, UsuarioRepository>();
             services.AddScoped<IProductoRepository, ProductoRepository>();
             services.AddScoped<ICatalogoRepository, CatalogoRepository>();
             services.AddScoped<IVentaRepository, VentaRepository>();

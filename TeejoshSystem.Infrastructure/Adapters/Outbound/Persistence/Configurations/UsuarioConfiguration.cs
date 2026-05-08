@@ -15,6 +15,11 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Configurati
             builder.Property(u => u.Id)
                 .HasColumnName("id");
 
+            builder.Property(u => u.Rol)
+                .HasColumnName("rol")
+                .HasConversion<string>()
+                .IsRequired();
+
             builder.Property(u => u.NombreUsuario)
                 .HasColumnName("username")
                 .HasMaxLength(100)

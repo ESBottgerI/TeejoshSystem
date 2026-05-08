@@ -1,4 +1,3 @@
-// Archivo: TeejoshSystem.Domain/Ports/Outbound/IImageStorageService.cs
 namespace TeejoshSystem.Domain.Ports.Outbound
 {
     public interface IImageStorageService

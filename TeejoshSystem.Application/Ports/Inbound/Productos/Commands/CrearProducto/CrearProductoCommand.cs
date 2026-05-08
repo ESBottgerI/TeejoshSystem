@@ -1,5 +1,4 @@
-﻿// Archivo: TeejoshSystem.Application/Ports/Inbound/Productos/Commands/CrearProducto/CrearProductoCommand.cs
-using MediatR;
+﻿using MediatR;
 
 using TeejoshSystem.Domain.Enums;
 using TeejoshSystem.Application.Common;

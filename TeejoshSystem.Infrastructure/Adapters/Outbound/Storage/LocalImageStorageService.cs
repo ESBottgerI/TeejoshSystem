@@ -1,4 +1,3 @@
-// Archivo: TeejoshSystem.Infrastructure/Adapters/Outbound/Storage/LocalImageStorageService.cs
 using TeejoshSystem.Domain.Ports.Outbound;
 
 namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Storage

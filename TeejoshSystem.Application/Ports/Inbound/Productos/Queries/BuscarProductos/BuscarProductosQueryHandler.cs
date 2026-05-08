@@ -1,5 +1,4 @@
-﻿// Archivo: TeejoshSystem.Application/Ports/Inbound/Productos/Queries/BuscarProductos/BuscarProductosQueryHandler.cs
-using MediatR;
+﻿using MediatR;
 
 using TeejoshSystem.Domain.Ports.Outbound;
 using TeejoshSystem.Domain.Ports.Outbound.Repositories;

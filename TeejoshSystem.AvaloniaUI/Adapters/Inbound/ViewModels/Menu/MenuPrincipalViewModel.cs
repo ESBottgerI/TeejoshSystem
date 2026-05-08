@@ -1,13 +1,13 @@
 using CommunityToolkit.Mvvm.Input;
 using MediatR;
-
 using Microsoft.Extensions.DependencyInjection;
 using System;
-
 using TeejoshSystem.AvaloniaUI.Adapters.Inbound.Services;
+using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Admin;
 using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Common;
 using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Productos;
 using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Ventas;
+using TeejoshSystem.Domain.Enums;
 
 namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Menu
 {
@@ -15,15 +15,25 @@ namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Menu
     {
         private readonly IServiceProvider _serviceProvider;
         private readonly INavigationService _navigation;
+        private readonly SesionContext _sesionContext;
+        private readonly INotificationService _notification;
 
         public MenuPrincipalViewModel(
             IServiceProvider serviceProvider,
-            INavigationService navigation)
+            INavigationService navigation,
+            SesionContext sesionContext,
+            INotificationService notification)
         {
             _serviceProvider = serviceProvider;
             _navigation = navigation;
+            _sesionContext = sesionContext;
+            _notification = notification;
         }
 
+        public bool EsAdministrador
+            => _sesionContext.SesionActual?.Rol == RolUsuario.Administrador;
+
+        // resto de métodos sin cambios
         [RelayCommand]
         private void VisualizarInventario()
         {
@@ -67,5 +77,20 @@ namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Menu
                 _navigation);
             _navigation.NavigateTo(vm);
         }
+
+        [RelayCommand]
+        private void IrAGestionarUsuarios()
+        {
+            if (_sesionContext.SesionActual?.Rol != RolUsuario.Administrador)
+            {
+                _ = _notification.ShowErrorAsync("Acceso restringido a administradores.");
+                return;
+            }
+            _navigation.NavigateTo(_serviceProvider.GetRequiredService<GestionarUsuariosViewModel>());
+        }
+
+        [RelayCommand]
+        private void IrACambiarPassword()
+            => _navigation.NavigateTo(_serviceProvider.GetRequiredService<CambiarPasswordViewModel>());
     }
 }

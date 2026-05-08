@@ -11,6 +11,8 @@
 			 xmlns:viewsVentas="clr-namespace:TeejoshSystem.AvaloniaUI.Adapters.Inbound.Views.Ventas"
 			 xmlns:vmAuth="clr-namespace:TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Auth"
 			 xmlns:viewsAuth="clr-namespace:TeejoshSystem.AvaloniaUI.Adapters.Inbound.Views.Auth"
+			 xmlns:vmAdmin="clr-namespace:TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Admin"
+			 xmlns:viewsAdmin="clr-namespace:TeejoshSystem.AvaloniaUI.Adapters.Inbound.Views.Admin"
 			 x:Class="TeejoshSystem.AvaloniaUI.App">
 	
 	<Application.RequestedThemeVariant>Light</Application.RequestedThemeVariant>
@@ -26,6 +28,13 @@
 
 		<DataTemplate DataType="{x:Type vmMenu:MenuPrincipalViewModel}">
 			<viewsMenu:MenuPrincipalView />
+		</DataTemplate>
+
+		<DataTemplate DataType="{x:Type vmAdmin:GestionarUsuariosViewModel}">
+			<viewsAdmin:GestionarUsuariosView/>
+		</DataTemplate>
+		<DataTemplate DataType="{x:Type vmAdmin:CambiarPasswordViewModel}">
+			<viewsAdmin:CambiarPasswordView/>
 		</DataTemplate>
 
 		<DataTemplate DataType="{x:Type vmProductos:InventarioViewModel}">

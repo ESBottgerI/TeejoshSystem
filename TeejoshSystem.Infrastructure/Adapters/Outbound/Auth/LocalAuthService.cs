@@ -1,3 +1,6 @@
+using System.Threading;
+using System.Threading.Tasks;
+using BCrypt.Net;
 using Microsoft.EntityFrameworkCore;
 using TeejoshSystem.Domain.Ports.Outbound.Auth;
 using TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence;
@@ -27,25 +30,32 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Auth
         {
             var usuario = await _context.Usuarios
                 .AsNoTracking()
-                .FirstOrDefaultAsync(
-                    u => u.NombreUsuario == nombreUsuario && u.Activo,
-                    cancellationToken);
+                .FirstOrDefaultAsync(u => u.NombreUsuario == nombreUsuario && u.Activo, cancellationToken);
 
             if (usuario is null)
             {
-                // Verificar contra hash falso para equiparar tiempo de respuesta.
                 BCrypt.Net.BCrypt.Verify(password, PlaceholderHash);
                 return AutenticacionResultado.Invalido("Usuario o contraseña incorrectos.");
             }
 
-            var passwordValida = BCrypt.Net.BCrypt.Verify(password, usuario.PasswordHash);
-
-            // El mensaje es idéntico para usuario inexistente y contraseña incorrecta.
-            // Mensajes distintos permitirían enumerar usuarios válidos.
-            if (!passwordValida)
+            if (!BCrypt.Net.BCrypt.Verify(password, usuario.PasswordHash))
                 return AutenticacionResultado.Invalido("Usuario o contraseña incorrectos.");
 
-            return AutenticacionResultado.Valido(usuario.Id, usuario.NombreUsuario);
+            return AutenticacionResultado.Valido(usuario.Id, usuario.NombreUsuario, usuario.Rol);
+        }
+
+        public async Task<bool> VerificarPasswordAsync(
+            int usuarioId,
+            string password,
+            CancellationToken cancellationToken = default)
+        {
+            var usuario = await _context.Usuarios
+                .AsNoTracking()
+                .FirstOrDefaultAsync(u => u.Id == usuarioId && u.Activo, cancellationToken);
+
+            if (usuario is null) return false;
+
+            return BCrypt.Net.BCrypt.Verify(password, usuario.PasswordHash);
         }
     }
 }

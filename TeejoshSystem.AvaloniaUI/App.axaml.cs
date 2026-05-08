@@ -1,14 +1,14 @@
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
-using System;
-
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-
+using System;
 using TeejoshSystem.AvaloniaUI.Adapters.Inbound.Services;
+using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Admin;
+using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Auth;
 using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Menu;
 using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Productos;
 using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Shell;
@@ -58,10 +58,14 @@ public partial class App : Avalonia.Application
                 // ViewModels
                 services.AddSingleton<MainViewModel>();
                 services.AddSingleton<MenuPrincipalViewModel>();
-                // services.AddTransient<InventarioViewModel>();
                 services.AddTransient<GestionarProductosViewModel>();
                 services.AddTransient<CrearProductoViewModel>();
-                // services.AddTransient<EditarProductoViewModel>();
+
+                // Auth
+                services.AddSingleton<SesionContext>();
+                services.AddTransient<LoginViewModel>();
+                services.AddTransient<GestionarUsuariosViewModel>();
+                services.AddTransient<CambiarPasswordViewModel>();
             })
             .Build();
 
@@ -70,9 +74,10 @@ public partial class App : Avalonia.Application
         {
             var db = scope.ServiceProvider.GetRequiredService<InventarioDbContext>();
             db.Database.Migrate();
+            DatabaseSeeder.SeedUsuarioAdmin(db);
         }
 
-        // Configurar navegacion
+        // Configurar navegación
         var navService = _host.Services.GetRequiredService<NavigationService>();
         var mainVm = _host.Services.GetRequiredService<MainViewModel>();
 
@@ -81,16 +86,22 @@ public partial class App : Avalonia.Application
             () => mainVm.CurrentView = _host.Services.GetRequiredService<MenuPrincipalViewModel>()
         );
 
-        // Navegar al menu inicial
-        mainVm.CurrentView = _host.Services.GetRequiredService<MenuPrincipalViewModel>();
+        // Navegación inicial con verificación de sesión
+        var sesionContext = _host.Services.GetRequiredService<SesionContext>();
+        var loginVm = _host.Services.GetRequiredService<LoginViewModel>();
+
+        loginVm.OnLoginExitoso = () =>
+            mainVm.CurrentView = _host.Services.GetRequiredService<MenuPrincipalViewModel>();
+
+        mainVm.CurrentView = sesionContext.EstaAutenticado
+            ? _host.Services.GetRequiredService<MenuPrincipalViewModel>()
+            : (object)loginVm;
 
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             var mainWindow = new MainWindow();
             mainWindow.DataContext = _host.Services.GetRequiredService<MainViewModel>();
-
             desktop.MainWindow = mainWindow;
-
             desktop.Exit += (_, _) => _host.Dispose();
         }
 

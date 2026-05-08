@@ -1,0 +1,57 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Auth"
+             x:Class="TeejoshSystem.AvaloniaUI.Adapters.Inbound.Views.Auth.LoginView"
+             x:DataType="vm:LoginViewModel">
+
+    <Grid HorizontalAlignment="Center"
+          VerticalAlignment="Center"
+          Width="300">
+
+        <StackPanel Spacing="16">
+
+            <TextBlock Text="TeejoshSystem"
+                       FontSize="22"
+                       FontWeight="Bold"
+                       HorizontalAlignment="Center"
+                       Margin="0,0,0,8"/>
+
+            <StackPanel Spacing="4">
+                <TextBlock Text="Usuario"/>
+                <TextBox Text="{Binding NombreUsuario}"
+                         Watermark="Nombre de usuario"
+                         IsEnabled="{Binding !IsBusy}"/>
+            </StackPanel>
+
+            <StackPanel Spacing="4">
+                <TextBlock Text="Contraseña"/>
+                <!--
+                    Avalonia no tiene PasswordBox nativo.
+                    PasswordChar enmascara la entrada visualmente.
+                    El valor se envía al ViewModel via TextChanged en code-behind.
+                -->
+                <TextBox x:Name="PasswordBox"
+                         PasswordChar="●"
+                         Watermark="Contraseña"
+                         IsEnabled="{Binding !IsBusy}"/>
+            </StackPanel>
+
+            <TextBlock Text="{Binding MensajeError}"
+                       Foreground="Red"
+                       TextWrapping="Wrap"
+                       IsVisible="{Binding MensajeError,
+                                   Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+
+            <Button Content="Iniciar sesión"
+                    Command="{Binding IniciarSesionCommand}"
+                    HorizontalAlignment="Stretch"
+                    HorizontalContentAlignment="Center"
+                    IsDefault="True"/>
+
+            <ProgressBar IsIndeterminate="True"
+                         IsVisible="{Binding IsBusy}"
+                         Height="4"/>
+
+        </StackPanel>
+    </Grid>
+</UserControl>

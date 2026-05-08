@@ -1,5 +1,4 @@
-﻿// Archivo: TeejoshSystem.Domain/Entities/Producto.cs
-using TeejoshSystem.Domain.Entities.Detalles;
+﻿using TeejoshSystem.Domain.Entities.Detalles;
 using TeejoshSystem.Domain.Enums;
 using TeejoshSystem.Domain.ValueObjects;
 

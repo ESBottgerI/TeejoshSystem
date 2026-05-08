@@ -1,5 +1,4 @@
-﻿// Archivo: TeejoshSystem.Infrastructure/DependencyInjection/InfrastructureServiceRegistration.cs
-using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 using TeejoshSystem.Domain.Ports.Outbound;

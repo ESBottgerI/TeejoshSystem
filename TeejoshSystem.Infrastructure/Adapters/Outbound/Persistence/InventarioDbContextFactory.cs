@@ -1,5 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
+using Microsoft.Extensions.Configuration;
+
+using TeejoshSystem.Infrastructure.DependencyInjection;
 
 namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence
 {
@@ -7,18 +10,19 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence
     {
         public InventarioDbContext CreateDbContext(string[] args)
         {
-            var dbPath = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                "TeejoshSystem",
-                "inventario.db");
+            // Carga la misma configuración que usa la app en runtime
+            var configuration = new ConfigurationBuilder()
+                .SetBasePath(AppContext.BaseDirectory)
+                .AddJsonFile("appsettings.json", optional: true)
+                .AddJsonFile("appsettings.Production.json", optional: true)
+                .Build();
 
-            Directory.CreateDirectory(Path.GetDirectoryName(dbPath)!);
+            var provider = configuration["Database:Provider"] ?? "sqlite";
 
-            var options = new DbContextOptionsBuilder<InventarioDbContext>()
-                .UseSqlite($"Data Source={dbPath}")
-                .Options;
+            var optionsBuilder = new DbContextOptionsBuilder<InventarioDbContext>();
+            PersistenceServiceRegistration.ConfigureProvider(optionsBuilder, provider, configuration);
 
-            return new InventarioDbContext(options);
+            return new InventarioDbContext(optionsBuilder.Options);
         }
     }
 }

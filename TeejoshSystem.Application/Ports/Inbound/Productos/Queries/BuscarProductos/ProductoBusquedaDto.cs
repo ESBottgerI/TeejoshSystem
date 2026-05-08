@@ -1,5 +1,4 @@
-﻿// Archivo: TeejoshSystem.Application/Ports/Inbound/Productos/Queries/BuscarProductos/ProductoBusquedaDto.cs
-using TeejoshSystem.Domain.Enums;
+﻿using TeejoshSystem.Domain.Enums;
 
 namespace TeejoshSystem.Application.Ports.Inbound.Productos.Queries.BuscarProductos
 {

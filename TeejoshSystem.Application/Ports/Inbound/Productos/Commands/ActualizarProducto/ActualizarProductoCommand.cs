@@ -8,6 +8,7 @@ namespace TeejoshSystem.Application.Ports.Inbound.Productos.Commands.ActualizarP
         int Id,
         string Nombre,
         decimal Precio,
-        int Unidades
+        int Unidades,
+        string? ImagePath  // NUEVO
     ) : IRequest<Result>;
 }

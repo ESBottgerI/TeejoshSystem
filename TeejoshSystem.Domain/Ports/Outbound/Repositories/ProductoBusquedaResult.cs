@@ -8,5 +8,6 @@ public record ProductoBusquedaResult(
     string Nombre,
     decimal Precio,
     int Unidades,
-    string DetalleResumen
+    string DetalleResumen,
+    string? ImagePath    // NUEVO
 );

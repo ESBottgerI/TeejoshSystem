@@ -51,6 +51,9 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Configurati
                     "height > 0 AND width > 0 AND (length IS NULL OR length > 0)");
             });
 
+            builder.Property<string>("Discriminator")
+                .IsRequired(false);
+
             builder.HasOne<Producto>()
                 .WithOne()
                 .HasForeignKey<VariosDetalle>(p => p.ProductoId)

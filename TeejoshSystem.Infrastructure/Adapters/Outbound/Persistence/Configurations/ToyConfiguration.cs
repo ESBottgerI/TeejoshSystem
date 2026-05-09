@@ -40,6 +40,9 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Configurati
                 p.HasCheckConstraint("check_players", "max_players >= min_players");
             });
 
+            builder.Property<string>("Discriminator")
+                .IsRequired(false);
+
             builder.HasOne<Producto>()
                 .WithOne()
                 .HasForeignKey<ToyDetalle>(p => p.ProductoId)

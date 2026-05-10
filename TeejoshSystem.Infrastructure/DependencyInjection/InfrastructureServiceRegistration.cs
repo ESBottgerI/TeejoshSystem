@@ -9,6 +9,8 @@ using TeejoshSystem.Infrastructure.Adapters.Outbound.Storage;
 using TeejoshSystem.Domain.Ports.Outbound.Auth;
 using TeejoshSystem.Infrastructure.Adapters.Outbound.Auth;
 
+using TeejoshSystem.Infrastructure.Adapters.Outbound.Backup;
+
 namespace TeejoshSystem.Infrastructure.DependencyInjection
 {
     public static class InfrastructureServiceRegistration
@@ -25,8 +27,12 @@ namespace TeejoshSystem.Infrastructure.DependencyInjection
             services.AddScoped<IVentaRepository, VentaRepository>();
             services.AddScoped<IAuthService, LocalAuthService>();
 
-            // NUEVO
             services.AddSingleton<IImageStorageService, LocalImageStorageService>();
+
+            // Backup automático solo cuando el proveedor es SQLite
+            var provider = configuration["Database:Provider"] ?? "sqlite";
+            if (provider.Equals("sqlite", StringComparison.OrdinalIgnoreCase))
+                services.AddHostedService<BackupService>();
 
             return services;
         }

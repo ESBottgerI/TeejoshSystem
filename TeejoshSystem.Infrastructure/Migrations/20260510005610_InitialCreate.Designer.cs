@@ -11,7 +11,7 @@ using TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence;
 namespace TeejoshSystem.Infrastructure.Migrations
 {
     [DbContext(typeof(InventarioDbContext))]
-    [Migration("20260507061132_InitialCreate")]
+    [Migration("20260510005610_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -243,6 +243,10 @@ namespace TeejoshSystem.Infrastructure.Migrations
 
                     b.Property<int>("FranquiciaId")
                         .HasColumnType("INTEGER");
+
+                    b.Property<string>("ImageUrl")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("image_url");
 
                     b.Property<string>("Nombre")
                         .IsRequired()
@@ -764,6 +768,44 @@ namespace TeejoshSystem.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("product", (string)null);
+                });
+
+            modelBuilder.Entity("TeejoshSystem.Domain.Entities.Usuario", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("id");
+
+                    b.Property<bool>("Activo")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(true)
+                        .HasColumnName("active");
+
+                    b.Property<string>("NombreUsuario")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT")
+                        .HasColumnName("username");
+
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasMaxLength(60)
+                        .HasColumnType("TEXT")
+                        .HasColumnName("password_hash");
+
+                    b.Property<string>("Rol")
+                        .IsRequired()
+                        .HasColumnType("TEXT")
+                        .HasColumnName("rol");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NombreUsuario")
+                        .IsUnique();
+
+                    b.ToTable("app_user", (string)null);
                 });
 
             modelBuilder.Entity("TeejoshSystem.Domain.Entities.Venta", b =>

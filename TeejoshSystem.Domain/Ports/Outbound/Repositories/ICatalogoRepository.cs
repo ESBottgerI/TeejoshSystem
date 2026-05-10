@@ -12,5 +12,11 @@ namespace TeejoshSystem.Domain.Ports.Outbound.Repositories
         Task<List<TcgPack>> GetTcgPacksAsync(int franquiciaId);
         Task<TcgExpansion?> GetTcgExpansionByIdAsync(int expansionId);
         Task<TcgPack?> GetTcgPackByIdAsync(int packId);
+
+        // NUEVOS — para sincronización
+        Task<TcgFranquicia?> GetTcgFranquiciaByNombreAsync(string nombre);
+        Task<TcgExpansion?> GetTcgExpansionByNombreYFranquiciaAsync(string nombre, int franquiciaId);
+        Task AddTcgExpansionAsync(TcgExpansion expansion);
+        Task UpdateTcgExpansionAsync(TcgExpansion expansion);
     }
 }

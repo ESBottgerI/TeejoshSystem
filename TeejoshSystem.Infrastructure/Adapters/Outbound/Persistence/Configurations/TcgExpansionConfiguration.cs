@@ -21,6 +21,11 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Configurati
                 .HasMaxLength(100)
                 .IsRequired();
 
+            // NUEVO
+            builder.Property(p => p.ImageUrl)
+                .HasColumnName("image_url")
+                .IsRequired(false);
+
             builder.HasIndex(p => new { p.Nombre, p.FranquiciaId })
                 .IsUnique();
 

@@ -241,6 +241,10 @@ namespace TeejoshSystem.Infrastructure.Migrations
                     b.Property<int>("FranquiciaId")
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("ImageUrl")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("image_url");
+
                     b.Property<string>("Nombre")
                         .IsRequired()
                         .HasMaxLength(100)

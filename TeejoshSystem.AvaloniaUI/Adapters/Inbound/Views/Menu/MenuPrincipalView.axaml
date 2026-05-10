@@ -52,6 +52,13 @@
                 Width="200" HorizontalAlignment="Center"
                 IsVisible="{Binding EsAdministrador}"/>
 
+                <Separator Margin="0,8"/>
+
+                <Button Content="🔄 Sincronizar catálogos"
+                        Command="{Binding SincronizarCatalogosCommand}"
+                        Width="200" HorizontalAlignment="Center"
+                        IsVisible="{Binding EsAdministrador}"/>
+
 		<Separator Margin="0,8"/>
 
 		<Button Content="Cerrar sesión"

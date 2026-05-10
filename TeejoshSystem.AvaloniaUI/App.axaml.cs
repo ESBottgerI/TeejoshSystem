@@ -12,6 +12,7 @@ using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Auth;
 using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Menu;
 using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Productos;
 using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Shell;
+using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Catalogos;
 using TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence;
 using TeejoshSystem.Infrastructure.DependencyInjection;
 
@@ -60,6 +61,7 @@ public partial class App : Avalonia.Application
                 services.AddSingleton<MenuPrincipalViewModel>();
                 services.AddTransient<GestionarProductosViewModel>();
                 services.AddTransient<CrearProductoViewModel>();
+                services.AddTransient<SincronizarCatalogosViewModel>();
 
                 // Auth
                 services.AddSingleton<SesionContext>();

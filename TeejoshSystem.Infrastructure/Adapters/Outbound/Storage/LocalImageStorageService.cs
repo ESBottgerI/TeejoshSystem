@@ -1,3 +1,7 @@
+using System;
+using System.IO;
+using System.Net.Http;
+using System.Threading.Tasks;
 using TeejoshSystem.Domain.Ports.Outbound;
 
 namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Storage
@@ -5,6 +9,7 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Storage
     public class LocalImageStorageService : IImageStorageService
     {
         private readonly string _imagesFolder;
+        private static readonly HttpClient _http = new();
 
         public LocalImageStorageService()
         {
@@ -40,6 +45,35 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Storage
 
             var fullPath = Path.Combine(_imagesFolder, imageName);
             return File.Exists(fullPath) ? fullPath : null;
+        }
+
+        // NUEVO
+        public async Task<string?> SaveImageFromUrlAsync(string? url)
+        {
+            if (string.IsNullOrWhiteSpace(url))
+                return null;
+
+            try
+            {
+                var bytes = await _http.GetByteArrayAsync(url);
+                var extension = Path.GetExtension(
+                    new Uri(url).AbsolutePath).ToLowerInvariant();
+
+                if (string.IsNullOrWhiteSpace(extension))
+                    extension = ".png";
+
+                var nombreArchivo = $"{Guid.NewGuid()}{extension}";
+                var rutaDestino = Path.Combine(_imagesFolder, nombreArchivo);
+
+                await File.WriteAllBytesAsync(rutaDestino, bytes);
+                return nombreArchivo;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine(
+                    $"SaveImageFromUrlAsync error: {ex.Message}");
+                return null;
+            }
         }
     }
 }

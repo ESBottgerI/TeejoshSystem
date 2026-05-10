@@ -2,12 +2,12 @@
 using Microsoft.Extensions.DependencyInjection;
 
 using TeejoshSystem.Domain.Ports.Outbound;
+using TeejoshSystem.Domain.Ports.Outbound.Auth;
 using TeejoshSystem.Domain.Ports.Outbound.Repositories;
+using TeejoshSystem.Infrastructure.Adapters.Outbound.Apis;
+using TeejoshSystem.Infrastructure.Adapters.Outbound.Auth;
 using TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Repositories;
 using TeejoshSystem.Infrastructure.Adapters.Outbound.Storage;
-
-using TeejoshSystem.Domain.Ports.Outbound.Auth;
-using TeejoshSystem.Infrastructure.Adapters.Outbound.Auth;
 
 namespace TeejoshSystem.Infrastructure.DependencyInjection
 {
@@ -25,8 +25,17 @@ namespace TeejoshSystem.Infrastructure.DependencyInjection
             services.AddScoped<IVentaRepository, VentaRepository>();
             services.AddScoped<IAuthService, LocalAuthService>();
 
-            // NUEVO
             services.AddSingleton<IImageStorageService, LocalImageStorageService>();
+
+            // HttpClient para los adapters de APIs
+            services.AddHttpClient<TcgdexAdapter>();
+            services.AddHttpClient<ScryfallAdapter>();
+            services.AddHttpClient<YgoprodeckAdapter>();
+
+            // Registrar los tres adapters como colección de ITcgCatalogoApiService
+            services.AddScoped<ITcgCatalogoApiService, TcgdexAdapter>();
+            services.AddScoped<ITcgCatalogoApiService, ScryfallAdapter>();
+            services.AddScoped<ITcgCatalogoApiService, YgoprodeckAdapter>();
 
             return services;
         }

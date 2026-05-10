@@ -14,5 +14,6 @@ namespace TeejoshSystem.Domain.Ports.Outbound
         /// guardado. Retorna null si imageName es null.
         /// </summary>
         string? GetFullPath(string? imageName);
+        Task<string?> SaveImageFromUrlAsync(string? url);  // NUEVO
     }
 }

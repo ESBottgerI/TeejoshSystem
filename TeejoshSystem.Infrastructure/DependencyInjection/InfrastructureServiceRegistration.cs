@@ -2,7 +2,10 @@
 using Microsoft.Extensions.DependencyInjection;
 
 using TeejoshSystem.Domain.Ports.Outbound;
+using TeejoshSystem.Domain.Ports.Outbound.Auth;
 using TeejoshSystem.Domain.Ports.Outbound.Repositories;
+using TeejoshSystem.Infrastructure.Adapters.Outbound.Apis;
+using TeejoshSystem.Infrastructure.Adapters.Outbound.Auth;
 using TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Repositories;
 using TeejoshSystem.Infrastructure.Adapters.Outbound.Storage;
 
@@ -29,6 +32,15 @@ namespace TeejoshSystem.Infrastructure.DependencyInjection
 
             services.AddSingleton<IImageStorageService, LocalImageStorageService>();
 
+            // HttpClient para los adapters de APIs
+            services.AddHttpClient<TcgdexAdapter>();
+            services.AddHttpClient<ScryfallAdapter>();
+            services.AddHttpClient<YgoprodeckAdapter>();
+
+            // Registrar los tres adapters como colección de ITcgCatalogoApiService
+            services.AddScoped<ITcgCatalogoApiService, TcgdexAdapter>();
+            services.AddScoped<ITcgCatalogoApiService, ScryfallAdapter>();
+            services.AddScoped<ITcgCatalogoApiService, YgoprodeckAdapter>();
             // Backup automático solo cuando el proveedor es SQLite
             var provider = configuration["Database:Provider"] ?? "sqlite";
             if (provider.Equals("sqlite", StringComparison.OrdinalIgnoreCase))

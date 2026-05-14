@@ -14,6 +14,22 @@ namespace TeejoshSystem.Infrastructure.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
+                name: "app_user",
+                columns: table => new
+                {
+                    id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    rol = table.Column<string>(type: "TEXT", nullable: false),
+                    username = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
+                    password_hash = table.Column<string>(type: "TEXT", maxLength: 60, nullable: false),
+                    active = table.Column<bool>(type: "INTEGER", nullable: false, defaultValue: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_app_user", x => x.id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "funko_special_feature",
                 columns: table => new
                 {
@@ -90,7 +106,8 @@ namespace TeejoshSystem.Infrastructure.Migrations
                     id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
                     name = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
-                    FranquiciaId = table.Column<int>(type: "INTEGER", nullable: false)
+                    FranquiciaId = table.Column<int>(type: "INTEGER", nullable: false),
+                    image_url = table.Column<string>(type: "TEXT", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -311,25 +328,25 @@ namespace TeejoshSystem.Infrastructure.Migrations
 
             migrationBuilder.InsertData(
                 table: "tcg_expansion",
-                columns: new[] { "id", "FranquiciaId", "name" },
+                columns: new[] { "id", "FranquiciaId", "image_url", "name" },
                 values: new object[,]
                 {
-                    { 1, 1, "Escarlata y Púrpura Base" },
-                    { 2, 1, "151" },
-                    { 3, 1, "Obsidiana Llameante" },
-                    { 4, 1, "Destinos de Paldea" },
-                    { 5, 1, "Fuerza Temporal" },
-                    { 6, 2, "Legendary Collection" },
-                    { 7, 2, "Age of Overlord" },
-                    { 8, 2, "Phantom Nightmare" },
-                    { 9, 3, "Wilds of Eldraine" },
-                    { 10, 3, "The Lost Caverns of Ixalan" },
-                    { 11, 3, "Murders at Karlov Manor" },
-                    { 12, 4, "Romance Dawn" },
-                    { 13, 4, "Paramount War" },
-                    { 14, 4, "Pillars of Strength" },
-                    { 15, 4, "Kingdoms of Intrigue" },
-                    { 16, 5, "Serie Base" }
+                    { 1, 1, null, "Escarlata y Púrpura Base" },
+                    { 2, 1, null, "151" },
+                    { 3, 1, null, "Obsidiana Llameante" },
+                    { 4, 1, null, "Destinos de Paldea" },
+                    { 5, 1, null, "Fuerza Temporal" },
+                    { 6, 2, null, "Legendary Collection" },
+                    { 7, 2, null, "Age of Overlord" },
+                    { 8, 2, null, "Phantom Nightmare" },
+                    { 9, 3, null, "Wilds of Eldraine" },
+                    { 10, 3, null, "The Lost Caverns of Ixalan" },
+                    { 11, 3, null, "Murders at Karlov Manor" },
+                    { 12, 4, null, "Romance Dawn" },
+                    { 13, 4, null, "Paramount War" },
+                    { 14, 4, null, "Pillars of Strength" },
+                    { 15, 4, null, "Kingdoms of Intrigue" },
+                    { 16, 5, null, "Serie Base" }
                 });
 
             migrationBuilder.InsertData(
@@ -367,6 +384,12 @@ namespace TeejoshSystem.Infrastructure.Migrations
                     { 16, 5, "Sobre Individual" },
                     { 17, 5, "Starter Pack" }
                 });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_app_user_username",
+                table: "app_user",
+                column: "username",
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_funko_special_feature_name",
@@ -413,6 +436,9 @@ namespace TeejoshSystem.Infrastructure.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropTable(
+                name: "app_user");
+
             migrationBuilder.DropTable(
                 name: "funko");
 

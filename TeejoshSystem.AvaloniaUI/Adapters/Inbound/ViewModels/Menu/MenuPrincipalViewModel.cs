@@ -8,6 +8,7 @@ using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Auth;
 using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Common;
 using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Productos;
 using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Ventas;
+using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Catalogos;
 using TeejoshSystem.Domain.Enums;
 
 namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Menu
@@ -18,23 +19,26 @@ namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Menu
         private readonly INavigationService _navigation;
         private readonly SesionContext _sesionContext;
         private readonly INotificationService _notification;
+        private readonly SincronizarCatalogosViewModel _sincronizarVm;
 
         public MenuPrincipalViewModel(
             IServiceProvider serviceProvider,
             INavigationService navigation,
             SesionContext sesionContext,
-            INotificationService notification)
+            INotificationService notification,
+            SincronizarCatalogosViewModel sincronizarVm)
         {
             _serviceProvider = serviceProvider;
             _navigation = navigation;
             _sesionContext = sesionContext;
             _notification = notification;
+            _sincronizarVm = sincronizarVm;
         }
 
         public bool EsAdministrador
             => _sesionContext.SesionActual?.Rol == RolUsuario.Administrador;
 
-        // resto de métodos sin cambios
+        // resto de mï¿½todos sin cambios
         [RelayCommand]
         private void VisualizarInventario()
         {
@@ -106,5 +110,9 @@ namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Menu
 
             _navigation.NavigateTo(loginVm);
         }
+
+        [RelayCommand]
+        private void SincronizarCatalogos() =>
+            _navigation.NavigateTo(_sincronizarVm);
     }
 }

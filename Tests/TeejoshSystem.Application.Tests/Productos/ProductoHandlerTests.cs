@@ -22,10 +22,19 @@ public class CrearProductoCommandHandlerTests
     private readonly IProductoRepository _repo;
     private readonly CrearProductoCommandHandler _handler;
 
+    private readonly IImageStorageService _imageStorageMock;
+
     public CrearProductoCommandHandlerTests()
     {
         _repo    = Substitute.For<IProductoRepository>();
-        _handler = new CrearProductoCommandHandler(_repo);
+        
+        _imageStorageMock = Substitute.For<IImageStorageService>();
+
+        _handler = new CrearProductoCommandHandler(
+            _repo,
+            _imageStorageMock
+        );
+
     }
 
     [Fact]
@@ -194,7 +203,13 @@ public class BuscarProductosQueryHandlerTests
     public BuscarProductosQueryHandlerTests()
     {
         _repo    = Substitute.For<IProductoRepository>();
-        _handler = new BuscarProductosQueryHandler(_repo);
+        
+        var imageStorage = Substitute.For<IImageStorageService>();
+
+        _handler = new BuscarProductosQueryHandler(
+            _repo,
+            imageStorage
+        );
     }
 
     [Fact]

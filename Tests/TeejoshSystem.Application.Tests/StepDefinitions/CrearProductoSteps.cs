@@ -16,6 +16,8 @@ public class CrearProductoSteps
 
     private readonly CrearProductoCommandHandler _handler;
 
+    private readonly IImageStorageService _imageStorageMock;
+
     private string _nombre = string.Empty;
     private decimal _precio;
     private int _stock;
@@ -28,7 +30,12 @@ public class CrearProductoSteps
     {
         _repository = Substitute.For<IProductoRepository>();
 
-        _handler = new CrearProductoCommandHandler(_repository);
+        _imageStorageMock = Substitute.For<IImageStorageService>();
+
+        _handler = new CrearProductoCommandHandler(
+            _repository,
+            _imageStorageMock
+        );
 
         _repository
             .AddAsync(Arg.Any<Domain.Entities.Producto>())

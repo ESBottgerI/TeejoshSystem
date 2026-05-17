@@ -6,16 +6,18 @@ using System;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 
-using Avalonia.Controls.ApplicationLifetimes;  // NUEVO
-using Avalonia.Platform.Storage;               // NUEVO
+using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Platform.Storage;
 
 using TeejoshSystem.Application.Common.Dtos;
 using TeejoshSystem.Application.Ports.Inbound.Catalogos.Queries.ObtenerCatalogos;
 using TeejoshSystem.Application.Ports.Inbound.Catalogos.Queries.ObtenerExpansionesYPacks;
+using TeejoshSystem.Application.Ports.Inbound.Catalogos.Queries.ObtenerImagenExpansion;
 using TeejoshSystem.Application.Ports.Inbound.Productos.Commands.CrearProducto;
 using TeejoshSystem.AvaloniaUI.Adapters.Inbound.Services;
 using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Common;
 using TeejoshSystem.Domain.Enums;
+using TeejoshSystem.Domain.Ports.Outbound;
 
 namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Productos;
 
@@ -25,6 +27,7 @@ public partial class CrearProductoViewModel : ValidatableViewModel
     private readonly INotificationService _notification;
     private readonly IConfirmationService _confirmation;
     private readonly INavigationService _navigation;
+    private readonly IImageStorageService _imageStorage;
 
     // Propiedades comunes
     [ObservableProperty]
@@ -43,10 +46,10 @@ public partial class CrearProductoViewModel : ValidatableViewModel
     private bool _catalogosCargados;
 
     [ObservableProperty]
-    private string? _imagePath;  // Ruta temporal del archivo origen
+    private string? _imagePath;
 
     [ObservableProperty]
-    private string? _imageNombre;  // Solo el nombre para mostrar en UI
+    private string? _imageNombre;
 
     // Hot Wheels
     [ObservableProperty]
@@ -145,12 +148,14 @@ public partial class CrearProductoViewModel : ValidatableViewModel
         IMediator mediator,
         INotificationService notification,
         IConfirmationService confirmation,
-        INavigationService navigation)
+        INavigationService navigation,
+        IImageStorageService imageStorage)  // NUEVO
     {
         _mediator = mediator;
         _notification = notification;
         _confirmation = confirmation;
         _navigation = navigation;
+        _imageStorage = imageStorage;  // NUEVO
 
         TipoSeleccionado = TiposDisponibles[0];
 
@@ -214,6 +219,43 @@ public partial class CrearProductoViewModel : ValidatableViewModel
         _ = CargarExpansionesYPacksAsync(value.Id);
     }
 
+    // NUEVO — al seleccionar expansión, asignar imagen automáticamente
+    partial void OnTcgExpansionSeleccionadaChanged(CatalogoItemDto? value)
+    {
+        if (value is null) return;
+        _ = AsignarImagenDesdeExpansionAsync(value.Id);
+    }
+
+    private async Task AsignarImagenDesdeExpansionAsync(int expansionId)
+    {
+        try
+        {
+            var imageUrl = await _mediator.Send(
+                new ObtenerImagenExpansionQuery(expansionId));
+
+            if (imageUrl is null) return;
+
+            // Resolver ruta absoluta si es nombre de archivo local
+            var fullPath = _imageStorage.GetFullPath(imageUrl);
+
+            if (fullPath is not null)
+            {
+                // Solo asignar automáticamente si el usuario no ha elegido una imagen ya
+                if (string.IsNullOrWhiteSpace(ImagePath) &&
+                    string.IsNullOrWhiteSpace(ImageNombre))
+                {
+                    ImagePath = fullPath;
+                    ImageNombre = System.IO.Path.GetFileName(fullPath);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine(
+                $"AsignarImagenDesdeExpansionAsync error: {ex.Message}");
+        }
+    }
+
     private async Task CargarExpansionesYPacksAsync(int franquiciaId)
     {
         try
@@ -271,7 +313,7 @@ public partial class CrearProductoViewModel : ValidatableViewModel
         Precio = Precio,
         Unidades = Unidades,
         Tipo = TipoSeleccionado!.Valor!.Value,
-        ImagePath = ImagePath,  // NUEVO
+        ImagePath = ImagePath,
 
         HotWheels = MostrarHotWheels && HwCategoriaSeleccionada != null
             ? new CrearHotWheelsDetalleDto(HwModelo!, HwAnio, HwSerie!, HwCategoriaSeleccionada.Id)

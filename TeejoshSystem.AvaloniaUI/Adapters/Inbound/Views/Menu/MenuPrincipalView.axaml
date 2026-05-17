@@ -54,7 +54,7 @@
 
                 <Separator Margin="0,8"/>
 
-                <Button Content="🔄 Sincronizar catálogos"
+                <Button Content="Sincronizar catálogos"
                         Command="{Binding SincronizarCatalogosCommand}"
                         Width="200" HorizontalAlignment="Center"
                         IsVisible="{Binding EsAdministrador}"/>

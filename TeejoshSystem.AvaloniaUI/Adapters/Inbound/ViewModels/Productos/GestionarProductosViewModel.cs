@@ -118,7 +118,6 @@ public partial class GestionarProductosViewModel : ViewModelBase
             {
                 await _notification.ShowSuccessAsync("Producto eliminado correctamente.");
                 ProductoSeleccionado = null;
-                await BuscarAsync();
             }
             else
             {
@@ -129,6 +128,8 @@ public partial class GestionarProductosViewModel : ViewModelBase
         {
             IsBusy = false;
         }
+
+        await BuscarAsync();
     }
 
     [RelayCommand]

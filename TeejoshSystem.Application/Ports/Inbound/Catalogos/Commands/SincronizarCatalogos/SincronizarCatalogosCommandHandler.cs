@@ -51,7 +51,11 @@ namespace TeejoshSystem.Application.Ports.Inbound.Catalogos.Commands.Sincronizar
                             .GetTcgExpansionByNombreYFranquiciaAsync(
                                 expansionApi.Nombre, franquicia.Id);
 
-                        string? imageName = expansionApi.ImageUrl;
+                        // Descargar imagen — SVG se convierte a PNG automáticamente
+                        string? imageName = null;
+                        if (expansionApi.ImageUrl is not null)
+                            imageName = await _imageStorage
+                                .SaveImageFromUrlAsync(expansionApi.ImageUrl);
 
                         if (existente is null)
                         {

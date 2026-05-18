@@ -7,11 +7,13 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Apis
     public class ScryfallAdapter : ITcgCatalogoApiService
     {
         private readonly HttpClient _http;
+        private readonly IAppLogger _logger;                 // NUEVO
         public string FranquiciaNombre => "Magic: The Gathering";
 
-        public ScryfallAdapter(HttpClient http)
+        public ScryfallAdapter(HttpClient http, IAppLogger logger)  // NUEVO
         {
             _http = http;
+            _logger = logger;
             _http.DefaultRequestHeaders.Clear();
             _http.DefaultRequestHeaders.TryAddWithoutValidation(
                 "User-Agent", "TeejoshSystem/1.0 (contact@teejosh.com)");
@@ -20,27 +22,36 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Apis
 
         public async Task<List<ExpansionApiResult>> GetExpansionesAsync()
         {
+            _logger.Debug("ScryfallAdapter: consultando sets en api.scryfall.com...");
             try
             {
                 var response = await _http.GetFromJsonAsync<ScryfallSetList>(
                     "https://api.scryfall.com/sets");
 
-                if (response?.Data is null) return new();
+                if (response?.Data is null)
+                {
+                    _logger.Warning("ScryfallAdapter: la API devolvió respuesta nula o sin datos.");
+                    return new();
+                }
 
-                return response.Data
+                var filtered = response.Data
                     .Where(s => s.SetType == "expansion" ||
                                 s.SetType == "core" ||
                                 s.SetType == "masters" ||
                                 s.SetType == "draft_innovation" ||
                                 s.SetType == "commander")
-                    .Select(s => new ExpansionApiResult(
-                        Nombre: s.Name,
-                        ImageUrl: s.IconSvgUri
-                    )).ToList();
+                    .ToList();
+
+                _logger.Info($"ScryfallAdapter: {filtered.Count} sets filtrados de {response.Data.Count} totales.");
+
+                return filtered.Select(s => new ExpansionApiResult(
+                    Nombre: s.Name,
+                    ImageUrl: s.IconSvgUri
+                )).ToList();
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"ScryfallAdapter error: {ex.Message}");
+                _logger.Error("ScryfallAdapter: error al consultar la API de Magic: The Gathering.", ex);
                 return new();
             }
         }

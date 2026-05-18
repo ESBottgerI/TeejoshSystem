@@ -11,15 +11,18 @@ namespace TeejoshSystem.Application.Ports.Inbound.Catalogos.Commands.Sincronizar
         private readonly ICatalogoRepository _catalogoRepo;
         private readonly IEnumerable<ITcgCatalogoApiService> _apiServices;
         private readonly IImageStorageService _imageStorage;
+        private readonly IAppLogger _logger;                 // NUEVO
 
         public SincronizarCatalogosCommandHandler(
             ICatalogoRepository catalogoRepo,
             IEnumerable<ITcgCatalogoApiService> apiServices,
-            IImageStorageService imageStorage)
+            IImageStorageService imageStorage,
+            IAppLogger logger)                               // NUEVO
         {
             _catalogoRepo = catalogoRepo;
             _apiServices = apiServices;
             _imageStorage = imageStorage;
+            _logger = logger;
         }
 
         public async Task<SincronizarCatalogosResult> Handle(
@@ -30,8 +33,12 @@ namespace TeejoshSystem.Application.Ports.Inbound.Catalogos.Commands.Sincronizar
             int totalAgregadas = 0;
             int totalActualizadas = 0;
 
+            _logger.Info("Iniciando sincronización de catálogos TCG.");
+
             foreach (var servicio in _apiServices)
             {
+                _logger.Debug($"Consultando API para franquicia '{servicio.FranquiciaNombre}'...");
+
                 try
                 {
                     var franquicia = await _catalogoRepo
@@ -39,11 +46,14 @@ namespace TeejoshSystem.Application.Ports.Inbound.Catalogos.Commands.Sincronizar
 
                     if (franquicia is null)
                     {
-                        errores.Add($"Franquicia '{servicio.FranquiciaNombre}' no encontrada en BD.");
+                        var msg = $"Franquicia '{servicio.FranquiciaNombre}' no encontrada en BD.";
+                        _logger.Warning(msg);
+                        errores.Add(msg);
                         continue;
                     }
 
                     var expansionesApi = await servicio.GetExpansionesAsync();
+                    _logger.Debug($"API '{servicio.FranquiciaNombre}' devolvió {expansionesApi.Count} expansiones.");
 
                     foreach (var expansionApi in expansionesApi)
                     {
@@ -90,9 +100,13 @@ namespace TeejoshSystem.Application.Ports.Inbound.Catalogos.Commands.Sincronizar
                 }
                 catch (Exception ex)
                 {
-                    errores.Add($"Error sincronizando {servicio.FranquiciaNombre}: {ex.Message}");
+                    var msg = $"Error sincronizando {servicio.FranquiciaNombre}: {ex.Message}";
+                    _logger.Error($"Fallo al sincronizar catálogo de '{servicio.FranquiciaNombre}'", ex);
+                    errores.Add(msg);
                 }
             }
+
+            _logger.Info($"Sincronización completada: {totalAgregadas} agregadas, {totalActualizadas} actualizadas, {errores.Count} errores.");
 
             return new SincronizarCatalogosResult(totalAgregadas, totalActualizadas, errores);
         }

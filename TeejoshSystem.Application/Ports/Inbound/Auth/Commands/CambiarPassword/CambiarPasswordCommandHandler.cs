@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using MediatR;
 using TeejoshSystem.Application.Common;
+using TeejoshSystem.Domain.Ports.Outbound;
 using TeejoshSystem.Domain.Ports.Outbound.Auth;
 
 namespace TeejoshSystem.Application.Ports.Inbound.Auth.Commands.CambiarPassword
@@ -11,11 +12,16 @@ namespace TeejoshSystem.Application.Ports.Inbound.Auth.Commands.CambiarPassword
     {
         private readonly IAuthService _authService;
         private readonly IUsuarioRepository _usuarioRepository;
+        private readonly IAppLogger _logger;                 // NUEVO
 
-        public CambiarPasswordCommandHandler(IAuthService authService, IUsuarioRepository usuarioRepository)
+        public CambiarPasswordCommandHandler(
+            IAuthService authService,
+            IUsuarioRepository usuarioRepository,
+            IAppLogger logger)                               // NUEVO
         {
             _authService = authService;
             _usuarioRepository = usuarioRepository;
+            _logger = logger;
         }
 
         public async Task<Result> Handle(CambiarPasswordCommand request, CancellationToken cancellationToken)
@@ -32,16 +38,20 @@ namespace TeejoshSystem.Application.Ports.Inbound.Auth.Commands.CambiarPassword
                     request.UsuarioId, request.PasswordActual, cancellationToken);
 
                 if (!passwordValida)
+                {
+                    _logger.Warning($"Intento de cambio de contraseña con contraseña actual incorrecta: UsuarioId={request.UsuarioId}");
                     return Result.Failure("La contraseña actual es incorrecta.");
+                }
 
                 await _usuarioRepository.ActualizarPasswordAsync(
                     request.UsuarioId, request.PasswordNuevo, cancellationToken);
 
+                _logger.Info($"Contraseña actualizada exitosamente: UsuarioId={request.UsuarioId}");
                 return Result.Success();
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine(ex);
+                _logger.Error($"Error inesperado al cambiar contraseña: UsuarioId={request.UsuarioId}", ex);
                 return Result.Failure("Error al cambiar la contraseña.");
             }
         }

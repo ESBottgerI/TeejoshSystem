@@ -2,6 +2,8 @@ using System;
 using System.IO;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Svg.Skia;
+using SkiaSharp;
 using TeejoshSystem.Domain.Ports.Outbound;
 
 namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Storage
@@ -47,7 +49,6 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Storage
             return File.Exists(fullPath) ? fullPath : null;
         }
 
-        // NUEVO
         public async Task<string?> SaveImageFromUrlAsync(string? url)
         {
             if (string.IsNullOrWhiteSpace(url))
@@ -58,6 +59,10 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Storage
                 var bytes = await _http.GetByteArrayAsync(url);
                 var extension = Path.GetExtension(
                     new Uri(url).AbsolutePath).ToLowerInvariant();
+
+                // Si es SVG, convertir a PNG antes de guardar
+                if (extension == ".svg")
+                    return await ConvertirSvgAPngAsync(bytes);
 
                 if (string.IsNullOrWhiteSpace(extension))
                     extension = ".png";
@@ -72,6 +77,56 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Storage
             {
                 System.Diagnostics.Debug.WriteLine(
                     $"SaveImageFromUrlAsync error: {ex.Message}");
+                return null;
+            }
+        }
+
+        private async Task<string?> ConvertirSvgAPngAsync(byte[] svgBytes)
+        {
+            try
+            {
+                return await Task.Run(() =>
+                {
+                    var svg = new SKSvg();
+                    using var stream = new MemoryStream(svgBytes);
+                    svg.Load(stream);
+
+                    if (svg.Picture is null)
+                        return null;
+
+                    var width = 256;
+                    var height = 256;
+
+                    var imageInfo = new SKImageInfo(width, height,
+                        SKColorType.Rgba8888, SKAlphaType.Premul);
+
+                    using var surface = SKSurface.Create(imageInfo);
+                    var canvas = surface.Canvas;
+
+                    canvas.Clear(SKColors.Transparent);
+
+                    var bounds = svg.Picture.CullRect;
+                    var scaleX = width / bounds.Width;
+                    var scaleY = height / bounds.Height;
+                    var scale = Math.Min(scaleX, scaleY);
+
+                    canvas.Scale(scale);
+                    canvas.DrawPicture(svg.Picture);
+
+                    using var image = surface.Snapshot();
+                    using var data = image.Encode(SKEncodedImageFormat.Png, 100);
+
+                    var nombreArchivo = $"{Guid.NewGuid()}.png";
+                    var rutaDestino = Path.Combine(_imagesFolder, nombreArchivo);
+
+                    File.WriteAllBytes(rutaDestino, data.ToArray());
+                    return nombreArchivo;
+                });
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine(
+                    $"ConvertirSvgAPngAsync error: {ex.Message}");
                 return null;
             }
         }

@@ -13,14 +13,17 @@ namespace TeejoshSystem.Application.Ports.Inbound.Productos.Commands.CrearProduc
     public class CrearProductoCommandHandler : IRequestHandler<CrearProductoCommand, Result>
     {
         private readonly IProductoRepository _repository;
-        private readonly IImageStorageService _imageStorage;  // NUEVO
+        private readonly IImageStorageService _imageStorage;
+        private readonly IAppLogger _logger;                 // NUEVO
 
         public CrearProductoCommandHandler(
             IProductoRepository repository,
-            IImageStorageService imageStorage)  // NUEVO
+            IImageStorageService imageStorage,
+            IAppLogger logger)                               // NUEVO
         {
             _repository = repository;
             _imageStorage = imageStorage;
+            _logger = logger;
         }
 
         public async Task<Result> Handle(
@@ -29,8 +32,10 @@ namespace TeejoshSystem.Application.Ports.Inbound.Productos.Commands.CrearProduc
         {
             try
             {
+                _logger.Debug($"Iniciando creación de producto: Tipo={request.Tipo}, Nombre={request.Nombre}");
+
                 // 1. Guardar imagen si viene una
-                var imageName = await _imageStorage.SaveImageAsync(request.ImagePath);  // NUEVO
+                var imageName = await _imageStorage.SaveImageAsync(request.ImagePath);
 
                 // 2. Crear producto base
                 var producto = new Producto(
@@ -40,7 +45,7 @@ namespace TeejoshSystem.Application.Ports.Inbound.Productos.Commands.CrearProduc
                     new Unidades(request.Unidades)
                 );
 
-                // 3. Asignar imagen al producto  // NUEVO
+                // 3. Asignar imagen al producto
                 if (imageName is not null)
                     producto.AsignarImagePath(imageName);
 
@@ -50,19 +55,22 @@ namespace TeejoshSystem.Application.Ports.Inbound.Productos.Commands.CrearProduc
                 // 5. Crear y guardar detalle según tipo
                 await CrearYGuardarDetallePorTipo(productoId, producto, request);
 
+                _logger.Info($"Producto creado exitosamente: Id={productoId}, Nombre={request.Nombre}");
                 return Result.Success();
             }
             catch (ArgumentException ex)
             {
+                _logger.Warning($"Datos inválidos al crear producto '{request.Nombre}': {ex.Message}");
                 return Result.Failure(ex.Message);
             }
             catch (InvalidOperationException ex)
             {
+                _logger.Warning($"Operación inválida al crear producto '{request.Nombre}': {ex.Message}");
                 return Result.Failure(ex.Message);
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine(ex);
+                _logger.Error($"Error inesperado al crear producto '{request.Nombre}'", ex);
                 return Result.Failure($"Error: {ex.Message} | Inner: {ex.InnerException?.Message}");
             }
         }

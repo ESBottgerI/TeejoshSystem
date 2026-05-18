@@ -5,6 +5,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;          // NUEVO
+using Serilog;                               // NUEVO
 using System;
 using TeejoshSystem.AvaloniaUI.Adapters.Inbound.Services;
 using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Admin;
@@ -38,10 +40,16 @@ public partial class App : Avalonia.Application
             .AddEnvironmentVariables()
             .Build();
 
+        // NUEVO — Serilog lee su configuración completa desde appsettings.json
+        Log.Logger = new LoggerConfiguration()
+            .ReadFrom.Configuration(configuration)
+            .CreateLogger();
+
         _host = Host.CreateDefaultBuilder()
+            .UseSerilog()                    // NUEVO — reemplaza el logging por defecto del host
             .ConfigureServices((_, services) =>
             {
-                // Infrastructure
+                // Infrastructure (incluye registro de IAppLogger → AppLogger)
                 services.AddInfrastructure(configuration);
 
                 // Application (MediatR)
@@ -104,7 +112,11 @@ public partial class App : Avalonia.Application
             var mainWindow = new MainWindow();
             mainWindow.DataContext = _host.Services.GetRequiredService<MainViewModel>();
             desktop.MainWindow = mainWindow;
-            desktop.Exit += (_, _) => _host.Dispose();
+            desktop.Exit += (_, _) =>
+            {
+                _host.Dispose();
+                Log.CloseAndFlush();         // NUEVO — cierra Serilog limpiamente al salir
+            };
         }
 
         base.OnFrameworkInitializationCompleted();

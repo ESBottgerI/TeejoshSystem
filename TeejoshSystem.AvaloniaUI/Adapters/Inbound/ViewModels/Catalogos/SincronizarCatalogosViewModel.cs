@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using TeejoshSystem.Application.Ports.Inbound.Catalogos.Commands.SincronizarCatalogos;
 using TeejoshSystem.AvaloniaUI.Adapters.Inbound.Services;
 using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Common;
+using TeejoshSystem.Domain.Ports.Outbound;
 
 namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Catalogos
 {
@@ -16,6 +17,7 @@ namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Catalogos
         private readonly IMediator _mediator;
         private readonly INotificationService _notification;
         private readonly INavigationService _navigation;
+        private readonly IAppLogger _logger;                 // NUEVO
 
         [ObservableProperty]
         private string? _resultado;
@@ -26,11 +28,13 @@ namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Catalogos
         public SincronizarCatalogosViewModel(
             IMediator mediator,
             INotificationService notification,
-            INavigationService navigation)
+            INavigationService navigation,
+            IAppLogger logger)                               // NUEVO
         {
             _mediator = mediator;
             _notification = notification;
             _navigation = navigation;
+            _logger = logger;
         }
 
         [RelayCommand]
@@ -64,7 +68,7 @@ namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Catalogos
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine(ex);
+                _logger.Error("Error inesperado en la sincronización de catálogos desde la UI.", ex);
                 await _notification.ShowErrorAsync($"Error: {ex.Message} | {ex.InnerException?.Message}");
             }
             finally

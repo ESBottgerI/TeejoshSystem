@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using MediatR;
 using TeejoshSystem.Application.Common;
+using TeejoshSystem.Domain.Ports.Outbound;
 using TeejoshSystem.Domain.Ports.Outbound.Auth;
 
 namespace TeejoshSystem.Application.Ports.Inbound.Auth.Commands.DesactivarUsuario
@@ -10,10 +11,14 @@ namespace TeejoshSystem.Application.Ports.Inbound.Auth.Commands.DesactivarUsuari
     public class DesactivarUsuarioCommandHandler : IRequestHandler<DesactivarUsuarioCommand, Result>
     {
         private readonly IUsuarioRepository _usuarioRepository;
+        private readonly IAppLogger _logger;                 // NUEVO
 
-        public DesactivarUsuarioCommandHandler(IUsuarioRepository usuarioRepository)
+        public DesactivarUsuarioCommandHandler(
+            IUsuarioRepository usuarioRepository,
+            IAppLogger logger)                               // NUEVO
         {
             _usuarioRepository = usuarioRepository;
+            _logger = logger;
         }
 
         public async Task<Result> Handle(DesactivarUsuarioCommand request, CancellationToken cancellationToken)
@@ -21,11 +26,12 @@ namespace TeejoshSystem.Application.Ports.Inbound.Auth.Commands.DesactivarUsuari
             try
             {
                 await _usuarioRepository.DesactivarAsync(request.UsuarioId, cancellationToken);
+                _logger.Info($"Usuario desactivado: UsuarioId={request.UsuarioId}");
                 return Result.Success();
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine(ex);
+                _logger.Error($"Error inesperado al desactivar usuario: UsuarioId={request.UsuarioId}", ex);
                 return Result.Failure("Error al desactivar el usuario.");
             }
         }

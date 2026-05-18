@@ -6,12 +6,9 @@ using TeejoshSystem.Domain.Ports.Outbound.Auth;
 using TeejoshSystem.Domain.Ports.Outbound.Repositories;
 using TeejoshSystem.Infrastructure.Adapters.Outbound.Apis;
 using TeejoshSystem.Infrastructure.Adapters.Outbound.Auth;
+using TeejoshSystem.Infrastructure.Adapters.Outbound.Logging;           // NUEVO
 using TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Repositories;
 using TeejoshSystem.Infrastructure.Adapters.Outbound.Storage;
-
-using TeejoshSystem.Domain.Ports.Outbound.Auth;
-using TeejoshSystem.Infrastructure.Adapters.Outbound.Auth;
-
 using TeejoshSystem.Infrastructure.Adapters.Outbound.Backup;
 
 namespace TeejoshSystem.Infrastructure.DependencyInjection
@@ -24,6 +21,7 @@ namespace TeejoshSystem.Infrastructure.DependencyInjection
         {
             services.AddPersistence(configuration);
 
+            // Repositories & services
             services.AddScoped<IUsuarioRepository, UsuarioRepository>();
             services.AddScoped<IProductoRepository, ProductoRepository>();
             services.AddScoped<ICatalogoRepository, CatalogoRepository>();
@@ -32,7 +30,10 @@ namespace TeejoshSystem.Infrastructure.DependencyInjection
 
             services.AddSingleton<IImageStorageService, LocalImageStorageService>();
 
-            // HttpClient para los adapters de APIs
+            // NUEVO — App logger (singleton: stateless, hilo-seguro, vive toda la app)
+            services.AddSingleton<IAppLogger, AppLogger>();
+
+            // HttpClient para los adapters de APIs externas
             services.AddHttpClient<TcgdexAdapter>();
             services.AddHttpClient<ScryfallAdapter>();
             services.AddHttpClient<YgoprodeckAdapter>();
@@ -41,7 +42,8 @@ namespace TeejoshSystem.Infrastructure.DependencyInjection
             services.AddScoped<ITcgCatalogoApiService, TcgdexAdapter>();
             services.AddScoped<ITcgCatalogoApiService, ScryfallAdapter>();
             services.AddScoped<ITcgCatalogoApiService, YgoprodeckAdapter>();
-            // Backup automático solo cuando el proveedor es SQLite
+
+            // Backup automático sólo cuando el proveedor es SQLite
             var provider = configuration["Database:Provider"] ?? "sqlite";
             if (provider.Equals("sqlite", StringComparison.OrdinalIgnoreCase))
                 services.AddHostedService<BackupService>();

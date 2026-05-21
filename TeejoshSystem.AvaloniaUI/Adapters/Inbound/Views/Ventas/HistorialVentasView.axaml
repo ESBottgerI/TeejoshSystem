@@ -15,7 +15,7 @@
 		</Border>
 
 		<!-- Contenido -->
-		<Border Grid.Row="1" Margin="16" Background="White" CornerRadius="4">
+		<Border Grid.Row="1" Margin="16" Background="{DynamicResource TeejoshSurfaceBrush}" CornerRadius="4">
 			<Grid RowDefinitions="Auto,*,Auto">
 
 				<!-- Filtros de fecha -->
@@ -102,7 +102,7 @@
 		</Border>
 
 		<!-- Footer -->
-		<Border Grid.Row="2" Margin="16,0,16,16" Background="White" Padding="16">
+		<Border Grid.Row="2" Margin="16,0,16,16" Background="{DynamicResource TeejoshSurfaceBrush}" Padding="16">
 			<Grid ColumnDefinitions="*,Auto">
 				<TextBlock VerticalAlignment="Center">
 					<Run Text="Total ventas: "/>

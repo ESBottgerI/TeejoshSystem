@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
+using Avalonia.Threading;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -8,6 +9,8 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;          // NUEVO
 using Serilog;                               // NUEVO
 using System;
+using System.ComponentModel;
+using System.Threading.Tasks;
 using TeejoshSystem.AvaloniaUI.Adapters.Inbound.Services;
 using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Admin;
 using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Auth;
@@ -60,6 +63,7 @@ public partial class App : Avalonia.Application
                 // UI Services
                 services.AddSingleton<INotificationService, NotificationService>();
                 services.AddSingleton<IConfirmationService, ConfirmationService>();
+                services.AddSingleton<IThemePreferenceService, ThemePreferenceService>();
                 services.AddSingleton<NavigationService>();
                 services.AddSingleton<INavigationService>(sp =>
                     sp.GetRequiredService<NavigationService>());
@@ -91,6 +95,20 @@ public partial class App : Avalonia.Application
         var navService = _host.Services.GetRequiredService<NavigationService>();
         var mainVm = _host.Services.GetRequiredService<MainViewModel>();
 
+        mainVm.PropertyChanged += (object? sender, PropertyChangedEventArgs e) =>
+        {
+            if (e.PropertyName == nameof(MainViewModel.ThemeVariant))
+            {
+                Dispatcher.UIThread.Post(() => RequestedThemeVariant = mainVm.ThemeVariant);
+            }
+        };
+
+        _ = Task.Run(async () =>
+        {
+            await mainVm.InitializeAsync();
+            Dispatcher.UIThread.Post(() => RequestedThemeVariant = mainVm.ThemeVariant);
+        });
+
         navService.Configure(
             vm => mainVm.CurrentView = vm,
             () => mainVm.CurrentView = _host.Services.GetRequiredService<MenuPrincipalViewModel>()
@@ -110,7 +128,7 @@ public partial class App : Avalonia.Application
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             var mainWindow = new MainWindow();
-            mainWindow.DataContext = _host.Services.GetRequiredService<MainViewModel>();
+            mainWindow.DataContext = mainVm;
             desktop.MainWindow = mainWindow;
             desktop.Exit += (_, _) =>
             {

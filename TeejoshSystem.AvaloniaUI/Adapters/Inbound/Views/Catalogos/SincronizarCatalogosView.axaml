@@ -11,7 +11,7 @@
                        Foreground="White" VerticalAlignment="Center"/>
         </Border>
 
-        <Border Grid.Row="1" Margin="16" Background="White" CornerRadius="4">
+        <Border Grid.Row="1" Margin="16" Background="{DynamicResource TeejoshSurfaceBrush}" CornerRadius="4">
             <StackPanel Margin="24" Spacing="16">
 
                 <TextBlock Text="Sincronización de catálogos TCG"
@@ -45,7 +45,7 @@
             </StackPanel>
         </Border>
 
-        <Border Grid.Row="2" Margin="16,0,16,16" Background="White" Padding="16">
+        <Border Grid.Row="2" Margin="16,0,16,16" Background="{DynamicResource TeejoshSurfaceBrush}" Padding="16">
             <Grid ColumnDefinitions="*,Auto,8,Auto">
                 <Button Grid.Column="1"
                         Command="{Binding SincronizarCommand}"

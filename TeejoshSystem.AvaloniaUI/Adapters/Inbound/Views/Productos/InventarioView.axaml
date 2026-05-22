@@ -27,7 +27,7 @@
         <!-- Contenido -->
         <Border Grid.Row="1"
                 Margin="16"
-                Background="White"
+                Background="{DynamicResource TeejoshSurfaceBrush}"
                 CornerRadius="4">
             <Grid RowDefinitions="Auto,*">
 
@@ -118,7 +118,7 @@
         <!-- Footer -->
         <Border Grid.Row="2"
                 Margin="16,0,16,16"
-                Background="White"
+                Background="{DynamicResource TeejoshSurfaceBrush}"
                 Padding="16">
             <Grid ColumnDefinitions="*,Auto">
                 <TextBlock VerticalAlignment="Center">

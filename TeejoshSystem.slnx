@@ -1,6 +1,0 @@
-<Solution>
-  <Project Path="TeejoshSystem.Application/TeejoshSystem.Application.csproj" />
-  <Project Path="TeejoshSystem.AvaloniaUI/TeejoshSystem.AvaloniaUI.csproj" />
-  <Project Path="TeejoshSystem.Domain/TeejoshSystem.Domain.csproj" />
-  <Project Path="TeejoshSystem.Infrastructure/TeejoshSystem.Infrastructure.csproj" />
-</Solution>

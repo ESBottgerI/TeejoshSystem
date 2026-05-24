@@ -4,6 +4,7 @@ using TeejoshSystem.Domain.Entities;
 using TeejoshSystem.Domain.Entities.Detalles;
 using TeejoshSystem.Domain.ValueObjects;
 using TeejoshSystem.Domain.Enums;
+using TeejoshSystem.Domain.Ports.Outbound;
 using TeejoshSystem.Domain.Ports.Outbound.Repositories;
 using TeejoshSystem.Application.Common;
 
@@ -12,10 +13,17 @@ namespace TeejoshSystem.Application.Ports.Inbound.Productos.Commands.CrearProduc
     public class CrearProductoCommandHandler : IRequestHandler<CrearProductoCommand, Result>
     {
         private readonly IProductoRepository _repository;
+        private readonly IImageStorageService _imageStorage;
+        private readonly IAppLogger _logger;                 // NUEVO
 
-        public CrearProductoCommandHandler(IProductoRepository repository)
+        public CrearProductoCommandHandler(
+            IProductoRepository repository,
+            IImageStorageService imageStorage,
+            IAppLogger logger)                               // NUEVO
         {
             _repository = repository;
+            _imageStorage = imageStorage;
+            _logger = logger;
         }
 
         public async Task<Result> Handle(
@@ -24,7 +32,12 @@ namespace TeejoshSystem.Application.Ports.Inbound.Productos.Commands.CrearProduc
         {
             try
             {
-                // 1. Crear producto base
+                _logger.Debug($"Iniciando creación de producto: Tipo={request.Tipo}, Nombre={request.Nombre}");
+
+                // 1. Guardar imagen si viene una
+                var imageName = await _imageStorage.SaveImageAsync(request.ImagePath);
+
+                // 2. Crear producto base
                 var producto = new Producto(
                     request.Tipo,
                     new NombreProducto(request.Nombre),
@@ -32,28 +45,38 @@ namespace TeejoshSystem.Application.Ports.Inbound.Productos.Commands.CrearProduc
                     new Unidades(request.Unidades)
                 );
 
-                // 2. Guardar producto para obtener ID
+                // 3. Asignar imagen al producto
+                if (imageName is not null)
+                    producto.AsignarImagePath(imageName);
+
+                // 4. Guardar producto para obtener ID
                 var productoId = await _repository.AddAsync(producto);
 
-                // 3. Crear y guardar detalle segun tipo
+                // 5. Crear y guardar detalle según tipo
                 await CrearYGuardarDetallePorTipo(productoId, producto, request);
 
+                _logger.Info($"Producto creado exitosamente: Id={productoId}, Nombre={request.Nombre}");
                 return Result.Success();
             }
             catch (ArgumentException ex)
             {
+                _logger.Warning($"Datos inválidos al crear producto '{request.Nombre}': {ex.Message}");
+                return Result.Failure(ex.Message);
+            }
+            catch (InvalidOperationException ex)
+            {
+                _logger.Warning($"Operación inválida al crear producto '{request.Nombre}': {ex.Message}");
                 return Result.Failure(ex.Message);
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine(ex);
-
-                return Result.Failure("Error al crear el producto");
+                _logger.Error($"Error inesperado al crear producto '{request.Nombre}'", ex);
+                return Result.Failure($"Error: {ex.Message} | Inner: {ex.InnerException?.Message}");
             }
         }
 
         private async Task CrearYGuardarDetallePorTipo(
-            int productoId, 
+            int productoId,
             Producto producto,
             CrearProductoCommand request)
         {
@@ -62,14 +85,9 @@ namespace TeejoshSystem.Application.Ports.Inbound.Productos.Commands.CrearProduc
                 case TipoProducto.HotWheels:
                     if (request.HotWheels is null)
                         throw new ArgumentException("Debe proporcionar detalles de Hot Wheels");
-
                     var hwDetalle = new HotWheelsDetalle(
-                        request.HotWheels.Modelo,
-                        request.HotWheels.Anio,
-                        request.HotWheels.Serie,
-                        request.HotWheels.CategoriaId
-                    );
-
+                        request.HotWheels.Modelo, request.HotWheels.Anio,
+                        request.HotWheels.Serie, request.HotWheels.CategoriaId);
                     hwDetalle.AsignarProductoId(productoId);
                     producto.AsignarDescripcion(hwDetalle);
                     await _repository.AddHotWheelsDetalleAsync(hwDetalle);
@@ -78,14 +96,9 @@ namespace TeejoshSystem.Application.Ports.Inbound.Productos.Commands.CrearProduc
                 case TipoProducto.Funko:
                     if (request.Funko is null)
                         throw new ArgumentException("Debe proporcionar detalles de Funko");
-
                     var funkoDetalle = new FunkoDetalle(
-                        request.Funko.NumeroBox,
-                        request.Funko.Licencia,
-                        request.Funko.SubtipoId,
-                        request.Funko.CaracteristicaEspecialId
-                    );
-
+                        request.Funko.NumeroBox, request.Funko.Licencia,
+                        request.Funko.SubtipoId, request.Funko.CaracteristicaEspecialId);
                     funkoDetalle.AsignarProductoId(productoId);
                     producto.AsignarDescripcion(funkoDetalle);
                     await _repository.AddFunkoDetalleAsync(funkoDetalle);
@@ -94,12 +107,7 @@ namespace TeejoshSystem.Application.Ports.Inbound.Productos.Commands.CrearProduc
                 case TipoProducto.Tcg:
                     if (request.Tcg is null)
                         throw new ArgumentException("Debe proporcionar detalles de TCG");
-
-                    var tcgDetalle = new TcgDetalle(
-                        request.Tcg.PackId,
-                        request.Tcg.ExpansionId
-                    );
-
+                    var tcgDetalle = new TcgDetalle(request.Tcg.PackId, request.Tcg.ExpansionId);
                     tcgDetalle.AsignarProductoId(productoId);
                     producto.AsignarDescripcion(tcgDetalle);
                     await _repository.AddTcgDetalleAsync(tcgDetalle);
@@ -108,14 +116,9 @@ namespace TeejoshSystem.Application.Ports.Inbound.Productos.Commands.CrearProduc
                 case TipoProducto.Toy:
                     if (request.Toy is null)
                         throw new ArgumentException("Debe proporcionar detalles de Toy");
-
                     var toyDetalle = new ToyDetalle(
-                        request.Toy.EdadMinima,
-                        request.Toy.JugadoresMinimo,
-                        request.Toy.JugadoresMaximo,
-                        request.Toy.EsJuegoMesa
-                    );
-
+                        request.Toy.EdadMinima, request.Toy.JugadoresMinimo,
+                        request.Toy.JugadoresMaximo, request.Toy.EsJuegoMesa);
                     toyDetalle.AsignarProductoId(productoId);
                     producto.AsignarDescripcion(toyDetalle);
                     await _repository.AddToyDetalleAsync(toyDetalle);
@@ -124,16 +127,9 @@ namespace TeejoshSystem.Application.Ports.Inbound.Productos.Commands.CrearProduc
                 case TipoProducto.Varios:
                     if (request.Varios is null)
                         throw new ArgumentException("Debe proporcionar detalles de Varios");
-
                     var variosDetalle = new VariosDetalle(
-                        request.Varios.Marca,
-                        request.Varios.Alto,
-                        request.Varios.Ancho,
-                        request.Varios.Largo,
-                        request.Varios.Material,
-                        request.Varios.TieneIlustracion
-                    );
-
+                        request.Varios.Marca, request.Varios.Alto, request.Varios.Ancho,
+                        request.Varios.Largo, request.Varios.Material, request.Varios.TieneIlustracion);
                     variosDetalle.AsignarProductoId(productoId);
                     producto.AsignarDescripcion(variosDetalle);
                     await _repository.AddVariosDetalleAsync(variosDetalle);

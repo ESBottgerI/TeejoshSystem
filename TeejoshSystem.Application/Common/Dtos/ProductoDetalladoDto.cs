@@ -9,6 +9,7 @@ namespace TeejoshSystem.Application.Common.Dtos
         public required string Nombre { get; set; }
         public decimal Precio { get; set; }
         public int Unidades { get; set; }
+        public string? ImagePath { get; set; }  // NUEVO
 
 
         // Detalle especifico (polimorfico)

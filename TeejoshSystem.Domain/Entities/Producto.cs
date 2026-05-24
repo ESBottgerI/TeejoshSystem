@@ -12,6 +12,7 @@ namespace TeejoshSystem.Domain.Entities
         public Precio Precio { get; private set; } = null!;
         public Unidades Stock { get; private set; } = null!;
         public ProductoDetalle? Descripcion { get; private set; }
+        public string? ImagePath { get; private set; }  // NUEVO
 
         private Producto() { } // Para EF (Infrastructure)
 
@@ -37,13 +38,17 @@ namespace TeejoshSystem.Domain.Entities
             Stock = stock ?? throw new ArgumentNullException(nameof(stock));
         }
 
-        // Precio
+        // NUEVO
+        public void AsignarImagePath(string? imagePath)
+        {
+            ImagePath = imagePath;
+        }
+
         public void CambiarPrecio(Precio nuevoPrecio)
         {
             Precio = nuevoPrecio;
         }
 
-        // Stock
         public void AgregarStock(int cantidad)
         {
             Stock = Stock.Incrementar(cantidad);
@@ -54,7 +59,6 @@ namespace TeejoshSystem.Domain.Entities
             Stock = Stock.Decrementar(cantidad);
         }
 
-        // Descripción
         public void AsignarDescripcion(ProductoDetalle descripcion)
         {
             ArgumentNullException.ThrowIfNull(descripcion);

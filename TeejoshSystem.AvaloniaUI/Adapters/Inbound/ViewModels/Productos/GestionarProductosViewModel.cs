@@ -11,6 +11,7 @@ using TeejoshSystem.Application.Ports.Inbound.Productos.Queries.BuscarProductos;
 using TeejoshSystem.AvaloniaUI.Adapters.Inbound.Services;
 using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Common;
 using TeejoshSystem.Domain.Enums;
+using TeejoshSystem.Domain.Ports.Outbound;
 
 namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Productos;
 
@@ -20,6 +21,8 @@ public partial class GestionarProductosViewModel : ViewModelBase
     private readonly INotificationService _notification;
     private readonly IConfirmationService _confirmation;
     private readonly INavigationService _navigation;
+    private readonly IImageStorageService _imageStorage;
+
 
     [ObservableProperty]
     private string? _textoBusqueda;
@@ -48,12 +51,14 @@ public partial class GestionarProductosViewModel : ViewModelBase
         IMediator mediator,
         INotificationService notification,
         IConfirmationService confirmation,
-        INavigationService navigation)
+        INavigationService navigation,
+        IImageStorageService imageStorage)
     {
         _mediator = mediator;
         _notification = notification;
         _confirmation = confirmation;
         _navigation = navigation;
+        _imageStorage = imageStorage;
 
         _ = BuscarAsync();
     }
@@ -87,6 +92,7 @@ public partial class GestionarProductosViewModel : ViewModelBase
             _notification,
             _confirmation,
             _navigation,
+            _imageStorage,
             this,               // ← GestionarProductosViewModel
             ProductoSeleccionado!.Id,
             ProductoSeleccionado!.Tipo);
@@ -112,7 +118,6 @@ public partial class GestionarProductosViewModel : ViewModelBase
             {
                 await _notification.ShowSuccessAsync("Producto eliminado correctamente.");
                 ProductoSeleccionado = null;
-                await BuscarAsync();
             }
             else
             {
@@ -123,6 +128,8 @@ public partial class GestionarProductosViewModel : ViewModelBase
         {
             IsBusy = false;
         }
+
+        await BuscarAsync();
     }
 
     [RelayCommand]

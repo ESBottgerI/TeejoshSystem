@@ -66,5 +66,45 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Repositorie
                 .OrderBy(p => p.Nombre)
                 .ToListAsync();
         }
+
+        public async Task<TcgExpansion?> GetTcgExpansionByIdAsync(int expansionId)
+        {
+            return await _context.TcgExpansiones
+                .AsNoTracking()
+                .FirstOrDefaultAsync(e => e.Id == expansionId);
+        }
+
+        public async Task<TcgPack?> GetTcgPackByIdAsync(int packId)
+        {
+            return await _context.TcgPacks
+                .AsNoTracking()
+                .FirstOrDefaultAsync(p => p.Id == packId);
+        }
+
+        public async Task<TcgFranquicia?> GetTcgFranquiciaByNombreAsync(string nombre)
+        {
+            return await _context.TcgFranquicias
+                .FirstOrDefaultAsync(f => f.Nombre == nombre);
+        }
+
+        public async Task<TcgExpansion?> GetTcgExpansionByNombreYFranquiciaAsync(
+            string nombre, int franquiciaId)
+        {
+            return await _context.TcgExpansiones
+                .FirstOrDefaultAsync(e => e.Nombre == nombre
+                                    && e.FranquiciaId == franquiciaId);
+        }
+
+        public async Task AddTcgExpansionAsync(TcgExpansion expansion)
+        {
+            _context.TcgExpansiones.Add(expansion);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task UpdateTcgExpansionAsync(TcgExpansion expansion)
+        {
+            _context.TcgExpansiones.Update(expansion);
+            await _context.SaveChangesAsync();
+        }
     }
 }

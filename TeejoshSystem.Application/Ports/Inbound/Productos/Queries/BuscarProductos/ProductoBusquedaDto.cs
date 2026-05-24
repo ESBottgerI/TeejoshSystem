@@ -10,5 +10,6 @@ namespace TeejoshSystem.Application.Ports.Inbound.Productos.Queries.BuscarProduc
         public decimal Precio { get; set; }
         public int Unidades { get; set; }
         public required string DetalleResumen { get; set; }
+        public string? ImagePath { get; set; }  // NUEVO
     }
 }

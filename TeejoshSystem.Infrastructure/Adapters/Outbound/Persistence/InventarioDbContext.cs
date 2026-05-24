@@ -28,6 +28,13 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence
         public DbSet<TcgExpansion> TcgExpansiones { get; set; }
         public DbSet<TcgPack> TcgPacks { get; set; }
 
+        // DbSets de ventas
+        public DbSet<Venta> Ventas { get; set; }
+        public DbSet<VentaDetalle> VentaDetalles { get; set; }
+
+        // DbSets de usuarios
+        public DbSet<Usuario> Usuarios { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.ApplyConfigurationsFromAssembly(typeof(InventarioDbContext).Assembly);

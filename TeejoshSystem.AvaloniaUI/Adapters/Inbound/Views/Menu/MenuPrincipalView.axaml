@@ -5,15 +5,66 @@
              x:DataType="vm:MenuPrincipalViewModel">
 
 	<StackPanel Margin="20" Spacing="15">
-		<TextBlock Text="Menú Principal" FontSize="24" FontWeight="Bold" HorizontalAlignment="Center"/>
 
-		<Button Content="Ver Inventario" Command="{Binding VisualizarInventarioCommand}"
+		<TextBlock Text="Menú Principal"
+                   FontSize="24"
+                   FontWeight="Bold"
+                   HorizontalAlignment="Center"/>
+
+		<!-- Opciones disponibles para todos los usuarios -->
+		<Button Content="Ver Inventario"
+                Command="{Binding VisualizarInventarioCommand}"
                 Width="200" HorizontalAlignment="Center" Margin="0,10"/>
 
-		<Button Content="Gestionar Productos" Command="{Binding ModificarProductoCommand}" 
+		<Button Content="Gestionar Productos"
+                Command="{Binding ModificarProductoCommand}"
                 Width="200" HorizontalAlignment="Center"/>
 
-		<Button Content="Añadir Producto" Command="{Binding AnadirProductoCommand}" 
+		<Button Content="Añadir Producto"
+                Command="{Binding AnadirProductoCommand}"
                 Width="200" HorizontalAlignment="Center"/>
+
+		<Button Content="Registrar Venta"
+                Command="{Binding RegistrarVentaCommand}"
+                Width="200" HorizontalAlignment="Center"/>
+
+		<Button Content="Historial de Ventas"
+                Command="{Binding VerHistorialVentasCommand}"
+                Width="200" HorizontalAlignment="Center"/>
+
+		<Button Content="Cambiar Contraseña"
+                Command="{Binding IrACambiarPasswordCommand}"
+                Width="200" HorizontalAlignment="Center"/>
+
+		<!-- Separador visual — solo visible para administrador -->
+		<Separator IsVisible="{Binding EsAdministrador}"
+                   Margin="0,8"/>
+
+		<TextBlock Text="Administración"
+                   FontSize="13"
+                   Foreground="Gray"
+                   HorizontalAlignment="Center"
+                   IsVisible="{Binding EsAdministrador}"/>
+
+		<!-- Opciones exclusivas de administrador -->
+		<Button Content="Gestionar Usuarios"
+                Command="{Binding IrAGestionarUsuariosCommand}"
+                Width="200" HorizontalAlignment="Center"
+                IsVisible="{Binding EsAdministrador}"/>
+
+                <Separator Margin="0,8"/>
+
+                <Button Content="Sincronizar catálogos"
+                        Command="{Binding SincronizarCatalogosCommand}"
+                        Width="200" HorizontalAlignment="Center"
+                        IsVisible="{Binding EsAdministrador}"/>
+
+		<Separator Margin="0,8"/>
+
+		<Button Content="Cerrar sesión"
+				Command="{Binding CerrarSesionCommand}"
+				Width="200" HorizontalAlignment="Center"
+				Foreground="Red"/>
+
 	</StackPanel>
 </UserControl>

@@ -2,23 +2,23 @@
 
 ## Resumen
 
-**TeejoshSystem** es una aplicación de escritorio offline-first para la gestión de inventarios de coleccionables (Hot Wheels, Funkos, TCG, Toys y otros).  
-  
-El sistema está diseñado bajo principios de **Clean Architecture** y **Hexagonal Architecture**, incorporando **DDD, CQRS y MVVM** cuando aportan valor real al dominio.  
+**TeejoshSystem** es una aplicación de escritorio offline-first para la gestión de inventarios y ventas de coleccionables (Hot Wheels, Funkos, TCG, Toys y otros).
 
-Funciona offline-first: sin conexión a red, sin servicios externos en runtime, con base de datos local. La UI es Avalonia, verificada en Windows y Linux (Fedora 43).
-  
-> No es un proyecto orientado a frameworks — es un proyecto orientado a estabilidad, evolución y desacoplamiento.  
-  
+El sistema está diseñado bajo principios de **Clean Architecture** y **Hexagonal Architecture**, incorporando **DDD, CQRS y MVVM** cuando aportan valor real al dominio.
+
+Funciona offline-first: sin conexión a red, sin servicios externos en runtime, con base de datos local. La UI es Avalonia, verificada en Windows y Linux (Fedora).
+
+> No es un proyecto orientado a frameworks — es un proyecto orientado a estabilidad, evolución y desacoplamiento.
+
 ---
-  
-## Objetivo del Sistema  
-  
-El objetivo no es solo gestionar inventario, sino construir una base sólida que permita:  
-  
-- Evolucionar la UI sin afectar el dominio  
-- Cambiar la base de datos sin reescribir lógica de negocio  
-- Incorporar nuevos canales (API, CLI, mobile) sin modificar el core  
+
+## Objetivo del Sistema
+
+El objetivo no es solo gestionar inventario, sino construir una base sólida que permita:
+
+- Evolucionar la UI sin afectar el dominio
+- Cambiar la base de datos sin reescribir lógica de negocio
+- Incorporar nuevos canales (API, CLI, mobile) sin modificar el core
 - Mantener reglas de negocio consistentes y centralizadas
 
 ---
@@ -27,13 +27,14 @@ El objetivo no es solo gestionar inventario, sino construir una base sólida que
 
 |Campo|Valor|
 |---|---|
-|**Versión**|0.4 — beta|
+|**Versión**|0.2.0|
 |**Estado**|Activo|
-|**UI**|Avalonia (migración desde WPF completada parcialmente)|
+|**UI**|Avalonia (migración desde WPF completada)|
 |**Plataformas verificadas**|Windows, Linux (Fedora 43)|
 |**Persistencia**|SQLite — Code-First con migraciones EF Core|
 |**Arquitectura**|Estable|
-|**Última actualización**|Abril 2026|
+|**Tests**|4 proyectos — Unit, BDD (SpecFlow), Integration, Mutation (Stryker)|
+|**Última actualización**|Mayo 2026|
 
 ---
 
@@ -42,9 +43,15 @@ El objetivo no es solo gestionar inventario, sino construir una base sólida que
 - Gestión de 5 tipos de producto con campos distintos entre sí
 - Formularios dinámicos que adaptan sus campos según el tipo seleccionado
 - Catálogos relacionales con carga en cascada (TCG: Franquicia → Expansiones/Packs)
+- Sincronización de catálogos TCG desde APIs externas (TCGdex, Scryfall, YGOPRODeck)
+- Imágenes de productos almacenadas localmente
 - Validaciones en tiempo real sobre cada campo
 - Búsqueda y filtrado por nombre y tipo
 - CRUD completo con confirmaciones antes de acciones destructivas
+- **Registro y consulta de ventas con precio histórico**
+- **Autenticación con contraseña hasheada (BCrypt) y gestión de usuarios**
+- **Temas claro/oscuro con preferencia persistida**
+- **Backup automático de base de datos**
 - Operación completamente offline
 
 ---
@@ -81,12 +88,12 @@ Infrastructure ──→ Domain
 |---|---|---|---|
 |**Domain**|Núcleo: entidades, value objects, contratos|Nada|Todas|
 |**Application**|Casos de uso, comandos, queries, DTOs|Domain|Infrastructure, UI|
-|**Infrastructure**|Persistencia, EF Core, repositorios|Domain, Application| UI|
+|**Infrastructure**|Persistencia, EF Core, APIs externas, repositorios|Domain, Application|UI|
 |**UI (Avalonia)**|Presentación: ViewModels, Views, Services|Application|Domain|
 
 > Infrastructure puede referenciar Application únicamente para implementar sus interfaces (outbound ports). Nunca para invocar casos de uso.
 
-La dirección de las dependencias no es una convención — es una garantía. Significa que Domain compila sin conocer que existe EF Core, Avalonia, o SQL Server. Estas reglas no son rígidas por dogma, sino guías para mantener bajo acoplamiento y facilitar cambios futuros.
+La dirección de las dependencias no es una convención — es una garantía. Significa que Domain compila sin conocer que existe EF Core, Avalonia, o SQLite. Estas reglas no son rígidas por dogma, sino guías para mantener bajo acoplamiento y facilitar cambios futuros.
 
 ### Violaciones no aceptables
 
@@ -97,28 +104,28 @@ La dirección de las dependencias no es una convención — es una garantía. Si
 
 ### Trade-offs de la Arquitectura
 
-Esta arquitectura prioriza mantenibilidad y desacoplamiento, pero introduce ciertos costos:  
-  
-#### Complejidad Inicial 
+Esta arquitectura prioriza mantenibilidad y desacoplamiento, pero introduce ciertos costos:
 
-- Más capas, más clases, más abstracciones  
-- Curva de aprendizaje mayor  
-  
-#### Overhead Estructural 
+#### Complejidad Inicial
 
-- Para features simples, puede sentirse “pesado”  
-- CQRS introduce más archivos (commands, queries, handlers)  
-  
+- Más capas, más clases, más abstracciones
+- Curva de aprendizaje mayor
+
+#### Overhead Estructural
+
+- Para features simples, puede sentirse "pesado"
+- CQRS introduce más archivos (commands, queries, handlers)
+
 #### Performance (Potencial)
 
-- TPT implica joins adicionales  
-- Uso de MediatR agrega indirección  
-  
+- TPC implica queries por tabla concreta
+- Uso de MediatR agrega indirección
+
 #### Justificación
 
-Estos trade-offs son aceptables porque:  
-- El dominio tiene múltiples variantes estructurales  
-- Se espera evolución del sistema (UI, DB, features)  
+Estos trade-offs son aceptables porque:
+- El dominio tiene múltiples variantes estructurales
+- Se espera evolución del sistema (UI, DB, features, canales)
 - La mantenibilidad es prioritaria sobre la simplicidad inicial
 
 ---
@@ -133,8 +140,8 @@ ViewModels
 Application Handler
   ↓ orquesta entidades y value objects
 Domain (reglas de negocio, invariantes)
-  ↓ IProductoRepository / ICatalogoRepository
-Infrastructure (EF Core)
+  ↓ IProductoRepository / ICatalogoRepository / IVentaRepository / IAuthService / ...
+Infrastructure (EF Core + Adapters externos)
   ↓
 Base de datos (SQLite)
   ↑
@@ -155,7 +162,7 @@ Esta sección explica qué resuelve cada patrón, por qué se eligió, y qué pr
 
 **Qué problema resuelve:** Sin esta separación, la lógica de negocio termina acoplada a la base de datos, al framework de UI, o a ambos. Cualquier cambio en EF Core, en WPF/Avalonia, o en el esquema SQL arrastraría cambios en las reglas del negocio — que son la parte más estable y valiosa del sistema.
 
-**Por qué importa aquí:** La migración de WPF a Avalonia fue posible sin tocar Domain ni Application. Si la arquitectura estuviera acoplada, esa migración habría requerido reescribir lógica de negocio junto con la UI.
+**Por qué importa aquí:** La migración de WPF a Avalonia fue posible sin tocar Domain ni Application. La incorporación de módulos de ventas, autenticación y APIs externas no requirió modificar las capas internas. Si la arquitectura estuviera acoplada, cada una de esas extensiones habría requerido refactoring transversal.
 
 ---
 
@@ -163,13 +170,13 @@ Esta sección explica qué resuelve cada patrón, por qué se eligió, y qué pr
 
 **Qué es:** El dominio define contratos (Ports) para todo lo que necesita del exterior. El exterior (UI, base de datos, APIs) los implementa mediante Adapters. El dominio nunca llama directamente a ninguna implementación concreta.
 
-**Qué problema resuelve:** Sin esto, el dominio está atado a tecnologías específicas. Si mañana se reemplaza SQL Server por SQLite, o se agrega una API REST, o se migra de Avalonia a MAUI, el dominio no debería necesitar cambios.
+**Qué problema resuelve:** Sin esto, el dominio está atado a tecnologías específicas. Si mañana se reemplaza SQLite por PostgreSQL, o se agrega una API REST, o se migra de Avalonia a MAUI, el dominio no debería necesitar cambios.
 
-**Inbound Adapters actuales:** UI Avalonia  
-**Outbound Adapters actuales:** EF Core + SQLite  
-**Puertos definidos:** `IProductoRepository`, `ICatalogoRepository`
+**Inbound Adapters actuales:** UI Avalonia
+**Outbound Adapters actuales:** EF Core + SQLite, BCrypt, APIs externas TCG, sistema de archivos local, logging
+**Puertos definidos:** `IProductoRepository`, `ICatalogoRepository`, `IVentaRepository`, `IAuthService`, `IUsuarioRepository`, `IImageStorageService`, `ITcgCatalogoApiService`, `IAppLogger`
 
-**Por qué importa aquí:** La sección [[#Evolución Planeada]] lista cambios de infraestructura que no requieren tocar el dominio, exactamente porque los ports están bien definidos.
+**Por qué importa aquí:** Agregar soporte para Supabase (PostgreSQL) en el futuro solo requiere nuevas implementaciones de estos ports. Domain y Application no se modifican.
 
 ---
 
@@ -181,10 +188,13 @@ Esta sección explica qué resuelve cada patrón, por qué se eligió, y qué pr
 
 **Aplicación concreta:**
 
-- `Producto` es la entidad raíz del agregado
+- `Producto` es la entidad raíz del agregado de inventario
+- `Venta` es la entidad raíz del agregado de ventas — con sus `VentaDetalle` como parte del mismo agregado
 - `NombreProducto`, `Precio`, `Unidades` son value objects inmutables que validan sus propias reglas — un `Precio` inválido no puede existir en ningún punto del sistema
+- `Unidades.Decrementar()` encapsula la invariante de stock no negativo — una venta que dejaría stock negativo falla en dominio antes de llegar a la base de datos
 - `ProductoDetalle` (abstracta) y sus subtipos modelan la variabilidad estructural de cada tipo de coleccionable
-- `Producto.AsignarDescripcion` valida que el detalle sea consistente con el tipo del producto — un HotWheelsDetalle no puede asignarse a un Producto de tipo Funko
+- `Producto.AsignarDescripcion` valida que el detalle sea consistente con el tipo del producto
+- `VentaDetalle` captura el precio y nombre del producto como snapshot — el historial de ventas no se ve afectado por cambios futuros en el catálogo
 - Los catálogos (`TcgFranquicia`, `TcgExpansion`, etc.) son entidades de referencia con identidad propia
 
 ---
@@ -193,18 +203,18 @@ Esta sección explica qué resuelve cada patrón, por qué se eligió, y qué pr
 
 **Qué es:** Separar explícitamente las operaciones que modifican estado (Commands) de las que solo leen (Queries). Cada intención tiene su propio objeto y su propio handler.
 
-**Qué problema resuelve:** Sin CQRS, un mismo método hace demasiado: valida, persiste, y devuelve datos para la UI al mismo tiempo. Esto dificulta mantener, testear y razonar sobre el código. Con CQRS, `CrearProductoCommand` solo sabe crear, y `ObtenerProductosQuery` solo sabe leer.
+**Qué problema resuelve:** Sin CQRS, un mismo método hace demasiado: valida, persiste, y devuelve datos para la UI al mismo tiempo. Esto dificulta mantener, testear y razonar sobre el código. Con CQRS, `RegistrarVentaCommand` solo sabe registrar ventas, y `ObtenerVentasQuery` solo sabe leer el historial.
 
 **Implementación:** CQRS simplificado — sin Event Sourcing, sin event store. MediatR actúa como dispatcher. Los comandos retornan `Result<T>`, las queries retornan DTOs.
 
 **¿Por qué sin Event Sourcing?** El sistema no requiere reconstruir estado a partir de eventos ni mantener historial de cambios intermedios. Event Sourcing agregaría complejidad operativa sin beneficio concreto en este contexto. Si el módulo de auditoría (roadmap) lo requiere en el futuro, es un cambio de Infrastructure, no de Domain.
-  
-#### Trade-off  
-  
-- Más clases y handlers  
-- Mayor verbosidad  
-  
-Se acepta este costo a cambio de mayor claridad y separación de responsabilidades.
+
+#### Trade-off
+
+- Más clases y handlers
+- Mayor verbosidad
+
+Se acepta este costo a cambio de mayor claridad, separación de responsabilidades y testabilidad independiente de cada caso de uso.
 
 ---
 
@@ -244,11 +254,11 @@ Se acepta este costo a cambio de mayor claridad y separación de responsabilidad
 
 ---
 
-### Shell Pattern (navegación por estado)
+### NavigationService (navegación explícita)
 
-**Qué es:** `MainViewModel.CurrentView` controla qué vista está activa. Los DataTemplates en XAML mapean cada ViewModel a su View automáticamente. Los ViewModels se resuelven desde el contenedor DI.
+**Qué es:** `INavigationService` es un contrato de navegación inyectado por constructor en los ViewModels. Reemplaza el Shell Pattern implícito de versiones anteriores.
 
-**Por qué no NavigationService:** Introducir un NavigationService implica historial, parámetros de ruta, y deep linking. Ninguna de esas necesidades existe aquí. El Shell Pattern resuelve la navegación de forma simple, sin overhead, y consistente con MVVM.
+**Por qué se migró desde Shell Pattern:** El Shell Pattern resolvía la navegación correctamente para el alcance original del sistema. A medida que el número de ViewModels creció (Login, Admin, Ventas, Catálogos), la navegación implícita via `MainViewModel.CurrentView` se volvió difícil de rastrear y testear. `INavigationService` expone la navegación como un contrato mockeable.
 
 ---
 
@@ -262,63 +272,103 @@ TeejoshSystem/
 ├── TeejoshSystem.slnx
 │
 ├── TeejoshSystem.Domain/
-│   ├── Entities/
-│   │   ├── Producto.cs
-│   │   ├── Catalogos/        # FunkoSubtipo, TcgFranquicia, TcgExpansion...
-│   │   └── Detalles/         # FunkoDetalle, HotWheelsDetalle, TcgDetalle...
-│   ├── ValueObjects/
-│   │   ├── NombreProducto.cs
-│   │   ├── Precio.cs
-│   │   └── Unidades.cs
-│   ├── Enums/
-│   │   └── TipoProducto.cs
-│   └── Ports/
-│       └── Outbound/
-│           └── Repositories/
-│               ├── ProductoBusquedaResult.cs
-│               ├── IProductoRepository.cs
-│               └── ICatalogoRepository.cs
+│   ├── Entities/
+│   │   ├── Producto.cs
+│   │   ├── Venta.cs
+│   │   ├── Usuario.cs
+│   │   ├── Catalogos/        # FunkoSubtipo, TcgFranquicia, TcgExpansion...
+│   │   └── Detalles/         # ProductoDetalle, FunkoDetalle, HotWheelsDetalle,
+│   │                         # TcgDetalle, ToyDetalle, VariosDetalle, VentaDetalle
+│   ├── ValueObjects/
+│   │   ├── NombreProducto.cs
+│   │   ├── Precio.cs
+│   │   └── Unidades.cs
+│   ├── Enums/
+│   │   ├── TipoProducto.cs
+│   │   └── RolUsuario.cs
+│   └── Ports/
+│       └── Outbound/
+│           ├── Repositories/
+│           │   ├── ProductoBusquedaResult.cs
+│           │   ├── IProductoRepository.cs
+│           │   ├── ICatalogoRepository.cs
+│           │   └── IVentaRepository.cs
+│           ├── Auth/
+│           │   ├── IAuthService.cs
+│           │   └── IUsuarioRepository.cs
+│           ├── IImageStorageService.cs
+│           ├── IAppLogger.cs
+│           └── ITcgCatalogoApiService.cs
 │
 ├── TeejoshSystem.Application/
-│   ├── Common/
-│   │   ├── Result.cs
-│   │   └── Dtos/
-│   │       ├── CatalogoItemDto.cs
-│   │       ├── ProductoDetalladoDto.cs
-│   │       └── ProductoDto.cs
-│   └── Ports/
-│       └── Inbound/
-│           ├── Productos/
-│           │   ├── Commands/   # Crear, Actualizar, Eliminar
-│           │   └── Queries/    # ObtenerProductos, BuscarProductos, ObtenerPorId
-│           └── Catalogos/
-│               └── Queries/    # ObtenerCatalogos, ObtenerExpansionesYPacks
+│   ├── Common/
+│   │   ├── Result.cs
+│   │   └── Dtos/
+│   │       ├── CatalogoItemDto.cs
+│   │       ├── ProductoDetalladoDto.cs
+│   │       ├── ProductoDto.cs
+│   │       ├── VentaDto.cs
+│   │       ├── SessionDto.cs
+│   │       └── UsuarioListaDto.cs
+│   └── Ports/
+│       └── Inbound/
+│           ├── Auth/
+│           │   ├── Commands/   # AutenticarUsuario, RegistrarUsuario,
+│           │   │               # CambiarPassword, DesactivarUsuario
+│           │   └── Queries/    # ListarUsuarios
+│           ├── Catalogos/
+│           │   ├── Commands/   # SincronizarCatalogos
+│           │   └── Queries/    # ObtenerCatalogos, ObtenerExpansionesYPacks,
+│           │                   # ObtenerImagenExpansion
+│           ├── Productos/
+│           │   ├── Commands/   # Crear, Actualizar, Eliminar
+│           │   └── Queries/    # ObtenerProductos, BuscarProductos, ObtenerPorId
+│           └── Ventas/
+│               ├── Commands/   # RegistrarVenta
+│               └── Queries/    # ObtenerVentas
 │
 ├── TeejoshSystem.Infrastructure/
-│   ├── Adapters/
-│   │   └── Outbound/
-│   │       └── Persistence/
-│   │           ├── InventarioDbContext.cs
-│   │           ├── InventarioDbContextFactory.cs
-│   │           ├── Configurations/   # Fluent API — 12 archivos
-│   │           ├── Migrations/       # Migracion de SQLite
-│   │           └── Repositories/
-│   │               ├── ProductoRepository.cs
-│   │               └── CatalogoRepository.cs
-│   └── DependencyInjection/
-│       ├── InfrastructureServiceRegistration.cs
-│       └── PersistenceServiceRegistration.cs
+│   ├── Adapters/
+│   │   └── Outbound/
+│   │       ├── Apis/               # ScryfallAdapter, TcgdexAdapter, YgoprodeckAdapter
+│   │       ├── Auth/               # LocalAuthService, UsuarioRepository
+│   │       ├── Backup/             # BackupService
+│   │       ├── Logging/            # AppLogger
+│   │       ├── Persistence/
+│   │       │   ├── InventarioDbContext.cs
+│   │       │   ├── InventarioDbContextFactory.cs
+│   │       │   ├── DatabaseSeeder.cs
+│   │       │   ├── Configurations/   # Fluent API — 15 archivos
+│   │       │   ├── Migrations/       # Migraciones de SQLite
+│   │       │   └── Repositories/     # ProductoRepository, CatalogoRepository,
+│   │       │                         # VentaRepository
+│   │       └── Storage/              # LocalImageStorageService
+│   └── DependencyInjection/
+│       ├── InfrastructureServiceRegistration.cs
+│       └── PersistenceServiceRegistration.cs
 │
-└── TeejoshSystem.AvaloniaUI/
-    ├── Program.cs
-    ├── App.axaml / App.axaml.cs
-    ├── MainWindow.axaml / MainWindow.axaml.cs
-    ├── appsettings.json
-    └── Adapters/
-        └── Inbound/
-            ├── ViewModels/     # Shell, Menu, Productos, Common
-            ├── Views/          # Menu, Productos
-            └── Services/       # INotificationService, IConfirmationService...
+├── TeejoshSystem.AvaloniaUI/
+│   ├── Program.cs
+│   ├── App.axaml / App.axaml.cs
+│   ├── MainWindow.axaml / MainWindow.axaml.cs
+│   ├── appsettings.json
+│   ├── appsettings.Production.json
+│   └── Adapters/
+│       └── Inbound/
+│           ├── Converters/     # InverseBoolConverter, PathToImageConverter
+│           ├── Helpers/        # ControlExtensions
+│           ├── ViewModels/     # Shell, Menu, Auth, Admin, Productos,
+│           │                   # Ventas, Catalogos, Common
+│           ├── Views/          # Espejo de ViewModels
+│           └── Services/       # INotificationService, IConfirmationService,
+│                               # INavigationService, ILoadable,
+│                               # SesionContext, IThemePreferenceService
+│
+└── Tests/
+    ├── TeejoshSystem.Domain.Tests/
+    ├── TeejoshSystem.Application.Tests/
+    ├── TeejoshSystem.Infrastructure.Tests/
+    └── TeejoshSystem.AvaloniaUI.Tests/
 ```
 
 ---
@@ -329,11 +379,12 @@ TeejoshSystem/
 
 ```sql
 product (
-    id    INTEGER PRIMARY KEY AUTOINCREMENT,
-    type  TEXT    NOT NULL,
-    name  TEXT    NOT NULL,
-    price REAL    NOT NULL,
-    units INTEGER NOT NULL
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    type       TEXT    NOT NULL,
+    image_path TEXT    NULL,
+    name       TEXT    NOT NULL,
+    price      REAL    NOT NULL,
+    units      INTEGER NOT NULL
 )
 ```
 
@@ -356,9 +407,26 @@ hot_wheels_category    (id, name)
 funko_subtype          (id, name)
 funko_special_feature  (id, name)
 tcg_franchise          (id, name)
-tcg_expansion          (id, name, franchise_id)
+tcg_expansion          (id, name, franchise_id, image_url)
 tcg_pack               (id, name, franchise_id)
 ```
+
+### Tablas de ventas
+
+```sql
+sale        (id, date, total)
+sale_detail (id, sale_id, product_id, product_name, unit_price, quantity)
+```
+
+`product_name` y `unit_price` en `sale_detail` son snapshots — registran el estado del producto al momento de la venta. Cambios futuros en el catálogo no afectan el historial.
+
+### Tabla de usuarios
+
+```sql
+app_user (id, username UNIQUE, password_hash VARCHAR(60), rol, active)
+```
+
+`password_hash` tiene longitud máxima de 60 caracteres — exactamente el tamaño de un hash BCrypt. La contraseña nunca se almacena en texto plano.
 
 ### Tablas de control
 
@@ -366,11 +434,12 @@ tcg_pack               (id, name, franchise_id)
 __EFMigrationsHistory  # Control interno de EF Core — no modificar manualmente
 ```
 
-### Por qué Table-Per-Container (TPC) y no Table-Per-Type (TPT) ó Table-Per-Hierarchy (TPH)
+### Por qué Table-Per-Concrete (TPC) y no TPT ni TPH
 
 - `TPH` almacena todos los subtipos en una sola tabla con columnas `nullable`. Con 5 tipos de coleccionable estructuralmente muy distintos, generaría una tabla con mayoría de NULLs e integridad referencial débil.
 - `TPT` estándar requiere una tabla base para `ProductoDetalle` con solo `ProductoId` — una tabla de una columna que solo sirve de pivot, y EF Core falla al intentar crearla para una clase abstracta.
-- `TPC` — cada subtipo concreto tiene su propia tabla completa, sin tabla base. La herencia existe en C# para compartir comportamiento (`ProductoId`, `AsignarProductoId`), pero no se refleja en el esquema. La relación con product se gestiona via `ProductoId` y el repositorio resuelve el detalle correcto usando `Producto.Tipo`.
+- `TPC` — cada subtipo concreto tiene su propia tabla completa, sin tabla base. La herencia existe en C# para compartir comportamiento (`ProductoId`, `AsignarProductoId`), pero no se refleja en el esquema. La relación con `product` se gestiona via `ProductoId` y el repositorio resuelve el detalle correcto usando `Producto.Tipo`.
+
 Se implementa en EF Core con `builder.HasBaseType((Type)null)` en la configuración de cada detalle.
 
 ---
@@ -386,7 +455,8 @@ Se implementa en EF Core con `builder.HasBaseType((Type)null)` en la configuraci
 |Microsoft.EntityFrameworkCore.Sqlite|8.0.0|Proveedor SQLite|
 |Microsoft.EntityFrameworkCore.Design|8.0.0|EF Core Tools (design time)|
 |MediatR|12.2.0|Dispatcher CQRS|
-|FluentValidation|11.9.0|Validaciones de Application (opcional)|
+|FluentValidation|11.9.0|Validaciones de Application|
+|BCrypt.Net-Next|—|Hasheo de contraseñas|
 
 ### Frontend (Avalonia)
 
@@ -394,11 +464,46 @@ Se implementa en EF Core con `builder.HasBaseType((Type)null)` en la configuraci
 |---|---|---|
 |Avalonia|11.3.12|UI multiplataforma (Windows, Linux, macOS)|
 |Avalonia.Controls.DataGrid|11.3.12|DataGrid (paquete separado, requiere StyleInclude)|
-|~~MsBox.Avalonia~~|-|Diálogos de notificación y confirmación|
 |CommunityToolkit.Mvvm|8.2.2|ObservableObject, RelayCommand|
 |Microsoft.Extensions.Hosting|8.0.0|DI container|
 |Microsoft.Extensions.Configuration|8.0.0|appsettings.json|
 |Microsoft.EntityFrameworkCore.Design|8.0.0|Requerido por EF Tools en startup project|
+
+### Testing
+
+|Herramienta|Propósito|
+|---|---|
+|SpecFlow|BDD — especificaciones ejecutables en Gherkin|
+|Stryker.NET|Mutation testing — calidad de los tests|
+|Cobertura XML|Reporte de cobertura de código|
+
+---
+
+## Tests
+
+El sistema cuenta con 4 proyectos de tests organizados por capa.
+
+### Estructura
+
+|Proyecto|Técnica|Alcance|
+|---|---|---|
+|`Domain.Tests`|Unit + Mutation (Stryker)|Value Objects, invariantes de entidad|
+|`Application.Tests`|BDD (SpecFlow) + Unit|Casos de uso como comportamientos de negocio|
+|`Infrastructure.Tests`|Integration (DatabaseFixture)|Repositorios contra SQLite in-memory|
+|`AvaloniaUI.Tests`|Unit|Lógica de ViewModels sin levantar UI|
+
+### Ejecutar los tests
+
+```bash
+# Todos los proyectos
+dotnet test
+
+# Por capa
+dotnet test Tests/TeejoshSystem.Domain.Tests
+dotnet test Tests/TeejoshSystem.Application.Tests
+dotnet test Tests/TeejoshSystem.Infrastructure.Tests
+dotnet test Tests/TeejoshSystem.AvaloniaUI.Tests
+```
 
 ---
 
@@ -432,61 +537,8 @@ dotnet ef migrations remove \
 ```
 
 ### Aplicación automática al arrancar
-`App.axaml.cs` llama `db.Database.Migrate()` en el startup. En una instalación nueva, crea la BD y aplica todas las migraciones. En instalaciones existentes, aplica solo las pendientes.
 
----
-
-## Evolución Planeada
-
-### ~~Database-First → Code-First~~ — Completado
-
-**Estado actual:** La base de datos preexiste. EF Core mapea las tablas mediante Fluent API. No hay migraciones.
-
-**Por qué migrar:** Con Database-First, los cambios de esquema requieren intervención manual en dos lugares (BD y configuraciones). Es frágil y no versionable. Code-First invierte esto: las clases del dominio y sus configuraciones Fluent definen el esquema, las migraciones versionan la BD junto con el código.
-
-**Impacto por capa al migrar:**
-
-|Capa|Cambio|
-|---|---|
-|Domain|Ninguno|
-|Application|Ninguno|
-|Infrastructure|Se agregan `Migrations/`. DbContext pasa a ser la fuente de verdad del esquema. Las configuraciones Fluent se mantienen y evolucionan.|
-|Base de datos|Generada y versionada desde código|
-
----
-
-### Elección de base de datos: SQLite sobre SQL Server Express
-
-Para un sistema de escritorio offline-first, de usuario único, con importación/exportación de Excel en el roadmap, **SQLite es la opción más adecuada**.
-
-|Criterio|SQL Server Express|SQLite|
-|---|---|---|
-|Proceso de servidor|Requiere instalación y servicio en background|No — archivo único|
-|Multiplataforma|Windows only (sin configuración extra)|Windows, Linux, macOS nativo|
-|Instalación para el usuario|Compleja|Ninguna — incluida en el binario|
-|EF Core + Code-First + Migrations|✓|✓|
-|Importación/exportación Excel|Indiferente|Indiferente|
-|Backup|Requiere herramientas SQL|Copiar el archivo `.db`|
-|Concurrencia multiusuario|✓|No necesaria en este contexto|
-|Tamaño para coleccionables|Sobredimensionado|Ajustado|
-
-El único escenario donde SQL Server gana es acceso concurrente de múltiples usuarios sobre red — que no aplica aquí. El resto de características de SQL Server Express son overhead innecesario para una aplicación de escritorio de usuario único.
-
-**Cambio de proveedor con Code-First:** reemplazar el proveedor en `PersistenceServiceRegistration.cs` y regenerar migraciones. Domain y Application no se tocan.
-
----
-
-### UI: Migración a Avalonia — Parcial
-
-La migración de WPF a Avalonia está **parcialmente completada**. El proyecto `TeejoshSystem.AvaloniaUI` reemplaza al anterior `WPF/`.
-
-**Verificado en:** Windows y Linux (Fedora 43).
-
-**Qué cambió:** Solo la capa de presentación — Views reescritas en XAML de Avalonia, reimplementación de `INotificationService` e `IConfirmationService`, ajuste de bindings.
-
-**Qué no cambió:** Domain, Application, Infrastructure — exactamente como garantiza la arquitectura.
-
-> Si la migración de UI hubiera requerido cambios en capas internas, habría indicado una violación arquitectónica.
+`App.axaml.cs` llama `db.Database.Migrate()` en el startup. En una instalación nueva, crea la BD y aplica todas las migraciones. `DatabaseSeeder` inicializa los datos base necesarios para el primer arranque (catálogos, usuario administrador inicial).
 
 ---
 
@@ -494,36 +546,60 @@ La migración de WPF a Avalonia está **parcialmente completada**. El proyecto `
 
 ### ~~Filtrado por tipo ejecutado en memoria~~ — Resuelto
 
-**Causa:** La tabla `product` no tiene columna discriminadora `type`. El filtrado se hace mediante joins en memoria a las tablas de detalle.  
-**Solución aplicada:** Se agregó la columna `type` en `product`. `SearchAsync` ahora filtra directamente en la query SQL sin cargar todos los productos en memor
+**Causa:** La tabla `product` no tenía columna discriminadora `type`.
+**Solución aplicada:** Se agregó la columna `type` en `product`. `SearchAsync` filtra directamente en la query SQL.
 
 ---
 
 ### ~~"Invalid object name 'ProductoDetalle'"~~ — Resuelto
 
-**Causa:** EF Core intentaba crear una tabla para la clase base abstracta `ProductoDetalle`.  
+**Causa:** EF Core intentaba crear una tabla para la clase base abstracta `ProductoDetalle`.
 **Solución aplicada:** `builder.HasBaseType((Type)null)` en la configuración Fluent de cada clase derivada. EF Core trata cada detalle como entidad independiente (TPC).
 
 ---
 
 ### ~~Detalles no se guardaban al crear producto~~ — Resuelto
 
-**Causa:** Faltaban los métodos `Add...DetalleAsync()` en el repositorio.  
+**Causa:** Faltaban los métodos `Add...DetalleAsync()` en el repositorio.
 **Solución aplicada:** `Add...DetalleAsync()` implementados en `ProductoRepository` e invocados desde `CrearProductoCommandHandler`.
 
 ---
 
-### ObtenerProductoPorId — Query pendiente de implementar
+### ~~ObtenerProductoPorId — Query pendiente de implementar~~ — Resuelto
 
-**Estado:** `ProductoDetalladoDto` existe en `Common/Dtos/`. Faltan `ObtenerProductoPorIdQuery.cs` y `ObtenerProductoPorIdQueryHandler.cs`.
-**Impacto:** La pantalla de edición no puede cargar el detalle completo de un producto por ID.
+**Causa:** `ObtenerProductoPorIdQuery.cs` y su handler no estaban implementados.
+**Solución aplicada:** Query y handler implementados. `EditarProductoViewModel.OnLoaded()` carga el producto completo con su detalle.
 
 ---
 
 ### ~~DataGrid requiere StyleInclude explícito~~ — Resuelto
 
 **Causa:** `Avalonia.Controls.DataGrid` es un paquete separado que requiere `<StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml"/>` en `App.axaml`.
-**Solución:** Aplicada. Documentado para futuros controles externos.
+**Solución Aplicada:** Documentado para futuros controles externos.
+
+---
+
+### ~~Incompatibilidad de `.slnx` con Stryker y Linux~~ — Resuelto
+
+**Causa:** El formato `.slnx` (nuevo formato de solución de Visual Studio) no es reconocido correctamente por Stryker.NET ni por algunas herramientas del ecosistema .NET en Linux.  
+**Impacto:** Mutation testing falla al ejecutarse, y el build puede presentar comportamiento inconsistente en entornos Linux.  
+**Solución aplicada:** Migrar el archivo de solución de `.slnx` a `.sln` clásico. El contenido es equivalente — solo cambia el formato.
+
+---
+
+### Base de datos en estado inválido tras actualización de esquema — Pendiente
+
+**Causa:** Al modificar el esquema (nueva migración o cambio en configuraciones Fluent API) sobre una base de datos existente con datos incompatibles, EF Core puede dejar la BD en un estado inconsistente que impide el arranque.  
+**Impacto:** La aplicación no inicia. El error suele manifestarse como excepción en `db.Database.Migrate()`.  
+**Solución aplicada:** Eliminar manualmente el archivo `inventario.db` en:
+
+´´´bash
+Windows: C:\Users\<usuario>\AppData\Local\TeejoshSystem\
+Linux:   ~/.local/share/TeejoshSystem/
+´´´
+
+La aplicación recreará la base de datos desde cero en el siguiente arranque.  
+**Nota:** Esta operación elimina todos los datos existentes. En desarrollo es aceptable — en producción se debe planificar una migración de datos antes de aplicar cambios de esquema.
 
 ---
 
@@ -535,16 +611,19 @@ La arquitectura hexagonal permite conectar nuevos adaptadores sin modificar el c
 
 - API REST con ASP.NET Core
 - CLI
+- WebUI Blazor Server (roadmap)
 - MAUI para mobile
 
 Solo se necesita un nuevo proyecto que invoque los inbound ports existentes vía MediatR.
 
 ### Nuevos Outbound Adapters (sin tocar Domain ni Application)
 
-- APIs externas de precios (ej.: TCGPlayer API)
-- Cache en memoria para catálogos
+- Supabase Auth (`SupabaseAuthService` implementando `IAuthService`)
+- Supabase Storage (`SupabaseImageStorageService` implementando `IImageStorageService`)
+- PostgreSQL (`UseNpgsql` en `PersistenceServiceRegistration`)
+- APIs externas adicionales (implementando `ITcgCatalogoApiService`)
 
-Solo se necesita implementar `IProductoRepository` o `ICatalogoRepository` con la nueva tecnología y registrarla en DI.
+Solo se necesita implementar el Port correspondiente con la nueva tecnología y registrarla en DI.
 
 ---
 
@@ -565,11 +644,11 @@ Solo se necesita implementar `IProductoRepository` o `ICatalogoRepository` con l
 
 - Ports → siempre interfaces
 - Adapters → siempre implementan Ports
-- DTOs → solo en Application
+- DTOs → solo en `Application/Common/Dtos/`
 - Entidades de dominio → nunca cruzan hacia la UI
-- Validaciones de negocio → en Domain (value objects)
-- Validaciones de presentación → en la UI (INotifyDataErrorInfo)
-- Propiedades string en entidades EF → `/= null!` (constructor privado para EF)
+- Validaciones de negocio → en Domain (value objects y métodos de entidad)
+- Validaciones de presentación → en la UI (`INotifyDataErrorInfo`)
+- Propiedades string en entidades EF → `= null!` (constructor privado para EF)
 - Propiedades string en DTOs → `required`
 
 ### Buenas prácticas de código
@@ -590,31 +669,26 @@ Solo se necesita implementar `IProductoRepository` o `ICatalogoRepository` con l
 - [X] Migración a Code-First + SQLite
 - [X] Columna discriminadora `type` en tabla `product`
 - [X] Completar Views de productos (migración WPF → Avalonia)
-- [ ] Módulo de ventas
-- [ ] Validaciones adicionales (stock no negativo tras venta)
-- [ ] Implementar `ObtenerProductoPorId` (Query + Handler + OnLoaded)
+- [X] Módulo de ventas
+- [X] Validaciones de stock (invariante de dominio)
+- [X] Implementar `ObtenerProductoPorId` (Query + Handler + OnLoaded)
 
 ### Media prioridad 🟡
 
-- [ ] Inicio de sesión con hasheo de contraseña
-- [ ] APIs de catálogos (TCGdex, Scryfall, YGOPRODeck)
+- [X] Inicio de sesión con hasheo de contraseña (BCrypt)
+- [X] APIs de catálogos (TCGdex, Scryfall, YGOPRODeck)
+- [X] Imágenes de productos
 - [ ] Importación y exportación desde Excel
-- [ ] Historial de cambios (audit log)
-- [ ] Imágenes de productos
-- [ ] Mejorar UI
+- [X] Historial de cambios (audit log)
+- [X] Mejorar UI
 
 ### Baja prioridad 🟢
 
-- [ ] Autenticación y roles
-- [ ] Backup automático de BD
-- [ ] Temas claro/oscuro
+- [X] Backup automático de BD
+- [X] Temas claro/oscuro
+- [ ] Autenticación y roles vía Supabase (despliegue en VPS)
 - [ ] Internacionalización (i18n)
-- [ ] API REST para consumo externo
+- [ ] API REST / WebUI Blazor Server
+- [ ] Migración a PostgreSQL (Supabase) para producción
 
----
 
-## Nota Final
-
-El dominio es estable. Los detalles técnicos son reemplazables.
-
-> La arquitectura no se diseñó para la versión actual — se diseñó para todas las versiones futuras.

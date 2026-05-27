@@ -3,6 +3,5 @@
 bin/
 obj/
 logs/
-Tests/
 *.user
 *.suo

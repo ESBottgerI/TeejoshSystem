@@ -1,4 +1,3 @@
-using FluentAssertions;
 using TeejoshSystem.Domain.ValueObjects;
 
 namespace TeejoshSystem.Domain.Tests.ValueObjects;
@@ -84,5 +83,67 @@ public class PrecioTests
         var precio = new Precio(valor);
 
         precio.ToString().Should().Be(esperado);
+    }
+
+    // ── decimal.Round(value, 2): nunca verificado con decimales extras ────────
+
+    [Fact]
+    public void Constructor_ConMasDeDosDecimales_AplicaRedondeo()
+    {
+        // Mata el mutante: decimal.Round(value, 2) → value
+        // 10.567 redondeado a 2 decimales = 10.57
+        var precio = new Precio(10.567m);
+
+        precio.Value.Should().Be(10.57m);
+    }
+
+    [Fact]
+    public void Constructor_ConTresDecimales_RedondeaAlSegundo()
+    {
+        // Segundo caso de redondeo — refuerza que Round se aplica
+        var precio = new Precio(5.005m);
+
+        precio.Value.Should().Be(5.01m);
+    }
+
+    [Fact]
+    public void Constructor_ConDosDecimalesExactos_NoCambiaElValor()
+    {
+        // Verifica que Round no altera valores ya correctos
+        var precio = new Precio(25.99m);
+
+        precio.Value.Should().Be(25.99m);
+    }
+
+    // ── ToString("0.00"): nunca testeado el formato ───────────────────────────
+
+    [Fact]
+    public void ToString_ConEntero_MuestraDosDecimales()
+    {
+        // Mata el mutante: "0.00" → diferente formato
+        var precio = new Precio(10m);
+
+        precio.ToString().Should().Be("10.00");
+    }
+
+    [Fact]
+    public void ToString_ConDecimal_MuestraFormatoCorrecto()
+    {
+        var precio = new Precio(5.50m);
+
+        precio.ToString().Should().Be("5.50");
+    }
+
+    // ── Equals: mutante Value == other.Value → true/false constante ──────────
+
+    [Fact]
+    public void Equals_ConTipoDistinto_RetornaFalse()
+    {
+        // Mata el mutante: obj is Precio other → true (siempre hace cast)
+        var precio = new Precio(10m);
+
+        precio.Equals("10.00").Should().BeFalse();
+        precio.Equals(10m).Should().BeFalse();
+        precio.Equals(null).Should().BeFalse();
     }
 }

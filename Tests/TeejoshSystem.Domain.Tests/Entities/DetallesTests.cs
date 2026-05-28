@@ -206,6 +206,103 @@ public class DetallesTests
         act.Should().Throw<ArgumentException>();
     }
 
+    // ── Actualizar: serie inválida (2 no cov + mutantes del guard) ────────────
+
+    [Fact]
+    public void Actualizar_SerieNull_DebeArrojar()
+    {
+        // Mata los mutantes del guard IsNullOrWhiteSpace(serie) en Actualizar
+        var detalle = new HotWheelsDetalle("Modelo", 2020, "Serie", 1);
+
+        var act = () => detalle.Actualizar("Modelo", 2020, null!, 1);
+
+        act.Should().Throw<ArgumentException>()
+           .WithMessage("*serie*");
+    }
+
+    [Fact]
+    public void Actualizar_SerieVacia_DebeArrojar()
+    {
+        var detalle = new HotWheelsDetalle("Modelo", 2020, "Serie", 1);
+
+        var act = () => detalle.Actualizar("Modelo", 2020, "", 1);
+
+        act.Should().Throw<ArgumentException>();
+    }
+
+    [Fact]
+    public void Actualizar_SerieSoloEspacios_DebeArrojar()
+    {
+        var detalle = new HotWheelsDetalle("Modelo", 2020, "Serie", 1);
+
+        var act = () => detalle.Actualizar("Modelo", 2020, "   ", 1);
+
+        act.Should().Throw<ArgumentException>();
+    }
+
+    // ── Actualizar: boundaries de anio — ambos no testeados en Actualizar ─────
+
+    [Fact]
+    public void Actualizar_ConAnio1966_DebeArrojar()
+    {
+        // Boundary inferior inválido en Actualizar — mata mutante < → <=
+        var detalle = new HotWheelsDetalle("Modelo", 2020, "Serie", 1);
+
+        var act = () => detalle.Actualizar("Modelo", 1966, "Serie", 1);
+
+        act.Should().Throw<ArgumentException>()
+           .WithMessage("*invalido*");
+    }
+
+    [Fact]
+    public void Actualizar_ConAnio1967_NoDebeArrojar()
+    {
+        // Boundary inferior válido en Actualizar — par necesario para el mutante
+        var detalle = new HotWheelsDetalle("Modelo", 2020, "Serie", 1);
+
+        var act = () => detalle.Actualizar("Modelo", 1967, "Serie", 1);
+
+        act.Should().NotThrow();
+    }
+
+    [Fact]
+    public void Actualizar_ConAnioActualMasUno_NoDebeArrojar()
+    {
+        // Boundary superior válido en Actualizar
+        var detalle = new HotWheelsDetalle("Modelo", 2020, "Serie", 1);
+        var anioValido = DateTime.Now.Year + 1;
+
+        var act = () => detalle.Actualizar("Modelo", anioValido, "Serie", 1);
+
+        act.Should().NotThrow();
+    }
+
+    [Fact]
+    public void Actualizar_ConAnioActualMasDos_DebeArrojar()
+    {
+        // Boundary superior inválido en Actualizar — mata mutante > → >=
+        var detalle = new HotWheelsDetalle("Modelo", 2020, "Serie", 1);
+        var anioInvalido = DateTime.Now.Year + 2;
+
+        var act = () => detalle.Actualizar("Modelo", anioInvalido, "Serie", 1);
+
+        act.Should().Throw<ArgumentException>()
+           .WithMessage("*invalido*");
+    }
+
+    // ── Actualizar: modelo whitespace (solo null y "" ya cubiertos) ───────────
+
+    [Fact]
+    public void Actualizar_ModeloSoloEspacios_DebeArrojar()
+    {
+        // Mata el mutante residual de IsNullOrWhiteSpace(modelo) en Actualizar
+        var detalle = new HotWheelsDetalle("Modelo", 2020, "Serie", 1);
+
+        var act = () => detalle.Actualizar("   ", 2020, "Serie", 1);
+
+        act.Should().Throw<ArgumentException>();
+    }
+
     // ═════════════════════════════════════════════════════════════════════════
     // FunkoDetalle
     // ═════════════════════════════════════════════════════════════════════════
@@ -291,6 +388,53 @@ public class DetallesTests
 
     [Fact]
     public void Funko_Actualizar_ConNumeroCajaInvalido_DebeArrojar()
+    {
+        var detalle = new FunkoDetalle(100, "Licencia", 1, null);
+
+        var act = () => detalle.Actualizar(0, "Licencia", 1, null);
+
+        act.Should().Throw<ArgumentException>();
+    }
+
+    // ── Actualizar: licencia inválida (los 2 "no cov" son null y whitespace) ──
+
+    [Fact]
+    public void Actualizar_LicenciaNull_DebeArrojar()
+    {
+        // Mata el mutante IsNullOrWhiteSpace(licencia) en Actualizar (no cov)
+        var detalle = new FunkoDetalle(100, "Licencia", 1, null);
+
+        var act = () => detalle.Actualizar(100, null!, 1, null);
+
+        act.Should().Throw<ArgumentException>()
+           .WithMessage("*licencia*");
+    }
+
+    [Fact]
+    public void Actualizar_LicenciaVacia_DebeArrojar()
+    {
+        var detalle = new FunkoDetalle(100, "Licencia", 1, null);
+
+        var act = () => detalle.Actualizar(100, "", 1, null);
+
+        act.Should().Throw<ArgumentException>();
+    }
+
+    [Fact]
+    public void Actualizar_LicenciaSoloEspacios_DebeArrojar()
+    {
+        // Mata el tercer mutante residual de IsNullOrWhiteSpace en Actualizar
+        var detalle = new FunkoDetalle(100, "Licencia", 1, null);
+
+        var act = () => detalle.Actualizar(100, "   ", 1, null);
+
+        act.Should().Throw<ArgumentException>();
+    }
+
+    // ── Actualizar: NumeroCaja boundary (para completar cobertura de Actualizar)
+
+    [Fact]
+    public void Actualizar_NumeroCajaCero_DebeArrojar()
     {
         var detalle = new FunkoDetalle(100, "Licencia", 1, null);
 
@@ -430,6 +574,43 @@ public class DetallesTests
         act.Should().Throw<ArgumentException>();
     }
 
+    // ── Actualizar: boundary jugadoresMin == jugadoresMax (solo en constructor) ─
+
+    [Fact]
+    public void Actualizar_JugadoresMinIgualAMax_NoDebeArrojar()
+    {
+        // El test de boundary igual solo existe para el constructor.
+        // Este mata el mutante < → <= en Actualizar
+        var detalle = new ToyDetalle(3, 2, 4, false);
+
+        var act = () => detalle.Actualizar(3, 2, 2, false);
+
+        act.Should().NotThrow();
+    }
+
+    [Fact]
+    public void Actualizar_JugadoresMaxMenorQueMin_DebeArrojar()
+    {
+        // Par obligatorio del test anterior
+        var detalle = new ToyDetalle(3, 2, 4, false);
+
+        var act = () => detalle.Actualizar(3, 4, 2, false);
+
+        act.Should().Throw<ArgumentException>()
+           .WithMessage("*jugadores*");
+    }
+
+    [Fact]
+    public void Actualizar_EdadMinima_SeActualizaCorrectamente()
+    {
+        // Mata el mutante que reemplaza EdadMinima = edadMinima en Actualizar
+        var detalle = new ToyDetalle(3, 2, 4, false);
+
+        detalle.Actualizar(12, 1, 6, false);
+
+        detalle.EdadMinima.Should().Be(12);
+    }
+
     // ═════════════════════════════════════════════════════════════════════════
     // VariosDetalle
     // ═════════════════════════════════════════════════════════════════════════
@@ -555,5 +736,57 @@ public class DetallesTests
         var act = () => detalle.Actualizar("Marca", 0m, 5m, null, "Metal", false);
 
         act.Should().Throw<ArgumentException>();
+    }
+
+    // ── Actualizar: solo alto=0 testeado; ancho=0 sobrevive ──────────────────
+
+    [Fact]
+    public void Actualizar_AnchoCero_DebeArrojar()
+    {
+        // Mata el mutante que elimina "|| ancho <= 0" en Actualizar
+        var detalle = new VariosDetalle("Marca", 10m, 5m, null, "Metal", false);
+
+        var act = () => detalle.Actualizar("Marca", 10m, 0m, null, "Metal", false);
+
+        act.Should().Throw<ArgumentException>()
+           .WithMessage("*invalidas*");
+    }
+
+    // ── Actualizar: Largo siempre null en tests — valor no-null sobrevive ─────
+
+    [Fact]
+    public void Actualizar_LargoConValor_SeActualizaCorrectamente()
+    {
+        // Mata el mutante Largo = largo → Largo = null en Actualizar
+        var detalle = new VariosDetalle("Marca", 10m, 5m, null, "Metal", false);
+
+        detalle.Actualizar("Marca", 10m, 5m, 20m, "Metal", false);
+
+        detalle.Largo.Should().Be(20m);
+    }
+
+    // ── Constructor y Actualizar: TieneIlustracion false → true mutant ────────
+
+    [Fact]
+    public void Actualizar_TieneIlustracionFalse_SeActualizaCorrectamente()
+    {
+        // Detalle con TieneIlustracion=true, luego se actualiza a false
+        var detalle = new VariosDetalle("Marca", 10m, 5m, null, "Metal", true);
+
+        detalle.Actualizar("Marca", 10m, 5m, null, "Metal", false);
+
+        // Mata el mutante !tieneIlustracion en la asignación
+        detalle.TieneIlustracion.Should().BeFalse();
+    }
+
+    [Fact]
+    public void Actualizar_MaterialSeActualizaCorrectamente()
+    {
+        // Mata el mutante Material = material → Material = null en Actualizar
+        var detalle = new VariosDetalle("Marca", 10m, 5m, null, "Metal", false);
+
+        detalle.Actualizar("NuevaMarca", 10m, 5m, null, "Madera", false);
+
+        detalle.Material.Should().Be("Madera");
     }
 }

@@ -11,7 +11,8 @@ namespace TeejoshSystem.Domain.ValueObjects
             if (value < 0)
                 throw new ArgumentException("El precio no puede ser negativo");
 
-            Value = decimal.Round(value, 2);
+            // Value = decimal.Round(value, 2);
+            Value = decimal.Round(value, 2, MidpointRounding.AwayFromZero);
         }
 
         public override bool Equals(object? obj)

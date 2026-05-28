@@ -220,4 +220,123 @@ public class ProductoTests
  
         producto.Precio.Value.Should().Be(25m);
     }
+
+    // ── TempBug ─────────────────────────────────────────────────────────
+
+    // ── Constructor: Tipo = tipo nunca afirmado directamente ──────────────────
+
+    [Theory]
+    [InlineData(TipoProducto.HotWheels)]
+    [InlineData(TipoProducto.Funko)]
+    [InlineData(TipoProducto.Tcg)]
+    [InlineData(TipoProducto.Toy)]
+    [InlineData(TipoProducto.Varios)]
+    public void Constructor_TipoAsignadoCorrectamente(TipoProducto tipo)
+    {
+        // Mata el mutante que reemplaza Tipo = tipo → Tipo = default
+        var producto = CrearProducto(tipo);
+
+        producto.Tipo.Should().Be(tipo);
+    }
+
+    // ── Constructor: null guards (nombre, precio, stock) ─────────────────────
+
+    [Fact]
+    public void Constructor_NombreNull_DebeArrojarArgumentNullException()
+    {
+        // Mata el mutante que elimina: nombre ?? throw
+        var act = () => new Producto(
+            TipoProducto.HotWheels,
+            null!,
+            new Precio(10m),
+            new Unidades(5));
+
+        act.Should().Throw<ArgumentNullException>()
+           .WithParameterName("nombre");
+    }
+
+    [Fact]
+    public void Constructor_PrecioNull_DebeArrojarArgumentNullException()
+    {
+        // Mata el mutante que elimina: precio ?? throw
+        var act = () => new Producto(
+            TipoProducto.HotWheels,
+            new NombreProducto("Test"),
+            null!,
+            new Unidades(5));
+
+        act.Should().Throw<ArgumentNullException>()
+           .WithParameterName("precio");
+    }
+
+    [Fact]
+    public void Constructor_StockNull_DebeArrojarArgumentNullException()
+    {
+        // Mata el mutante que elimina: stock ?? throw
+        var act = () => new Producto(
+            TipoProducto.HotWheels,
+            new NombreProducto("Test"),
+            new Precio(10m),
+            null!);
+
+        act.Should().Throw<ArgumentNullException>()
+           .WithParameterName("stock");
+    }
+
+    // ── ActualizarDatos: null guards de precio y stock ────────────────────────
+
+    [Fact]
+    public void ActualizarDatos_PrecioNull_DebeArrojarArgumentNullException()
+    {
+        // Mata el mutante que elimina: precio ?? throw en ActualizarDatos
+        var producto = CrearProducto(TipoProducto.HotWheels);
+
+        var act = () => producto.ActualizarDatos(
+            new NombreProducto("Nuevo"),
+            null!,
+            new Unidades(10));
+
+        act.Should().Throw<ArgumentNullException>()
+           .WithParameterName("precio");
+    }
+
+    [Fact]
+    public void ActualizarDatos_StockNull_DebeArrojarArgumentNullException()
+    {
+        // Mata el mutante que elimina: stock ?? throw en ActualizarDatos
+        var producto = CrearProducto(TipoProducto.HotWheels);
+
+        var act = () => producto.ActualizarDatos(
+            new NombreProducto("Nuevo"),
+            new Precio(20m),
+            null!);
+
+        act.Should().Throw<ArgumentNullException>()
+           .WithParameterName("stock");
+    }
+
+    // ── AsignarImagePath: 2 mutantes sin cobertura ───────────────────────────
+
+    [Fact]
+    public void AsignarImagePath_ConRuta_AsignaImagePath()
+    {
+        // Mata el mutante ImagePath = imagePath → ImagePath = null
+        var producto = CrearProducto(TipoProducto.HotWheels);
+
+        producto.AsignarImagePath("imagenes/pikachu.jpg");
+
+        producto.ImagePath.Should().Be("imagenes/pikachu.jpg");
+    }
+
+    [Fact]
+    public void AsignarImagePath_ConNull_DejaImagePathNull()
+    {
+        // Mata el mutante que elimina la asignación cuando imagePath es null
+        var producto = CrearProducto(TipoProducto.HotWheels);
+        producto.AsignarImagePath("ruta_anterior.jpg"); // primero asignar algo
+
+        producto.AsignarImagePath(null);
+
+        producto.ImagePath.Should().BeNull();
+    }
 }

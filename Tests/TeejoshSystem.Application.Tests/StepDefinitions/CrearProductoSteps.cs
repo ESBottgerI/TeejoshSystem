@@ -5,6 +5,7 @@ using Reqnroll;
 using TeejoshSystem.Application.Common;
 using TeejoshSystem.Application.Ports.Inbound.Productos.Commands.CrearProducto;
 using TeejoshSystem.Domain.Enums;
+using TeejoshSystem.Domain.Ports.Outbound;
 using TeejoshSystem.Domain.Ports.Outbound.Repositories;
 
 namespace TeejoshSystem.Application.Tests.StepDefinitions;
@@ -17,6 +18,8 @@ public class CrearProductoSteps
     private readonly CrearProductoCommandHandler _handler;
 
     private readonly IImageStorageService _imageStorageMock;
+
+    private readonly IAppLogger _applogger;
 
     private string _nombre = string.Empty;
     private decimal _precio;
@@ -32,9 +35,12 @@ public class CrearProductoSteps
 
         _imageStorageMock = Substitute.For<IImageStorageService>();
 
+        _applogger = Substitute.For<IAppLogger>();
+
         _handler = new CrearProductoCommandHandler(
             _repository,
-            _imageStorageMock
+            _imageStorageMock,
+            _applogger
         );
 
         _repository

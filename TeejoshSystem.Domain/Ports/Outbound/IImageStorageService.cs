@@ -1,4 +1,4 @@
-namespace TeejoshSystem.Domain.Ports.Outbound.Repositories
+namespace TeejoshSystem.Domain.Ports.Outbound
 {
     public interface IImageStorageService
     {

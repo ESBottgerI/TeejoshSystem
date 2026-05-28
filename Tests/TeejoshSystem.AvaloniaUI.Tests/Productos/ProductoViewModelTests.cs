@@ -5,6 +5,7 @@ using TeejoshSystem.Application.Ports.Inbound.Productos.Queries.BuscarProductos;
 using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Productos;
 using TeejoshSystem.Domain.Enums;
 using System.Linq;
+using TeejoshSystem.Domain.Ports.Outbound;
 
 namespace TeejoshSystem.AvaloniaUI.Tests.Productos;
 
@@ -24,6 +25,7 @@ public class GestionarProductosViewModelTests
     private readonly INotificationService _notification;
     private readonly IConfirmationService _confirmation;
     private readonly INavigationService _navigation;
+    private readonly IImageStorageService _imageStorage;
 
     public GestionarProductosViewModelTests()
     {
@@ -31,6 +33,7 @@ public class GestionarProductosViewModelTests
         _notification = Substitute.For<INotificationService>();
         _confirmation = Substitute.For<IConfirmationService>();
         _navigation = Substitute.For<INavigationService>();
+        _imageStorage = Substitute.For<IImageStorageService>();
 
         // El constructor llama BuscarAsync() → necesita este mock
         ConfigurarBusquedaVacia();
@@ -44,7 +47,7 @@ public class GestionarProductosViewModelTests
     }
 
     private GestionarProductosViewModel CrearVm()
-        => new(_mediator, _notification, _confirmation, _navigation);
+        => new(_mediator, _notification, _confirmation, _navigation, _imageStorage);
 
     // ── Constructor / BuscarAsync inicial ─────────────────────────────────────
 
@@ -200,6 +203,7 @@ public class CrearProductoViewModelTests
     private readonly INotificationService _notification;
     private readonly IConfirmationService _confirmation;
     private readonly INavigationService _navigation;
+    private readonly IImageStorageService _imageStorage;
 
     public CrearProductoViewModelTests()
     {
@@ -207,6 +211,7 @@ public class CrearProductoViewModelTests
         _notification = Substitute.For<INotificationService>();
         _confirmation = Substitute.For<IConfirmationService>();
         _navigation = Substitute.For<INavigationService>();
+        _imageStorage = Substitute.For<IImageStorageService>();
 
         // Constructor dispara CargarCatalogosAsync() → mock mínimo
         _mediator
@@ -221,7 +226,7 @@ public class CrearProductoViewModelTests
     }
 
     private CrearProductoViewModel CrearVm()
-        => new(_mediator, _notification, _confirmation, _navigation);
+        => new(_mediator, _notification, _confirmation, _navigation, _imageStorage);
 
     // ── Visibilidad de paneles ────────────────────────────────────────────────
 

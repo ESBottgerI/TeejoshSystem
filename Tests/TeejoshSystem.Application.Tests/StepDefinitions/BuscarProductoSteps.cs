@@ -4,6 +4,7 @@ using Reqnroll;
 
 using TeejoshSystem.Application.Ports.Inbound.Productos.Queries.BuscarProductos;
 using TeejoshSystem.Domain.Enums;
+using TeejoshSystem.Domain.Ports.Outbound;
 using TeejoshSystem.Domain.Ports.Outbound.Repositories;
 
 namespace TeejoshSystem.Application.Tests.StepDefinitions;

@@ -6,6 +6,7 @@ using TeejoshSystem.Application.Ports.Inbound.Productos.Queries.BuscarProductos;
 using TeejoshSystem.Application.Ports.Inbound.Productos.Queries.ObtenerProductos;
 using TeejoshSystem.Domain.Entities;
 using TeejoshSystem.Domain.Enums;
+using TeejoshSystem.Domain.Ports.Outbound;
 using TeejoshSystem.Domain.Ports.Outbound.Repositories;
 using TeejoshSystem.Domain.ValueObjects;
 
@@ -19,20 +20,26 @@ namespace TeejoshSystem.Application.Tests.Productos;
 
 public class CrearProductoCommandHandlerTests
 {
-    private readonly IProductoRepository _repo;
+    private readonly IProductoRepository _repository;
+
     private readonly CrearProductoCommandHandler _handler;
 
     private readonly IImageStorageService _imageStorageMock;
 
+    private readonly IAppLogger _applogger;
+
     public CrearProductoCommandHandlerTests()
     {
-        _repo    = Substitute.For<IProductoRepository>();
+        _repository = Substitute.For<IProductoRepository>();
         
         _imageStorageMock = Substitute.For<IImageStorageService>();
 
+        _applogger = Substitute.For<IAppLogger>();
+
         _handler = new CrearProductoCommandHandler(
-            _repo,
-            _imageStorageMock
+            _repository,
+            _imageStorageMock,
+            _applogger
         );
 
     }
@@ -40,7 +47,7 @@ public class CrearProductoCommandHandlerTests
     [Fact]
     public async Task Handle_CommandHotWheelsValido_DebeGuardarYRetornarSuccess()
     {
-        _repo.AddAsync(Arg.Any<Producto>()).Returns(Task.FromResult(1));
+        _repository.AddAsync(Arg.Any<Producto>()).Returns(Task.FromResult(1));
 
         var command = new CrearProductoCommand
         {
@@ -54,7 +61,7 @@ public class CrearProductoCommandHandlerTests
         var result = await _handler.Handle(command, CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
-        await _repo.Received(1).AddAsync(Arg.Any<Producto>());
+        await _repository.Received(1).AddAsync(Arg.Any<Producto>());
     }
 
     [Theory]
@@ -75,7 +82,7 @@ public class CrearProductoCommandHandlerTests
 
         result.IsSuccess.Should().BeFalse();
         result.Error.Should().NotBeNullOrEmpty();
-        await _repo.DidNotReceive().AddAsync(Arg.Any<Producto>());
+        await _repository.DidNotReceive().AddAsync(Arg.Any<Producto>());
     }
 
     [Fact]
@@ -93,7 +100,7 @@ public class CrearProductoCommandHandlerTests
         var result = await _handler.Handle(command, CancellationToken.None);
 
         result.IsSuccess.Should().BeFalse();
-        await _repo.DidNotReceive().AddAsync(Arg.Any<Producto>());
+        await _repository.DidNotReceive().AddAsync(Arg.Any<Producto>());
     }
 }
 

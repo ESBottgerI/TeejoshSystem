@@ -1,4 +1,4 @@
-﻿using TeejoshSystem.Application.Common;
+using TeejoshSystem.Application.Common;
 using TeejoshSystem.Application.Ports.Inbound.Productos.Commands.CrearProducto;
 using TeejoshSystem.Domain.Entities;
 using TeejoshSystem.Domain.Entities.Detalles;

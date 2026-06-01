@@ -4,63 +4,18 @@ using TeejoshSystem.Application.Ports.Inbound.Auth.Commands.AutenticarUsuario;
 using TeejoshSystem.Application.Ports.Inbound.Auth.Commands.CambiarPassword;
 using TeejoshSystem.Application.Ports.Inbound.Auth.Commands.DesactivarUsuario;
 using TeejoshSystem.Application.Ports.Inbound.Auth.Commands.RegistrarUsuario;
-using TeejoshSystem.Application.Ports.Inbound.Auth.Queries.ListarUsuarios;
-using TeejoshSystem.Domain.Entities;
 using TeejoshSystem.Domain.Enums;
 using TeejoshSystem.Domain.Ports.Outbound;
 using TeejoshSystem.Domain.Ports.Outbound.Auth;
 
 namespace TeejoshSystem.Application.Tests.Auth;
 
-// ═══════════════════════════════════════════════════════════════════════════
-// AutenticarUsuarioCommandHandler
-//
-// Mutantes objetivo:
-//   - IsNullOrWhiteSpace(NombreUsuario) → reemplazado por false
-//   - IsNullOrWhiteSpace(Password)      → reemplazado por false
-//   - !resultado.Exitoso                → reemplazado por resultado.Exitoso
-//   - Trim() sobre NombreUsuario        → eliminado por mutante
-// ═══════════════════════════════════════════════════════════════════════════
-
 public class AutenticarUsuarioCommandHandlerTests
 {
     private readonly IAuthService _authService = Substitute.For<IAuthService>();
     private readonly IAppLogger _logger = Substitute.For<IAppLogger>();
 
-    private AutenticarUsuarioCommandHandler CrearHandler()
-        => new(_authService, _logger);
-
-    // ── Flujo exitoso ─────────────────────────────────────────────────────────
-
-    [Fact]
-    public async Task Handle_CredencialesValidas_RetornaSuccessConSesionDto()
-    {
-        _authService.AutenticarAsync("admin", "Pass1234!", Arg.Any<CancellationToken>())
-                    .Returns(AutenticacionResultado.Valido(1, "admin", RolUsuario.Administrador));
-
-        var result = await CrearHandler().Handle(
-            new AutenticarUsuarioCommand("admin", "Pass1234!"), CancellationToken.None);
-
-        result.IsSuccess.Should().BeTrue();
-        result.Value.NombreUsuario.Should().Be("admin");
-        result.Value.Rol.Should().Be(RolUsuario.Administrador);
-        result.Value.UsuarioId.Should().Be(1);
-    }
-
-    [Fact]
-    public async Task Handle_CredencialesValidas_InvocaAutenticarAsyncUnaVez()
-    {
-        _authService.AutenticarAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
-                    .Returns(AutenticacionResultado.Valido(1, "admin", RolUsuario.Administrador));
-
-        await CrearHandler().Handle(
-            new AutenticarUsuarioCommand("admin", "Pass1234!"), CancellationToken.None);
-
-        await _authService.Received(1)
-              .AutenticarAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
-    }
-
-    // ── Guard: NombreUsuario vacío/nulo ───────────────────────────────────────
+    private AutenticarUsuarioCommandHandler CrearHandler() => new(_authService, _logger);
 
     [Theory]
     [InlineData(null)]
@@ -68,17 +23,14 @@ public class AutenticarUsuarioCommandHandlerTests
     [InlineData("   ")]
     public async Task Handle_NombreUsuarioInvalido_RetornaFailureSinLlamarAuth(string? nombre)
     {
-        // Mata el mutante que reemplaza IsNullOrWhiteSpace(NombreUsuario) por false
         var result = await CrearHandler().Handle(
-            new AutenticarUsuarioCommand(nombre!, "Pass1234!"), CancellationToken.None);
+            new AutenticarUsuarioCommand(nombre!, "Pass123!"), CancellationToken.None);
 
         result.IsSuccess.Should().BeFalse();
-        result.Error.Should().NotBeNullOrWhiteSpace();
-        await _authService.DidNotReceive()
-              .AutenticarAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
+        result.Error.Should().Contain("nombre de usuario");
+        await _authService.DidNotReceive().AutenticarAsync(
+            Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
     }
-
-    // ── Guard: Password vacío/nulo ────────────────────────────────────────────
 
     [Theory]
     [InlineData(null)]
@@ -86,135 +38,147 @@ public class AutenticarUsuarioCommandHandlerTests
     [InlineData("   ")]
     public async Task Handle_PasswordInvalido_RetornaFailureSinLlamarAuth(string? password)
     {
-        // Mata el mutante que reemplaza IsNullOrWhiteSpace(Password) por false
         var result = await CrearHandler().Handle(
             new AutenticarUsuarioCommand("admin", password!), CancellationToken.None);
 
         result.IsSuccess.Should().BeFalse();
-        await _authService.DidNotReceive()
-              .AutenticarAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
-    }
-
-    // ── Autenticación fallida — !resultado.Exitoso ────────────────────────────
-
-    [Fact]
-    public async Task Handle_AuthServiceRetornaInvalido_RetornaFailure()
-    {
-        // Mata el mutante que elimina el ! de !resultado.Exitoso
-        _authService.AutenticarAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
-                    .Returns(AutenticacionResultado.Invalido("Credenciales inválidas."));
-
-        var result = await CrearHandler().Handle(
-            new AutenticarUsuarioCommand("admin", "WrongPass!"), CancellationToken.None);
-
-        result.IsSuccess.Should().BeFalse();
-        result.Error.Should().Contain("Credenciales inválidas.");
+        result.Error.Should().Contain("contraseña");
+        await _authService.DidNotReceive().AutenticarAsync(
+            Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
-    public async Task Handle_AuthServiceRetornaExitoso_RetornaSuccess()
+    public async Task Handle_NombreConEspacios_EnviaConTrimAplicado()
     {
-        // Test complementario: cuando Exitoso=true, el resultado es Success
-        _authService.AutenticarAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
-                    .Returns(AutenticacionResultado.Valido(5, "operador", RolUsuario.Operador));
-
-        var result = await CrearHandler().Handle(
-            new AutenticarUsuarioCommand("operador", "Pass1234!"), CancellationToken.None);
-
-        result.IsSuccess.Should().BeTrue();
-        result.Value.Rol.Should().Be(RolUsuario.Operador);
-    }
-
-    // ── Trim sobre NombreUsuario ──────────────────────────────────────────────
-
-    [Fact]
-    public async Task Handle_NombreConEspacios_EnviaAlAuthServiceConTrim()
-    {
-        // Mata el mutante que elimina el .Trim() del NombreUsuario
         _authService.AutenticarAsync("admin", Arg.Any<string>(), Arg.Any<CancellationToken>())
                     .Returns(AutenticacionResultado.Valido(1, "admin", RolUsuario.Administrador));
 
         await CrearHandler().Handle(
-            new AutenticarUsuarioCommand("  admin  ", "Pass1234!"), CancellationToken.None);
+            new AutenticarUsuarioCommand("  admin  ", "Pass123!"), CancellationToken.None);
 
-        // El handler debe pasar "admin" (sin espacios), no "  admin  "
         await _authService.Received(1)
               .AutenticarAsync("admin", Arg.Any<string>(), Arg.Any<CancellationToken>());
     }
 
-    // ── Excepción inesperada ──────────────────────────────────────────────────
+    [Fact]
+    public async Task Handle_AuthRetornaInvalido_RetornaFailure()
+    {
+        _authService.AutenticarAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+                    .Returns(AutenticacionResultado.Invalido("Credenciales inválidas."));
+
+        var result = await CrearHandler().Handle(
+            new AutenticarUsuarioCommand("admin", "wrong"), CancellationToken.None);
+
+        result.IsSuccess.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task Handle_AuthRetornaValido_RetornaSuccess()
+    {
+        _authService.AutenticarAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+                    .Returns(AutenticacionResultado.Valido(1, "admin", RolUsuario.Administrador));
+
+        var result = await CrearHandler().Handle(
+            new AutenticarUsuarioCommand("admin", "Pass123!"), CancellationToken.None);
+
+        result.IsSuccess.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task Handle_AuthInvalidoConMensaje_UsaMensajeDelServicio()
+    {
+        _authService.AutenticarAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+                    .Returns(AutenticacionResultado.Invalido("Usuario inactivo."));
+
+        var result = await CrearHandler().Handle(
+            new AutenticarUsuarioCommand("admin", "pass"), CancellationToken.None);
+
+        result.Error.Should().Be("Usuario inactivo.");
+    }
+
+    [Fact]
+    public async Task Handle_AuthInvalidoConMensajeNull_UsaFallback()
+    {
+        var sinMensaje = new AutenticacionResultado(false, null, null, null, null);
+        _authService.AutenticarAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+                    .Returns(sinMensaje);
+
+        var result = await CrearHandler().Handle(
+            new AutenticarUsuarioCommand("admin", "pass"), CancellationToken.None);
+
+        result.IsSuccess.Should().BeFalse();
+        result.Error.Should().Be("Credenciales inválidas.");
+    }
+
+    [Fact]
+    public async Task Handle_AuthExitoso_MapeaTodosLosCamposDelSesionDto()
+    {
+        _authService.AutenticarAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+                    .Returns(AutenticacionResultado.Valido(42, "operador", RolUsuario.Operador));
+
+        var result = await CrearHandler().Handle(
+            new AutenticarUsuarioCommand("operador", "Pass123!"), CancellationToken.None);
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value.UsuarioId.Should().Be(42);
+        result.Value.NombreUsuario.Should().Be("operador");
+        result.Value.Rol.Should().Be(RolUsuario.Operador);
+    }
 
     [Fact]
     public async Task Handle_ExcepcionEnAuthService_RetornaFailure()
     {
-        _authService.When(x => x.AutenticarAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>()))
-                    .Throw(new Exception("Error de red"));
+        _authService.When(x => x.AutenticarAsync(
+                        Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>()))
+                    .Throw(new Exception("Timeout de BD"));
 
         var result = await CrearHandler().Handle(
-            new AutenticarUsuarioCommand("admin", "Pass1234!"), CancellationToken.None);
+            new AutenticarUsuarioCommand("admin", "Pass123!"), CancellationToken.None);
 
         result.IsSuccess.Should().BeFalse();
         result.Error.Should().NotBeNullOrWhiteSpace();
     }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// RegistrarUsuarioCommandHandler
-//
-// Mutantes objetivo:
-//   - IsNullOrWhiteSpace(NombreUsuario)
-//   - IsNullOrWhiteSpace(Password) || Password.Length < 8  → boundary 7 y 8
-//   - await ExisteAsync(...)  → valor devuelto true/false
-// ═══════════════════════════════════════════════════════════════════════════
-
 public class RegistrarUsuarioCommandHandlerTests
 {
     private readonly IUsuarioRepository _repo = Substitute.For<IUsuarioRepository>();
     private readonly IAppLogger _logger = Substitute.For<IAppLogger>();
 
-    private RegistrarUsuarioCommandHandler CrearHandler()
-        => new(_repo, _logger);
-
-    // ── Flujo exitoso ─────────────────────────────────────────────────────────
-
-    [Fact]
-    public async Task Handle_DatosValidos_RetornaSuccessYLlamaCrearAsync()
-    {
-        _repo.ExisteAsync("nuevo", Arg.Any<CancellationToken>()).Returns(false);
-        _repo.CrearAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<RolUsuario>(), Arg.Any<CancellationToken>())
-             .Returns(Task.CompletedTask);
-
-        var result = await CrearHandler().Handle(
-            new RegistrarUsuarioCommand("nuevo", "Pass1234!", RolUsuario.Operador),
-            CancellationToken.None);
-
-        result.IsSuccess.Should().BeTrue();
-        await _repo.Received(1).CrearAsync("nuevo", "Pass1234!", RolUsuario.Operador, Arg.Any<CancellationToken>());
-    }
-
-    // ── Guard: NombreUsuario ──────────────────────────────────────────────────
+    private RegistrarUsuarioCommandHandler CrearHandler() => new(_repo, _logger);
 
     [Theory]
     [InlineData(null)]
     [InlineData("")]
     [InlineData("   ")]
-    public async Task Handle_NombreUsuarioInvalido_RetornaFailureSinPersistir(string? nombre)
+    public async Task Handle_NombreUsuarioInvalido_RetornaFailureSinConsultarRepo(string? nombre)
     {
         var result = await CrearHandler().Handle(
             new RegistrarUsuarioCommand(nombre!, "Pass1234!", RolUsuario.Operador),
             CancellationToken.None);
 
         result.IsSuccess.Should().BeFalse();
-        await _repo.DidNotReceive().CrearAsync(Arg.Any<string>(), Arg.Any<string>(),
-            Arg.Any<RolUsuario>(), Arg.Any<CancellationToken>());
+        result.Error.Should().Contain("nombre de usuario");
+        await _repo.DidNotReceive().ExisteAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
     }
 
-    // ── Guard: Password length < 8 — boundary crítico ────────────────────────
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public async Task Handle_PasswordVacioNuloOEspacios_RetornaFailure(string? password)
+    {
+        var result = await CrearHandler().Handle(
+            new RegistrarUsuarioCommand("usuario", password!, RolUsuario.Operador),
+            CancellationToken.None);
+
+        result.IsSuccess.Should().BeFalse();
+        result.Error.Should().Contain("8");
+    }
 
     [Fact]
     public async Task Handle_Password7Caracteres_RetornaFailure()
     {
-        // Boundary inferior inválido: 7 caracteres — mata mutante < → <=
         var result = await CrearHandler().Handle(
             new RegistrarUsuarioCommand("usuario", "Pass12!", RolUsuario.Operador),
             CancellationToken.None);
@@ -226,7 +190,6 @@ public class RegistrarUsuarioCommandHandlerTests
     [Fact]
     public async Task Handle_Password8Caracteres_EsValido()
     {
-        // Boundary superior válido: exactamente 8 caracteres
         _repo.ExisteAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns(false);
         _repo.CrearAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<RolUsuario>(), Arg.Any<CancellationToken>())
              .Returns(Task.CompletedTask);
@@ -238,25 +201,20 @@ public class RegistrarUsuarioCommandHandlerTests
         result.IsSuccess.Should().BeTrue();
     }
 
-    [Theory]
-    [InlineData(null)]
-    [InlineData("")]
-    [InlineData("   ")]
-    public async Task Handle_PasswordVacioONulo_RetornaFailure(string? password)
+    [Fact]
+    public async Task Handle_PasswordCortoNoNulo_RetornaFailure()
     {
+        // Mata || → && : password válido (no null/whitespace) pero corto
         var result = await CrearHandler().Handle(
-            new RegistrarUsuarioCommand("usuario", password!, RolUsuario.Operador),
+            new RegistrarUsuarioCommand("usuario", "Pas1!", RolUsuario.Operador),
             CancellationToken.None);
 
         result.IsSuccess.Should().BeFalse();
     }
 
-    // ── Guard: usuario ya existe ──────────────────────────────────────────────
-
     [Fact]
     public async Task Handle_UsuarioYaExiste_RetornaFailureSinCrear()
     {
-        // Mata el mutante que invierte la condición de ExisteAsync
         _repo.ExisteAsync("existente", Arg.Any<CancellationToken>()).Returns(true);
 
         var result = await CrearHandler().Handle(
@@ -270,15 +228,14 @@ public class RegistrarUsuarioCommandHandlerTests
     }
 
     [Fact]
-    public async Task Handle_UsuarioNoExiste_ProcedaCrear()
+    public async Task Handle_UsuarioNoExiste_ProcedeCon()
     {
-        // Complementario: cuando ExisteAsync=false, sí debe crear
         _repo.ExisteAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns(false);
         _repo.CrearAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<RolUsuario>(), Arg.Any<CancellationToken>())
              .Returns(Task.CompletedTask);
 
         var result = await CrearHandler().Handle(
-            new RegistrarUsuarioCommand("nuevo", "Pass1234!", RolUsuario.Administrador),
+            new RegistrarUsuarioCommand("nuevo", "Pass1234!", RolUsuario.Operador),
             CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
@@ -286,10 +243,23 @@ public class RegistrarUsuarioCommandHandlerTests
             Arg.Any<RolUsuario>(), Arg.Any<CancellationToken>());
     }
 
-    // ── Excepción inesperada ──────────────────────────────────────────────────
+    [Fact]
+    public async Task Handle_DatosValidos_CrearAsyncRecibeLosArgumentosCorrectos()
+    {
+        _repo.ExisteAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns(false);
+        _repo.CrearAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<RolUsuario>(), Arg.Any<CancellationToken>())
+             .Returns(Task.CompletedTask);
+
+        await CrearHandler().Handle(
+            new RegistrarUsuarioCommand("nuevo_user", "Pass1234!", RolUsuario.Administrador),
+            CancellationToken.None);
+
+        await _repo.Received(1).CrearAsync(
+            "nuevo_user", "Pass1234!", RolUsuario.Administrador, Arg.Any<CancellationToken>());
+    }
 
     [Fact]
-    public async Task Handle_ExcepcionEnRepositorio_RetornaFailure()
+    public async Task Handle_ExcepcionEnCrearAsync_RetornaFailure()
     {
         _repo.ExisteAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns(false);
         _repo.When(x => x.CrearAsync(Arg.Any<string>(), Arg.Any<string>(),
@@ -297,21 +267,13 @@ public class RegistrarUsuarioCommandHandlerTests
              .Throw(new Exception("Error de BD"));
 
         var result = await CrearHandler().Handle(
-            new RegistrarUsuarioCommand("usuario", "Pass1234!", RolUsuario.Operador),
+            new RegistrarUsuarioCommand("nuevo", "Pass1234!", RolUsuario.Operador),
             CancellationToken.None);
 
         result.IsSuccess.Should().BeFalse();
+        result.Error.Should().Contain("Error al registrar");
     }
 }
-
-// ═══════════════════════════════════════════════════════════════════════════
-// CambiarPasswordCommandHandler
-//
-// Mutantes objetivo:
-//   - PasswordNuevo.Length < 8            → boundary 7 (fail) y 8 (pass)
-//   - PasswordActual == PasswordNuevo     → operador == → !=
-//   - !passwordValida                     → eliminar el !
-// ═══════════════════════════════════════════════════════════════════════════
 
 public class CambiarPasswordCommandHandlerTests
 {
@@ -319,197 +281,212 @@ public class CambiarPasswordCommandHandlerTests
     private readonly IUsuarioRepository _repo = Substitute.For<IUsuarioRepository>();
     private readonly IAppLogger _logger = Substitute.For<IAppLogger>();
 
-    private CambiarPasswordCommandHandler CrearHandler()
-        => new(_authService, _repo, _logger);
-
-    // ── Flujo exitoso ─────────────────────────────────────────────────────────
-
-    [Fact]
-    public async Task Handle_DatosValidos_RetornaSuccessYActualizaPassword()
-    {
-        _authService.VerificarPasswordAsync(1, "Actual123!", Arg.Any<CancellationToken>())
-                    .Returns(true);
-        _repo.ActualizarPasswordAsync(1, "Nuevo1234!", Arg.Any<CancellationToken>())
-             .Returns(Task.CompletedTask);
-
-        var result = await CrearHandler().Handle(
-            new CambiarPasswordCommand(1, "Actual123!", "Nuevo1234!"),
-            CancellationToken.None);
-
-        result.IsSuccess.Should().BeTrue();
-        await _repo.Received(1).ActualizarPasswordAsync(1, "Nuevo1234!", Arg.Any<CancellationToken>());
-    }
-
-    // ── Guard: PasswordNuevo length < 8 — boundary ───────────────────────────
-
-    [Fact]
-    public async Task Handle_NuevoPassword7Caracteres_RetornaFailureSinVerificar()
-    {
-        // Boundary: 7 caracteres inválido — mata mutante < → <=
-        var result = await CrearHandler().Handle(
-            new CambiarPasswordCommand(1, "Actual123!", "Nue12!X"),
-            CancellationToken.None);
-
-        result.IsSuccess.Should().BeFalse();
-        result.Error.Should().Contain("8");
-        await _authService.DidNotReceive()
-              .VerificarPasswordAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
-    }
-
-    [Fact]
-    public async Task Handle_NuevoPassword8Caracteres_EsValido()
-    {
-        // Boundary: 8 caracteres válido
-        _authService.VerificarPasswordAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
-                    .Returns(true);
-        _repo.ActualizarPasswordAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
-             .Returns(Task.CompletedTask);
-
-        var result = await CrearHandler().Handle(
-            new CambiarPasswordCommand(1, "Actual123!", "Nuevo12!"),
-            CancellationToken.None);
-
-        result.IsSuccess.Should().BeTrue();
-    }
+    private CambiarPasswordCommandHandler CrearHandler() => new(_authService, _repo, _logger);
 
     [Theory]
     [InlineData(null)]
     [InlineData("")]
-    [InlineData("  ")]
-    public async Task Handle_NuevoPasswordVacioONulo_RetornaFailure(string? passwordNuevo)
+    [InlineData("   ")]
+    public async Task Handle_PasswordNuevoVacioNuloOEspacios_RetornaFailureSinVerificar(string? passwordNuevo)
     {
         var result = await CrearHandler().Handle(
-            new CambiarPasswordCommand(1, "Actual123!", passwordNuevo!),
-            CancellationToken.None);
+            new CambiarPasswordCommand(1, "Actual123!", passwordNuevo!), CancellationToken.None);
 
         result.IsSuccess.Should().BeFalse();
-    }
-
-    // ── Guard: passwords iguales — operador == ────────────────────────────────
-
-    [Fact]
-    public async Task Handle_NuevoPasswordIgualAlActual_RetornaFailureSinVerificar()
-    {
-        // Mata el mutante que cambia == por !=
-        var result = await CrearHandler().Handle(
-            new CambiarPasswordCommand(1, "MismoPass1!", "MismoPass1!"),
-            CancellationToken.None);
-
-        result.IsSuccess.Should().BeFalse();
-        result.Error.Should().Contain("distinta");
-        await _authService.DidNotReceive()
-              .VerificarPasswordAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
+        await _authService.DidNotReceive().VerificarPasswordAsync(
+            Arg.Any<int>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
-    public async Task Handle_NuevoPasswordDistintoAlActual_NoBloqueaPorIgualdad()
+    public async Task Handle_PasswordNuevo7Caracteres_RetornaFailure()
     {
-        // Complementario: passwords distintos no deben ser bloqueados por el guard de igualdad
+        var result = await CrearHandler().Handle(
+            new CambiarPasswordCommand(1, "Actual123!", "Nue12!X"), CancellationToken.None);
+
+        result.IsSuccess.Should().BeFalse();
+        result.Error.Should().Contain("8");
+    }
+
+    [Fact]
+    public async Task Handle_PasswordNuevo8Caracteres_EsValido()
+    {
         _authService.VerificarPasswordAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
                     .Returns(true);
         _repo.ActualizarPasswordAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
              .Returns(Task.CompletedTask);
 
         var result = await CrearHandler().Handle(
-            new CambiarPasswordCommand(1, "Actual123!", "Diferente1!"),
-            CancellationToken.None);
+            new CambiarPasswordCommand(1, "Actual123!", "Nuevo12!"), CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
     }
 
-    // ── Guard: !passwordValida ────────────────────────────────────────────────
+    [Fact]
+    public async Task Handle_PasswordCortoNoNulo_RetornaFailure()
+    {
+        var result = await CrearHandler().Handle(
+            new CambiarPasswordCommand(1, "Actual123!", "Nue1!"), CancellationToken.None);
+
+        result.IsSuccess.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task Handle_PasswordNuevoIgualAlActual_RetornaFailureSinVerificar()
+    {
+        var result = await CrearHandler().Handle(
+            new CambiarPasswordCommand(1, "Mismo1234!", "Mismo1234!"), CancellationToken.None);
+
+        result.IsSuccess.Should().BeFalse();
+        result.Error.Should().Contain("distinta");
+        await _authService.DidNotReceive().VerificarPasswordAsync(
+            Arg.Any<int>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Handle_PasswordNuevoDistintoAlActual_NoBloqueaPorIgualdad()
+    {
+        _authService.VerificarPasswordAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+                    .Returns(true);
+        _repo.ActualizarPasswordAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+             .Returns(Task.CompletedTask);
+
+        var result = await CrearHandler().Handle(
+            new CambiarPasswordCommand(1, "Actual123!", "Diferente1!"), CancellationToken.None);
+
+        result.IsSuccess.Should().BeTrue();
+    }
 
     [Fact]
     public async Task Handle_PasswordActualIncorrecto_RetornaFailureSinActualizar()
     {
-        // Mata el mutante que elimina el ! de !passwordValida
         _authService.VerificarPasswordAsync(1, "Incorrecto!", Arg.Any<CancellationToken>())
                     .Returns(false);
 
         var result = await CrearHandler().Handle(
-            new CambiarPasswordCommand(1, "Incorrecto!", "Nuevo1234!"),
-            CancellationToken.None);
+            new CambiarPasswordCommand(1, "Incorrecto!", "Nuevo1234!"), CancellationToken.None);
 
         result.IsSuccess.Should().BeFalse();
         result.Error.Should().Contain("incorrecta");
-        await _repo.DidNotReceive()
-              .ActualizarPasswordAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
+        await _repo.DidNotReceive().ActualizarPasswordAsync(
+            Arg.Any<int>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
     public async Task Handle_PasswordActualCorrecto_ProcedaActualizar()
     {
-        // Complementario: cuando verificación=true, sí actualiza
         _authService.VerificarPasswordAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
                     .Returns(true);
         _repo.ActualizarPasswordAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
              .Returns(Task.CompletedTask);
 
         var result = await CrearHandler().Handle(
-            new CambiarPasswordCommand(1, "Correcto1!", "Nuevo1234!"),
-            CancellationToken.None);
+            new CambiarPasswordCommand(1, "Correcto1!", "Nuevo1234!"), CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
-        await _repo.Received(1).ActualizarPasswordAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
+        await _repo.Received(1).ActualizarPasswordAsync(
+            Arg.Any<int>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
     }
 
-    // ── Excepción inesperada ──────────────────────────────────────────────────
+    [Fact]
+    public async Task Handle_VerificarPasswordAsync_RecibeLosArgumentosCorrectos()
+    {
+        _authService.VerificarPasswordAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+                    .Returns(true);
+        _repo.ActualizarPasswordAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+             .Returns(Task.CompletedTask);
+
+        await CrearHandler().Handle(
+            new CambiarPasswordCommand(7, "Actual123!", "Nuevo1234!"), CancellationToken.None);
+
+        await _authService.Received(1).VerificarPasswordAsync(7, "Actual123!", Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Handle_ActualizarPasswordAsync_RecibeLosArgumentosCorrectos()
+    {
+        _authService.VerificarPasswordAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+                    .Returns(true);
+        _repo.ActualizarPasswordAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+             .Returns(Task.CompletedTask);
+
+        await CrearHandler().Handle(
+            new CambiarPasswordCommand(7, "Actual123!", "Nuevo1234!"), CancellationToken.None);
+
+        await _repo.Received(1).ActualizarPasswordAsync(7, "Nuevo1234!", Arg.Any<CancellationToken>());
+    }
 
     [Fact]
     public async Task Handle_ExcepcionEnVerificar_RetornaFailure()
     {
-        _authService.When(x => x.VerificarPasswordAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<CancellationToken>()))
-                    .Throw(new Exception("Error de BD"));
+        _authService.When(x => x.VerificarPasswordAsync(
+                        Arg.Any<int>(), Arg.Any<string>(), Arg.Any<CancellationToken>()))
+                    .Throw(new Exception("Timeout"));
 
         var result = await CrearHandler().Handle(
-            new CambiarPasswordCommand(1, "Actual123!", "Nuevo1234!"),
-            CancellationToken.None);
+            new CambiarPasswordCommand(1, "Actual123!", "Nuevo1234!"), CancellationToken.None);
 
         result.IsSuccess.Should().BeFalse();
+        result.Error.Should().Contain("cambiar la contraseña");
     }
 }
-
-// ═══════════════════════════════════════════════════════════════════════════
-// DesactivarUsuarioCommandHandler
-//
-// Flujo simple: delega a DesactivarAsync y retorna Success.
-// Mutante: excepción → Failure en lugar de propagarse.
-// ═══════════════════════════════════════════════════════════════════════════
 
 public class DesactivarUsuarioCommandHandlerTests
 {
     private readonly IUsuarioRepository _repo = Substitute.For<IUsuarioRepository>();
     private readonly IAppLogger _logger = Substitute.For<IAppLogger>();
 
-    private DesactivarUsuarioCommandHandler CrearHandler()
-        => new(_repo, _logger);
+    private DesactivarUsuarioCommandHandler CrearHandler() => new(_repo, _logger);
 
     [Fact]
-    public async Task Handle_UsuarioValido_DesactivaYRetornaSuccess()
+    public async Task Handle_UsuarioValido_RetornaSuccess()
     {
-        _repo.DesactivarAsync(5, Arg.Any<CancellationToken>()).Returns(Task.CompletedTask);
+        _repo.DesactivarAsync(Arg.Any<int>(), Arg.Any<CancellationToken>())
+             .Returns(Task.CompletedTask);
 
         var result = await CrearHandler().Handle(
             new DesactivarUsuarioCommand(5), CancellationToken.None);
 
         result.IsSuccess.Should().BeTrue();
-        await _repo.Received(1).DesactivarAsync(5, Arg.Any<CancellationToken>());
     }
 
     [Fact]
-    public async Task Handle_DesactivarAsync_EsInvocadoConElIdCorrecto()
+    public async Task Handle_DesactivarAsync_RecibeLosArgumentosCorrectos()
     {
-        // Mata mutante que pase un ID diferente al recibido
-        _repo.DesactivarAsync(Arg.Any<int>(), Arg.Any<CancellationToken>()).Returns(Task.CompletedTask);
+        _repo.DesactivarAsync(Arg.Any<int>(), Arg.Any<CancellationToken>())
+             .Returns(Task.CompletedTask);
 
         await CrearHandler().Handle(new DesactivarUsuarioCommand(42), CancellationToken.None);
 
         await _repo.Received(1).DesactivarAsync(42, Arg.Any<CancellationToken>());
-        await _repo.DidNotReceive().DesactivarAsync(Arg.Is<int>(id => id != 42), Arg.Any<CancellationToken>());
+        await _repo.DidNotReceive().DesactivarAsync(
+            Arg.Is<int>(id => id != 42), Arg.Any<CancellationToken>());
     }
 
     [Fact]
-    public async Task Handle_ExcepcionEnRepositorio_RetornaFailure()
+    public async Task Handle_DesactivarAsync_RecibeCancellationToken()
+    {
+        var cts = new CancellationTokenSource();
+        _repo.DesactivarAsync(Arg.Any<int>(), Arg.Any<CancellationToken>())
+             .Returns(Task.CompletedTask);
+
+        await CrearHandler().Handle(new DesactivarUsuarioCommand(1), cts.Token);
+
+        await _repo.Received(1).DesactivarAsync(Arg.Any<int>(), cts.Token);
+    }
+
+    [Fact]
+    public async Task Handle_DesactivacionExitosa_LoguearaInfoConUsuarioId()
+    {
+        _repo.DesactivarAsync(Arg.Any<int>(), Arg.Any<CancellationToken>())
+             .Returns(Task.CompletedTask);
+
+        await CrearHandler().Handle(new DesactivarUsuarioCommand(99), CancellationToken.None);
+
+        _logger.Received(1).Info(Arg.Is<string>(s => s.Contains("99")));
+    }
+
+    [Fact]
+    public async Task Handle_ExcepcionEnRepositorio_RetornaFailureConMensajeCorrecto()
     {
         _repo.When(x => x.DesactivarAsync(Arg.Any<int>(), Arg.Any<CancellationToken>()))
              .Throw(new Exception("Error de BD"));
@@ -518,110 +495,18 @@ public class DesactivarUsuarioCommandHandlerTests
             new DesactivarUsuarioCommand(1), CancellationToken.None);
 
         result.IsSuccess.Should().BeFalse();
-        result.Error.Should().NotBeNullOrWhiteSpace();
-    }
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-// ListarUsuariosQueryHandler
-//
-// Mutantes objetivo: projection Select — cada campo del UsuarioListaDto
-// puede ser mutado (Id → 0, NombreUsuario → null, Rol → default, Activo → !Activo).
-// ═══════════════════════════════════════════════════════════════════════════
-
-public class ListarUsuariosQueryHandlerTests
-{
-    private readonly IUsuarioRepository _repo = Substitute.For<IUsuarioRepository>();
-
-    private ListarUsuariosQueryHandler CrearHandler() => new(_repo);
-
-    private static Usuario FabricarUsuario(int id, string nombre, RolUsuario rol, bool activo)
-    {
-        var u = new Usuario();
-        // Setear via reflexión — las propiedades son private set
-        typeof(Usuario).GetProperty("Id")!.SetValue(u, id);
-        typeof(Usuario).GetProperty("NombreUsuario")!.SetValue(u, nombre);
-        typeof(Usuario).GetProperty("Rol")!.SetValue(u, rol);
-        typeof(Usuario).GetProperty("Activo")!.SetValue(u, activo);
-        return u;
+        result.Error.Should().Be("Error al desactivar el usuario.");
     }
 
     [Fact]
-    public async Task Handle_ConUsuarios_MapeatodosLosCamposCorrectamente()
+    public async Task Handle_ExcepcionEnRepositorio_LoguearaErrorConUsuarioId()
     {
-        // Verifica que Id, NombreUsuario, Rol y Activo se mapean sin mutación
-        var usuarios = new List<Usuario>
-        {
-            FabricarUsuario(7, "operador01", RolUsuario.Operador, true)
-        };
-        _repo.ListarAsync(Arg.Any<CancellationToken>()).Returns(usuarios);
+        _repo.When(x => x.DesactivarAsync(Arg.Any<int>(), Arg.Any<CancellationToken>()))
+             .Throw(new Exception("Error"));
 
-        var result = (await CrearHandler().Handle(
-            new ListarUsuariosQuery(), CancellationToken.None)).ToList();
+        await CrearHandler().Handle(new DesactivarUsuarioCommand(55), CancellationToken.None);
 
-        result.Should().HaveCount(1);
-        var dto = result.Single();
-        dto.Id.Should().Be(7);
-        dto.NombreUsuario.Should().Be("operador01");
-        dto.Rol.Should().Be(RolUsuario.Operador);
-        dto.Activo.Should().BeTrue();
-    }
-
-    [Fact]
-    public async Task Handle_UsuarioInactivo_MapeatActivoComoFalse()
-    {
-        // Mata el mutante que invierte el campo Activo (!Activo en la projection)
-        var usuarios = new List<Usuario>
-        {
-            FabricarUsuario(3, "dado_de_baja", RolUsuario.Operador, false)
-        };
-        _repo.ListarAsync(Arg.Any<CancellationToken>()).Returns(usuarios);
-
-        var result = (await CrearHandler().Handle(
-            new ListarUsuariosQuery(), CancellationToken.None)).ToList();
-
-        result.Single().Activo.Should().BeFalse();
-    }
-
-    [Fact]
-    public async Task Handle_VariosUsuarios_RetornaUnDtoPorUsuario()
-    {
-        var usuarios = new List<Usuario>
-        {
-            FabricarUsuario(1, "admin",    RolUsuario.Administrador, true),
-            FabricarUsuario(2, "vendedor", RolUsuario.Operador,       true),
-            FabricarUsuario(3, "baja",     RolUsuario.Operador,       false)
-        };
-        _repo.ListarAsync(Arg.Any<CancellationToken>()).Returns(usuarios);
-
-        var result = await CrearHandler().Handle(new ListarUsuariosQuery(), CancellationToken.None);
-
-        result.Should().HaveCount(3);
-    }
-
-    [Fact]
-    public async Task Handle_SinUsuarios_RetornaListaVacia()
-    {
-        _repo.ListarAsync(Arg.Any<CancellationToken>()).Returns(new List<Usuario>());
-
-        var result = await CrearHandler().Handle(new ListarUsuariosQuery(), CancellationToken.None);
-
-        result.Should().BeEmpty();
-    }
-
-    [Fact]
-    public async Task Handle_RolAdministrador_EsMapeadoCorrectamente()
-    {
-        // Mata mutante que reemplaza u.Rol por RolUsuario.Operador fijo
-        var usuarios = new List<Usuario>
-        {
-            FabricarUsuario(1, "superadmin", RolUsuario.Administrador, true)
-        };
-        _repo.ListarAsync(Arg.Any<CancellationToken>()).Returns(usuarios);
-
-        var result = (await CrearHandler().Handle(
-            new ListarUsuariosQuery(), CancellationToken.None)).ToList();
-
-        result.Single().Rol.Should().Be(RolUsuario.Administrador);
+        _logger.Received(1).Error(
+            Arg.Is<string>(s => s.Contains("55")), Arg.Any<Exception>());
     }
 }

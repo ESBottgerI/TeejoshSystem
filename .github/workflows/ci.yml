@@ -4,12 +4,13 @@ on:
   push:
     branches:
       - main
-      - develop
+      - dev
+      - techdebt/tests
 
   pull_request:
     branches:
       - main
-      - develop
+      - dev
 
 jobs:
 
@@ -40,7 +41,7 @@ jobs:
         run: |
           dotnet build TeejoshSystem.sln \
             --configuration Release \
-            --no-restore \
+            --no-restore
 
       # Stage 04 - Tests y Cobertura
 

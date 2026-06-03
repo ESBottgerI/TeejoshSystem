@@ -1,0 +1,133 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+
+  pull_request:
+    branches:
+      - main
+      - develop
+
+jobs:
+
+  build-test-mutation:
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      # Stage 01 - Configuración y Entorno
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      # Stage 02 - Restaurar Dependencias
+      - name: Restore NuGet packages
+        run: dotnet restore TeejoshSystem.sln
+
+      - name: Restore local tools
+        run: dotnet tool restore
+
+      # Stage 03 - Compilación
+      - name: Build
+        run: |
+          dotnet build TeejoshSystem.sln \
+            --configuration Release \
+            --no-restore \
+
+      # Stage 04 - Tests y Cobertura
+
+      - name: Domain Tests
+        run: |
+          dotnet test Tests/TeejoshSystem.Domain.Tests \
+            --configuration Release \
+            --no-build \
+            --collect:"XPlat Code Coverage" \
+            --results-directory ./TestResults/Domain
+
+      - name: Application Tests
+        run: |
+          dotnet test Tests/TeejoshSystem.Application.Tests \
+            --configuration Release \
+            --no-build \
+            --collect:"XPlat Code Coverage" \
+            --results-directory ./TestResults/Application
+
+      # Stage 06 (parte 1) - Validación de Cobertura
+
+      - name: Validate Coverage Thresholds
+        shell: pwsh
+        run: |
+
+          $threshold = 80
+
+          $coverageFiles = Get-ChildItem `
+            -Path . `
+            -Recurse `
+            -Filter "coverage.cobertura.xml"
+
+          if ($coverageFiles.Count -eq 0) {
+            Write-Error "No coverage files found."
+            exit 1
+          }
+
+          foreach ($file in $coverageFiles) {
+
+            Write-Host "Processing: $($file.FullName)"
+
+            [xml]$xml = Get-Content $file.FullName
+
+            $coverage = [math]::Round(
+              ([double]$xml.coverage.'line-rate') * 100,
+              2
+            )
+
+            Write-Host "Coverage = $coverage%"
+
+            if ($coverage -lt $threshold) {
+              Write-Error "Coverage below threshold ($threshold%). Actual: $coverage%"
+              exit 1
+            }
+          }
+
+      # Stage 05 - Mutation Testing
+
+      - name: Domain Mutation Tests
+        working-directory: Tests/TeejoshSystem.Domain.Tests
+        run: dotnet stryker
+
+      - name: Application Mutation Tests
+        working-directory: Tests/TeejoshSystem.Application.Tests
+        run: dotnet stryker
+
+      # Stage 06 - Reportes
+
+      - name: Generate Coverage Report
+        run: |
+          reportgenerator \
+            "-reports:**/coverage.cobertura.xml" \
+            "-targetdir:CoverageReport" \
+            "-reporttypes:Html"
+
+      - name: Upload Coverage Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: CoverageReport
+
+      - name: Upload Mutation Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mutation-report
+          path: |
+            Tests/TeejoshSystem.Domain.Tests/StrykerOutput
+            Tests/TeejoshSystem.Application.Tests/StrykerOutput

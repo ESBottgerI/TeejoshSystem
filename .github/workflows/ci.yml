@@ -106,7 +106,9 @@ jobs:
 
       - name: Application Mutation Tests
         working-directory: Tests/TeejoshSystem.Application.Tests
-        run: dotnet stryker
+        run: |
+          dotnet stryker \
+            --project TeejoshSystem.Application/TeejoshSystem.Application.csproj
 
       # Stage 06 - Reportes
 

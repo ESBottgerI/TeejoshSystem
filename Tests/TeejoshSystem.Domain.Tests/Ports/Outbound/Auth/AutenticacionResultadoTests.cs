@@ -3,10 +3,6 @@ using TeejoshSystem.Domain.Ports.Outbound.Auth;
 
 namespace TeejoshSystem.Domain.Tests.Ports.Outbound.Auth
 {
-    // ═════════════════════════════════════════════════════════════════════════
-    // AutenticacionResultado
-    // ═════════════════════════════════════════════════════════════════════════
-
     public class AutenticacionResultadoTests
     {
         // ── Valido: mutante true → false en Exitoso; null → valor en MensajeError ─

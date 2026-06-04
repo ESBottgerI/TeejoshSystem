@@ -375,7 +375,7 @@ TeejoshSystem/
 
 ---
 
-## 0.2.0-beta.1 — Etapa 2 · Estado actual (Mayo 2026)
+## 0.2.0 — Etapa 2 · Estado actual (Mayo 2026)
 
 > Designación interna: 0.5-beta | Estado de producción activo
 
@@ -542,19 +542,32 @@ TeejoshSystem/
 └── Tests/                            ← NUEVO proyecto raíz
     ├── TEST_README.md
     ├── TeejoshSystem.Domain.Tests/
-    │   ├── Entities/ProductoTests.cs
-    │   ├── ValueObjects/ (PrecioTests, UnidadesTests)
+    │   ├── Entities
+    │   │   ├── ProductoTests.cs
+    │   │   ├── Venta.cs
+    │   │   └── Detalles/
+    │   ├── ValueObjects/
     │   ├── TestResults/coverage.cobertura.xml
-    │   └── stryker-config.json
+    │   ├── stryker-config.json
+    │   └── Ports/Outbound/Auth/AutenticacionResultadoTests.cs
     ├── TeejoshSystem.Application.Tests/
-    │   ├── Features/ (BDD SpecFlow)
-    │   │   ├── buscar_productos.feature
-    │   │   ├── crear_producto.feature
-    │   │   └── registrar_venta.feature
-    │   ├── StepDefinitions/
-    │   ├── Productos/ProductoHandlerTests.cs
-    │   ├── Ventas/VentaHandlerTests.cs
-    │   └── stryker-config.json
+    │   ├── stryker-config.json
+    │   ├── Gherkin/ (BDD SpecFlow)
+    │   │   ├── Features/ (BDD SpecFlow)
+    │   │   │   ├── buscar_productos.feature
+    │   │   │   ├── crear_producto.feature
+    │   │   │   └── registrar_venta.feature
+    │   │   ├── StepDefinitions/
+    │   │   │   ├── BuscarProductoSteps.cs
+    │   │   │   ├── CrearProductoSteps.cs
+    │   │   │   └── RegistrarVentaSteps.cs
+    │   │   └── Support/
+    │   │       └── TestContext.cs
+    │   └── Ports/Inbound
+    │        ├── Auth/
+    │        ├── Catalogos/
+    │        ├── Productos/
+    │        └── Ventas/
     ├── TeejoshSystem.Infrastructure.Tests/
     │   ├── Fixtures/DatabaseFixture.cs
     │   └── Repositories/ProductoRepositoryTests.cs

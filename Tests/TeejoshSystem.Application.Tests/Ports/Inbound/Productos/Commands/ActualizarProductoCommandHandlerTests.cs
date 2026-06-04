@@ -1,14 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using TeejoshSystem.Application.Ports.Inbound.Productos.Commands.ActualizarProducto;
-using TeejoshSystem.Domain.Entities;
+﻿using TeejoshSystem.Domain.Entities;
 using TeejoshSystem.Domain.Enums;
 using TeejoshSystem.Domain.Ports.Outbound;
 using TeejoshSystem.Domain.Ports.Outbound.Repositories;
 using TeejoshSystem.Domain.ValueObjects;
+using TeejoshSystem.Application.Ports.Inbound.Productos.Commands.ActualizarProducto;
 
 namespace TeejoshSystem.Application.Tests.Ports.Inbound.Productos.Commands;
 
@@ -38,6 +33,15 @@ public class ActualizarProductoCommandHandlerTests
         var result = await CrearHandler().Handle(
             new ActualizarProductoCommand(1, "Camaro 1969", 30m, 10, null),
             CancellationToken.None);
+
+        _logger.Received(1)
+            .Debug(Arg.Is<string>(s =>
+                s.Contains("Id=1")));
+
+        _logger.Received(1)
+            .Info(Arg.Is<string>(s =>
+                s.Contains("Id=1") &&
+                s.Contains("Camaro 1969")));
 
         result.IsSuccess.Should().BeTrue();
         await _repo.Received(1).UpdateAsync(Arg.Any<Producto>());
@@ -108,6 +112,10 @@ public class ActualizarProductoCommandHandlerTests
             new ActualizarProductoCommand(99, "Test", 10m, 1, null),
             CancellationToken.None);
 
+        _logger.Received(1)
+            .Warning(Arg.Is<string>(s =>
+                s.Contains("Id=99")));
+
         result.IsSuccess.Should().BeFalse();
         result.Error.Should().Be("El producto no existe.");
     }
@@ -160,6 +168,10 @@ public class ActualizarProductoCommandHandlerTests
             new ActualizarProductoCommand(1, "", 25m, 5, null),
             CancellationToken.None);
 
+        _logger.Received(1)
+            .Warning(Arg.Is<string>(s =>
+                s.Contains("Id=1")));
+
         result.IsSuccess.Should().BeFalse();
         result.Error.Should().NotBeNullOrWhiteSpace();
         await _repo.DidNotReceive().UpdateAsync(Arg.Any<Producto>());
@@ -173,6 +185,10 @@ public class ActualizarProductoCommandHandlerTests
         var result = await CrearHandler().Handle(
             new ActualizarProductoCommand(1, "Test", -1m, 5, null),
             CancellationToken.None);
+
+        _logger.Received(1)
+            .Warning(Arg.Is<string>(s =>
+                s.Contains("Id=1")));
 
         result.IsSuccess.Should().BeFalse();
     }
@@ -189,6 +205,12 @@ public class ActualizarProductoCommandHandlerTests
             new ActualizarProductoCommand(1, "Test", 25m, 5, null),
             CancellationToken.None);
 
+        _logger.Received(1)
+            .Error(
+                Arg.Is<string>(s =>
+                    s.Contains("Id=1")),
+                Arg.Any<Exception>());
+
         result.IsSuccess.Should().BeFalse();
         result.Error.Should().NotBeNullOrWhiteSpace();
     }
@@ -203,6 +225,12 @@ public class ActualizarProductoCommandHandlerTests
         var result = await CrearHandler().Handle(
             new ActualizarProductoCommand(1, "Camaro", 25m, 5, null),
             CancellationToken.None);
+
+        _logger.Received(1)
+            .Error(
+                Arg.Is<string>(s =>
+                    s.Contains("Id=1")),
+                Arg.Any<Exception>());
 
         result.IsSuccess.Should().BeFalse();
     }
@@ -282,5 +310,33 @@ public class ActualizarProductoCommandHandlerTests
 
         result.IsSuccess.Should().BeFalse();
         result.Error.Should().Contain("guardar el producto");
+    }
+
+    [Fact]
+    public async Task Handle_InvalidOperationException_RetornaFailureYRegistraWarning()
+    {
+        _repo.GetByIdAsync(1)
+             .Returns(ProductoExistente());
+
+        _repo.When(x => x.UpdateAsync(Arg.Any<Producto>()))
+             .Do(_ => throw new InvalidOperationException("Operación inválida"));
+
+        var result = await CrearHandler().Handle(
+            new ActualizarProductoCommand(
+                1,
+                "Camaro",
+                25m,
+                5,
+                null),
+            CancellationToken.None);
+
+        result.IsSuccess.Should().BeFalse();
+
+        result.Error.Should().Be("Operación inválida");
+
+        _logger.Received(1)
+            .Warning(Arg.Is<string>(s =>
+                s.Contains("Id=1") &&
+                s.Contains("Operación inválida")));
     }
 }

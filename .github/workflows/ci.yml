@@ -35,6 +35,9 @@ jobs:
 
       - name: Restore local tools
         run: dotnet tool restore
+      
+      - name: List installed tools
+        run: dotnet tool list
 
       # Stage 03 - Compilación
       - name: Build
@@ -114,7 +117,7 @@ jobs:
 
       - name: Generate Coverage Report
         run: |
-          reportgenerator \
+          dotnet tool run reportgenerator \
             "-reports:**/coverage.cobertura.xml" \
             "-targetdir:CoverageReport" \
             "-reporttypes:Html"

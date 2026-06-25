@@ -1,0 +1,104 @@
+name: SCM Status Accounting
+
+on:
+pull_request:
+types:
+- closed
+
+permissions:
+contents: write
+
+jobs:
+scm-status-accounting:
+runs-on: ubuntu-latest
+
+steps:
+  - name: Checkout repository
+    uses: actions/checkout@v4
+    with:
+      fetch-depth: 0
+
+  - name: Ensure report exists
+    run: |
+      if [ ! -f scm-status-report.json ]; then
+        echo "[]" > scm-status-report.json
+      fi
+
+  - name: Update SCM Report
+    uses: actions/github-script@v7
+    with:
+      script: |
+        const fs = require('fs');
+
+        const reportPath = 'scm-status-report.json';
+
+        let report = [];
+
+        try {
+          report = JSON.parse(
+            fs.readFileSync(reportPath, 'utf8')
+          );
+        } catch {
+          report = [];
+        }
+
+        const pr = context.payload.pull_request;
+
+        report.push({
+          timestamp: new Date().toISOString(),
+
+          prNumber: pr.number,
+          title: pr.title,
+
+          author: pr.user.login,
+
+          merged: pr.merged,
+
+          status: pr.merged
+            ? "APPROVED_AND_MERGED"
+            : "REJECTED",
+
+          sourceBranch: pr.head.ref,
+          targetBranch: pr.base.ref,
+
+          mergeCommit: pr.merge_commit_sha,
+
+          mergedBy: pr.merged_by
+            ? pr.merged_by.login
+            : null,
+
+          mergedAt: pr.merged_at,
+
+          closedAt: pr.closed_at,
+
+          reviewers:
+            pr.requested_reviewers
+              ? pr.requested_reviewers.map(
+                  reviewer => reviewer.login
+                )
+              : [],
+
+          url: pr.html_url
+        });
+
+        fs.writeFileSync(
+          reportPath,
+          JSON.stringify(report, null, 2)
+        );
+
+  - name: Commit SCM report
+    run: |
+      git config user.name "github-actions"
+      git config user.email "github-actions@github.com"
+
+      git add scm-status-report.json
+
+      if git diff --cached --quiet; then
+        echo "No changes"
+      else
+        git commit -m "docs: update SCM status report"
+      fi
+
+  - name: Push SCM report
+    run: |
+      git push

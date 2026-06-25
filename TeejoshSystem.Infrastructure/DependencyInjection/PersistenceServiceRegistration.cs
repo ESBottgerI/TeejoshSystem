@@ -27,13 +27,15 @@ namespace TeejoshSystem.Infrastructure.DependencyInjection
         {
             if (provider.Equals("sqlite", StringComparison.OrdinalIgnoreCase))
             {
+                // SQLite: la ruta siempre se resuelve en runtime contra LocalAppData
+                // para garantizar permisos correctos en todos los SO.
+                // Database:ConnectionString en appsettings.json es solo documentación.
                 var dbPath = Path.Combine(
                     Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
                     "TeejoshSystem",
                     "inventario.db");
 
                 Directory.CreateDirectory(Path.GetDirectoryName(dbPath)!);
-
                 options.UseSqlite($"Data Source={dbPath}");
             }
             else if (provider.Equals("postgresql", StringComparison.OrdinalIgnoreCase))

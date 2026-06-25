@@ -59,6 +59,10 @@
             <viewsAdmin:CambiarPasswordView/>
         </DataTemplate>
 
+        <DataTemplate DataType="{x:Type vmAdmin:AuditLogViewModel}">
+            <viewsAdmin:AuditLogView/>
+        </DataTemplate>
+
         <DataTemplate DataType="{x:Type vmProductos:InventarioViewModel}">
             <viewsProductos:InventarioView />
         </DataTemplate>

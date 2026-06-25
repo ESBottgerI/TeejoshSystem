@@ -81,9 +81,11 @@ public partial class App : Avalonia.Application
                 services.AddTransient<GestionarProductosViewModel>();
                 services.AddTransient<CrearProductoViewModel>();
                 services.AddTransient<SincronizarCatalogosViewModel>();
+                services.AddTransient<AuditLogViewModel>();
 
                 // Auth
                 services.AddSingleton<SesionContext>();
+                services.AddSingleton<ICurrentUserProvider, SessionCurrentUserProvider>();
                 services.AddTransient<LoginViewModel>();
                 services.AddTransient<GestionarUsuariosViewModel>();
                 services.AddTransient<CambiarPasswordViewModel>();

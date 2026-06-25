@@ -20,19 +20,22 @@ namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Menu
         private readonly SesionContext _sesionContext;
         private readonly INotificationService _notification;
         private readonly SincronizarCatalogosViewModel _sincronizarVm;
+        private readonly AuditLogViewModel _auditLogVm;
 
         public MenuPrincipalViewModel(
             IServiceProvider serviceProvider,
             INavigationService navigation,
             SesionContext sesionContext,
             INotificationService notification,
-            SincronizarCatalogosViewModel sincronizarVm)
+            SincronizarCatalogosViewModel sincronizarVm,
+            AuditLogViewModel auditLogVm)
         {
             _serviceProvider = serviceProvider;
             _navigation = navigation;
             _sesionContext = sesionContext;
             _notification = notification;
             _sincronizarVm = sincronizarVm;
+            _auditLogVm = auditLogVm;
         }
 
         public bool EsAdministrador
@@ -114,5 +117,9 @@ namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Menu
         [RelayCommand]
         private void SincronizarCatalogos() =>
             _navigation.NavigateTo(_sincronizarVm);
+
+        [RelayCommand]
+        private void VerAuditLog() => 
+            _navigation.NavigateTo(_auditLogVm);
     }
 }

@@ -13,8 +13,6 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence
     {
         private readonly ICurrentUserProvider? _currentUserProvider;
 
-        // Entidades que sí se auditan. El resto (catálogos, configuración) se ignora
-        // para no llenar el audit log de ruido.
         private static readonly HashSet<Type> EntidadesAuditadas = new()
         {
             typeof(Producto),
@@ -30,76 +28,74 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence
             _currentUserProvider = currentUserProvider;
         }
 
-        // DbSets principales
         public DbSet<Producto> Productos { get; set; }
-
-        // DbSets de detalles
         public DbSet<HotWheelsDetalle> HotWheelsDetalles { get; set; }
         public DbSet<FunkoDetalle> FunkoDetalles { get; set; }
         public DbSet<TcgDetalle> TcgDetalles { get; set; }
         public DbSet<ToyDetalle> ToyDetalles { get; set; }
         public DbSet<VariosDetalle> VariosDetalles { get; set; }
-
-        // DbSets de catalogos
         public DbSet<HotWheelsCategoria> HotWheelsCategorias { get; set; }
         public DbSet<FunkoSubtipo> FunkoSubtipos { get; set; }
         public DbSet<FunkoCaracteristica> FunkoCaracteristicas { get; set; }
         public DbSet<TcgFranquicia> TcgFranquicias { get; set; }
         public DbSet<TcgExpansion> TcgExpansiones { get; set; }
         public DbSet<TcgPack> TcgPacks { get; set; }
-
-        // DbSets de ventas
         public DbSet<Venta> Ventas { get; set; }
         public DbSet<VentaDetalle> VentaDetalles { get; set; }
-
-        // DbSets de usuarios
         public DbSet<Usuario> Usuarios { get; set; }
-
-        // DbSet de auditoría — NUEVO
         public DbSet<AuditLog> AuditLogs { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.ApplyConfigurationsFromAssembly(typeof(InventarioDbContext).Assembly);
-
             base.OnModelCreating(modelBuilder);
         }
 
         public override async Task<int> SaveChangesAsync(
             CancellationToken cancellationToken = default)
         {
-            var auditEntries = CapturarCambiosParaAuditoria();
+            // Paso 1 — capturar antes de guardar (los IDs aún no existen para Crear)
+            var pendientes = CapturarCambiosPendientes();
 
-            // Las entradas de auditoría se agregan al mismo ChangeTracker
-            // antes de guardar, así se persisten en la misma transacción.
-            if (auditEntries.Count > 0)
+            // Paso 2 — guardar los cambios reales (SQLite asigna IDs aquí)
+            var resultado = await base.SaveChangesAsync(cancellationToken);
+
+            // Paso 3 — ahora los IDs ya están asignados, construir entradas de auditoría
+            if (pendientes.Count > 0)
             {
-                foreach (var entry in auditEntries)
-                {
-                    var log = new AuditLog(
-                        entry.Entidad,
-                        entry.EntidadId,
-                        entry.Accion.ToString(),
-                        entry.Usuario,
-                        entry.Cambios);
+                var usuario = _currentUserProvider?.UsuarioActual;
 
-                    AuditLogs.Add(log);
+                foreach (var pendiente in pendientes)
+                {
+                    // Leer el ID real post-save
+                    var idReal = pendiente.Entry.Properties
+                        .FirstOrDefault(p => p.Metadata.Name == "Id")?
+                        .CurrentValue?.ToString() ?? "desconocido";
+
+                    AuditLogs.Add(new AuditLog(
+                        pendiente.NombreEntidad,
+                        idReal,
+                        pendiente.Accion.ToString(),
+                        usuario,
+                        pendiente.CambiosJson));
                 }
+
+                // Paso 4 — guardar las entradas de auditoría
+                await base.SaveChangesAsync(cancellationToken);
             }
 
-            return await base.SaveChangesAsync(cancellationToken);
+            return resultado;
         }
 
-        private List<AuditLogEntryData> CapturarCambiosParaAuditoria()
+        private List<AuditPendiente> CapturarCambiosPendientes()
         {
-            var resultado = new List<AuditLogEntryData>();
-            var usuario = _currentUserProvider?.UsuarioActual;
+            var resultado = new List<AuditPendiente>();
 
             foreach (var entry in ChangeTracker.Entries())
             {
-                if (entry.State != EntityState.Added &&
-                    entry.State != EntityState.Modified &&
-                    entry.State != EntityState.Deleted)
+                if (entry.State is not (EntityState.Added
+                    or EntityState.Modified
+                    or EntityState.Deleted))
                     continue;
 
                 if (!EntidadesAuditadas.Contains(entry.Entity.GetType()))
@@ -113,79 +109,55 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence
                     _ => AccionAuditoria.Actualizar
                 };
 
-                var entidadId = ObtenerId(entry);
-                var cambiosJson = ConstruirJsonCambios(entry, accion);
+                var cambios = new Dictionary<string, object?>();
 
-                resultado.Add(new AuditLogEntryData(
+                foreach (var prop in entry.Properties)
+                {
+                    if (prop.Metadata.Name == "Discriminator") continue;
+
+                    switch (accion)
+                    {
+                        case AccionAuditoria.Crear:
+                            cambios[prop.Metadata.Name] = new
+                            {
+                                anterior = (object?)null,
+                                nuevo = prop.CurrentValue
+                            };
+                            break;
+
+                        case AccionAuditoria.Eliminar:
+                            cambios[prop.Metadata.Name] = new
+                            {
+                                anterior = prop.OriginalValue,
+                                nuevo = (object?)null
+                            };
+                            break;
+
+                        case AccionAuditoria.Actualizar:
+                            if (prop.IsModified)
+                                cambios[prop.Metadata.Name] = new
+                                {
+                                    anterior = prop.OriginalValue,
+                                    nuevo = prop.CurrentValue
+                                };
+                            break;
+                    }
+                }
+
+                resultado.Add(new AuditPendiente(
+                    entry,
                     entry.Entity.GetType().Name,
-                    entidadId,
                     accion,
-                    usuario,
-                    cambiosJson));
+                    cambios.Count > 0 ? JsonSerializer.Serialize(cambios) : null));
             }
 
             return resultado;
         }
 
-        private static string ObtenerId(EntityEntry entry)
-        {
-            var idProperty = entry.Properties
-                .FirstOrDefault(p => p.Metadata.Name == "Id");
-
-            if (idProperty is null)
-                return "desconocido";
-
-            // Para entidades nuevas el Id aún no está asignado (autoincremental).
-            // Se usa el valor actual, que EF resuelve después de guardar.
-            return idProperty.CurrentValue?.ToString() ?? "pendiente";
-        }
-
-        private static string? ConstruirJsonCambios(EntityEntry entry, AccionAuditoria accion)
-        {
-            var cambios = new Dictionary<string, object?>();
-
-            foreach (var property in entry.Properties)
-            {
-                // Ignorar propiedades de navegación complejas no escalares
-                if (property.Metadata.IsShadowProperty() &&
-                    property.Metadata.Name == "Discriminator")
-                    continue;
-
-                switch (accion)
-                {
-                    case AccionAuditoria.Crear:
-                        cambios[property.Metadata.Name] = new
-                        {
-                            anterior = (object?)null,
-                            nuevo = property.CurrentValue
-                        };
-                        break;
-
-                    case AccionAuditoria.Eliminar:
-                        cambios[property.Metadata.Name] = new
-                        {
-                            anterior = property.OriginalValue,
-                            nuevo = (object?)null
-                        };
-                        break;
-
-                    case AccionAuditoria.Actualizar:
-                        if (property.IsModified)
-                        {
-                            cambios[property.Metadata.Name] = new
-                            {
-                                anterior = property.OriginalValue,
-                                nuevo = property.CurrentValue
-                            };
-                        }
-                        break;
-                }
-            }
-
-            if (cambios.Count == 0)
-                return null;
-
-            return JsonSerializer.Serialize(cambios);
-        }
+        private sealed record AuditPendiente(
+            EntityEntry Entry,
+            string NombreEntidad,
+            AccionAuditoria Accion,
+            string? CambiosJson);
     }
 }

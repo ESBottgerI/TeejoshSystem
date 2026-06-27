@@ -1,7 +1,10 @@
+using System;
+using System.Collections.ObjectModel;
+using System.Threading.Tasks;
+
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MediatR;
-using System.Collections.ObjectModel;
 
 using TeejoshSystem.Application.Ports.Inbound.Auditoria.Queries.ConsultarAuditLog;
 using TeejoshSystem.AvaloniaUI.Adapters.Inbound.Services;
@@ -9,7 +12,7 @@ using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Common;
 
 namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Admin
 {
-    public partial class AuditLogViewModel : ViewModelBase
+    public partial class AuditLogViewModel : ViewModelBase, ILoadable
     {
         private readonly IMediator _mediator;
         private readonly INavigationService _navigation;
@@ -26,6 +29,10 @@ namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Admin
         {
             _mediator = mediator;
             _navigation = navigation;
+        }
+
+        public void OnLoaded()
+        {
             _ = CargarAsync();
         }
 

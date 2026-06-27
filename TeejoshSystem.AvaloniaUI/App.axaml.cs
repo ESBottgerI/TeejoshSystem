@@ -11,6 +11,7 @@ using Serilog;                               // NUEVO
 using System;
 using System.ComponentModel;
 using System.Threading.Tasks;
+using TeejoshSystem.Domain.Ports.Outbound;
 using TeejoshSystem.AvaloniaUI.Adapters.Inbound.Services;
 using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Admin;
 using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Auth;

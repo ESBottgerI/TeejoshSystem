@@ -1,41 +1,29 @@
 using MediatR;
-using Microsoft.EntityFrameworkCore;
-using TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence;
+using TeejoshSystem.Domain.Ports.Outbound.Repositories;
 
 namespace TeejoshSystem.Application.Ports.Inbound.Auditoria.Queries.ConsultarAuditLog
 {
     public class ConsultarAuditLogQueryHandler
         : IRequestHandler<ConsultarAuditLogQuery, List<AuditLogDto>>
     {
-        private readonly InventarioDbContext _context;
+        private readonly IAuditLogRepository _repository;
 
-        public ConsultarAuditLogQueryHandler(InventarioDbContext context)
+        public ConsultarAuditLogQueryHandler(IAuditLogRepository repository)
         {
-            _context = context;
+            _repository = repository;
         }
 
         public async Task<List<AuditLogDto>> Handle(
             ConsultarAuditLogQuery request,
             CancellationToken cancellationToken)
         {
-            var query = _context.AuditLogs.AsQueryable();
+            var resultado = await _repository.ConsultarAsync(
+                request.Entidad, request.Usuario);
 
-            if (!string.IsNullOrWhiteSpace(request.Entidad))
-                query = query.Where(a => a.Entidad == request.Entidad);
-
-            if (!string.IsNullOrWhiteSpace(request.Usuario))
-                query = query.Where(a => a.Usuario == request.Usuario);
-
-            var resultado = await query
-                .OrderByDescending(a => a.Timestamp)
-                .Skip((request.Pagina - 1) * request.TamanioPagina)
-                .Take(request.TamanioPagina)
-                .Select(a => new AuditLogDto(
-                    a.Id, a.Timestamp, a.Usuario,
-                    a.Entidad, a.EntidadId, a.Accion, a.Cambios))
-                .ToListAsync(cancellationToken);
-
-            return resultado;
+            return resultado.Select(a => new AuditLogDto(
+                a.Id, a.Timestamp, a.Usuario,
+                a.Entidad, a.EntidadId, a.Accion, a.Cambios))
+                .ToList();
         }
     }
 }

@@ -11,7 +11,7 @@ using TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence;
 namespace TeejoshSystem.Infrastructure.Migrations
 {
     [DbContext(typeof(InventarioDbContext))]
-    [Migration("20260510005610_InitialCreate")]
+    [Migration("20260627030423_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -19,6 +19,53 @@ namespace TeejoshSystem.Infrastructure.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.0");
+
+            modelBuilder.Entity("TeejoshSystem.Domain.Entities.AuditLog", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Accion")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("TEXT")
+                        .HasColumnName("accion");
+
+                    b.Property<string>("Cambios")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("cambios");
+
+                    b.Property<string>("Entidad")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT")
+                        .HasColumnName("entidad");
+
+                    b.Property<string>("EntidadId")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT")
+                        .HasColumnName("entidad_id");
+
+                    b.Property<DateTime>("Timestamp")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("timestamp");
+
+                    b.Property<string>("Usuario")
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT")
+                        .HasColumnName("usuario");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Timestamp");
+
+                    b.HasIndex("Entidad", "EntidadId");
+
+                    b.ToTable("audit_log", (string)null);
+                });
 
             modelBuilder.Entity("TeejoshSystem.Domain.Entities.Catalogos.FunkoCaracteristica", b =>
                 {

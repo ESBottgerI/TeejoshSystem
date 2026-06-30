@@ -1,104 +1,84 @@
 name: SCM Status Accounting
 
 on:
-pull_request:
-types:
-- closed
+  pull_request:
+    types:
+      - closed
 
 permissions:
-contents: write
+  contents: read
 
 jobs:
-scm-status-accounting:
-runs-on: ubuntu-latest
 
-steps:
-  - name: Checkout repository
-    uses: actions/checkout@v4
-    with:
-      fetch-depth: 0
+  scm-status-accounting:
 
-  - name: Ensure report exists
-    run: |
-      if [ ! -f scm-status-report.json ]; then
-        echo "[]" > scm-status-report.json
-      fi
+    runs-on: ubuntu-latest
 
-  - name: Update SCM Report
-    uses: actions/github-script@v7
-    with:
-      script: |
-        const fs = require('fs');
+    steps:
 
-        const reportPath = 'scm-status-report.json';
+      - uses: actions/checkout@v4
 
-        let report = [];
+      - name: Generate SCM Report
 
-        try {
-          report = JSON.parse(
-            fs.readFileSync(reportPath, 'utf8')
-          );
-        } catch {
-          report = [];
-        }
+        uses: actions/github-script@v7
 
-        const pr = context.payload.pull_request;
+        with:
+          script: |
 
-        report.push({
-          timestamp: new Date().toISOString(),
+            const fs = require('fs');
 
-          prNumber: pr.number,
-          title: pr.title,
+            const pr = context.payload.pull_request;
 
-          author: pr.user.login,
+            const report = {
 
-          merged: pr.merged,
+              timestamp: new Date().toISOString(),
 
-          status: pr.merged
-            ? "APPROVED_AND_MERGED"
-            : "REJECTED",
+              prNumber: pr.number,
 
-          sourceBranch: pr.head.ref,
-          targetBranch: pr.base.ref,
+              title: pr.title,
 
-          mergeCommit: pr.merge_commit_sha,
+              author: pr.user.login,
 
-          mergedBy: pr.merged_by
-            ? pr.merged_by.login
-            : null,
+              merged: pr.merged,
 
-          mergedAt: pr.merged_at,
+              status: pr.merged
+                ? "APPROVED_AND_MERGED"
+                : "REJECTED",
 
-          closedAt: pr.closed_at,
+              sourceBranch: pr.head.ref,
 
-          reviewers:
-            pr.requested_reviewers
-              ? pr.requested_reviewers.map(
-                  reviewer => reviewer.login
-                )
-              : [],
+              targetBranch: pr.base.ref,
 
-          url: pr.html_url
-        });
+              mergeCommit: pr.merge_commit_sha,
 
-        fs.writeFileSync(
-          reportPath,
-          JSON.stringify(report, null, 2)
-        );
+              mergedBy: pr.merged_by
+                ? pr.merged_by.login
+                : null,
 
-  - name: Commit SCM report
-    run: |
-      git config user.name "github-actions"
-      git config user.email "github-actions@github.com"
+              mergedAt: pr.merged_at,
 
-      git add scm-status-report.json
+              closedAt: pr.closed_at,
 
-      if git diff --cached --quiet; then
-        echo "No changes"
-      else
-        git commit -m "docs: update SCM status report"
-      fi
+              reviewers:
+                pr.requested_reviewers
+                  ? pr.requested_reviewers.map(r => r.login)
+                  : [],
 
-  - name: Push SCM report
-    run: |
-      git push
+              url: pr.html_url
+
+            };
+
+            fs.writeFileSync(
+              "scm-status-report.json",
+              JSON.stringify(report,null,2)
+            );
+
+      - name: Upload SCM Report
+
+        uses: actions/upload-artifact@v4
+
+        with:
+
+          name: scm-status-report-pr-${{ github.event.pull_request.number }}
+
+          path: scm-status-report.json

@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.HttpOverrides;
 using TeejoshSystem.BlazorUI.Components;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -7,6 +8,15 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 var app = builder.Build();
+
+app.UseForwardedHeaders(new ForwardedHeadersOptions
+{
+    ForwardedHeaders =
+        ForwardedHeaders.XForwardedFor |
+        ForwardedHeaders.XForwardedProto
+});
+
+
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())

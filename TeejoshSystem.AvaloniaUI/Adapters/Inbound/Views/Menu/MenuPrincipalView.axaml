@@ -61,6 +61,13 @@
 
 		<Separator Margin="0,8"/>
 
+                <Button Content="📋 Historial de cambios"
+                        Command="{Binding VerAuditLogCommand}"
+                        Width="200" HorizontalAlignment="Center"
+                        IsVisible="{Binding EsAdministrador}"/>
+
+                <Separator Margin="0,8"/>
+
 		<Button Content="Cerrar sesión"
 				Command="{Binding CerrarSesionCommand}"
 				Width="200" HorizontalAlignment="Center"

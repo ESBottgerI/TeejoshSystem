@@ -1,0 +1,39 @@
+@using TeejoshSystem.Application.Common.Dtos
+@using TeejoshSystem.Application.Ports.Inbound.Ventas.Queries.ObtenerVentas
+@inject IMediator Mediator
+
+<section class="history-panel" aria-labelledby="history-title">
+    <h2 id="history-title">Historial de ventas</h2>
+    <div class="toolbar">
+        <input class="input" type="date" @bind="Desde" aria-label="Fecha desde" />
+        <input class="input" type="date" @bind="Hasta" aria-label="Fecha hasta" />
+        <CustomButton Type="button" IsBusy="_isBusy" OnClick="CargarAsync">Filtrar</CustomButton>
+    </div>
+    <div class="table-shell">
+        <table class="data-table">
+            <thead><tr><th>Fecha</th><th>Items</th><th>Total</th></tr></thead>
+            <tbody>
+                @foreach (var venta in Ventas)
+                {
+                    <tr><td>@venta.Fecha.ToString("g")</td><td>@venta.Detalles.Count</td><td>@venta.Total.ToString("C")</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<LoadingOverlay IsVisible="_isBusy" Message="Cargando historial..." />
+
+@code {
+    private DateTime? Desde { get; set; } = DateTime.Today.AddDays(-7);
+    private DateTime? Hasta { get; set; } = DateTime.Today;
+    private IReadOnlyList<VentaDto> Ventas { get; set; } = Array.Empty<VentaDto>();
+    private bool _isBusy;
+    protected override async Task OnInitializedAsync() => await CargarAsync();
+    private async Task CargarAsync()
+    {
+        _isBusy = true;
+        Ventas = await Mediator.Send(new ObtenerVentasQuery(Desde, Hasta));
+        _isBusy = false;
+    }
+}

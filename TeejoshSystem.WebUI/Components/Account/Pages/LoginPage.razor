@@ -1,0 +1,57 @@
+@page "/login"
+@attribute [AllowAnonymous]
+@inject TeejoshSystem.WebUI.Infrastructure.Auth.CustomAuthenticationStateProvider AuthProvider
+@inject NavigationManager Navigation
+
+<main class="login-page">
+    <section class="auth-card" aria-labelledby="login-title">
+        <p class="eyebrow">Acceso seguro</p>
+        <h1 id="login-title">Iniciar sesion</h1>
+        <form @onsubmit="LoginAsync" @onsubmit:preventDefault="true" novalidate>
+            <CustomInputText Label="Usuario" Value="NombreUsuario" ValueChanged="v => NombreUsuario = v ?? string.Empty" Error="@NombreUsuarioError" Disabled="IsBusy" />
+            <div class="field">
+                <label for="password">Password</label>
+                <input id="password" class="input" type="password" @bind="Password" disabled="@IsBusy" aria-invalid="@(!string.IsNullOrWhiteSpace(PasswordError))" />
+                @if (!string.IsNullOrWhiteSpace(PasswordError))
+                {
+                    <p class="field-error" role="alert">@PasswordError</p>
+                }
+            </div>
+            @if (!string.IsNullOrWhiteSpace(ErrorMessage))
+            {
+                <p class="field-error" role="alert">@ErrorMessage</p>
+            }
+            <CustomButton Type="submit" IsBusy="IsBusy" BusyText="Validando sesion">Entrar</CustomButton>
+        </form>
+    </section>
+</main>
+
+@code {
+    [SupplyParameterFromQuery] public string? ReturnUrl { get; set; }
+    private string NombreUsuario { get; set; } = string.Empty;
+    private string Password { get; set; } = string.Empty;
+    private string? NombreUsuarioError { get; set; }
+    private string? PasswordError { get; set; }
+    private string? ErrorMessage { get; set; }
+    private bool IsBusy { get; set; }
+
+    private async Task LoginAsync()
+    {
+        NombreUsuarioError = string.IsNullOrWhiteSpace(NombreUsuario) ? "El usuario es obligatorio." : null;
+        PasswordError = string.IsNullOrWhiteSpace(Password) ? "La contrasena es obligatoria." : null;
+        if (NombreUsuarioError is not null || PasswordError is not null) return;
+
+        IsBusy = true;
+        ErrorMessage = null;
+        var result = await AuthProvider.SignInWithPasswordAsync(NombreUsuario.Trim(), Password);
+        IsBusy = false;
+
+        if (!result.Success)
+        {
+            ErrorMessage = result.Error;
+            return;
+        }
+
+        Navigation.NavigateTo(string.IsNullOrWhiteSpace(ReturnUrl) ? "/" : ReturnUrl);
+    }
+}

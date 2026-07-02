@@ -1,0 +1,13 @@
+@using static TeejoshSystem.WebUI.Components.Pages.Productos.CrearProductoPage
+
+<fieldset class="form-section">
+    <legend>Detalle Varios</legend>
+    <CustomInputText Label="Marca" Value="Model.Marca" ValueChanged="v => Model.Marca = v ?? string.Empty" />
+    <CustomInputNumber Label="Alto" Value="Model.Alto" ValueChanged="v => Model.Alto = v" />
+    <CustomInputNumber Label="Ancho" Value="Model.Ancho" ValueChanged="v => Model.Ancho = v" />
+    <CustomInputNumber Label="Largo" Value="Model.Largo ?? 0" ValueChanged="v => Model.Largo = v" />
+    <CustomInputText Label="Material" Value="Model.Material" ValueChanged="v => Model.Material = v ?? string.Empty" />
+    <label class="check"><input type="checkbox" @bind="Model.TieneIlustracion" /> Tiene ilustracion</label>
+</fieldset>
+
+@code { [Parameter] public VariosFormModel Model { get; set; } = new(); }

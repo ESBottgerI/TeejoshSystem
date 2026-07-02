@@ -1,0 +1,24 @@
+@using TeejoshSystem.Application.Ports.Inbound.Productos.Queries.BuscarProductos
+
+<div class="table-shell" role="region" aria-label="Tabla de inventario" tabindex="0">
+    <table class="data-table">
+        <thead>
+            <tr><th>Producto</th><th>Tipo</th><th>Precio</th><th>Stock</th><th>Detalle</th></tr>
+        </thead>
+        <tbody>
+            <Virtualize Items="Items" Context="item">
+                <tr>
+                    <td><a class="nav-link" style="padding:0;color:var(--tj-on-surface)" href="/productos/@item.Id">@item.Nombre</a></td>
+                    <td>@item.Tipo</td>
+                    <td>@item.Precio.ToString("C")</td>
+                    <td><BadgeStatus Stock="item.Unidades" /></td>
+                    <td>@item.DetalleResumen</td>
+                </tr>
+            </Virtualize>
+        </tbody>
+    </table>
+</div>
+
+@code {
+    [Parameter] public List<ProductoBusquedaDto> Items { get; set; } = new();
+}

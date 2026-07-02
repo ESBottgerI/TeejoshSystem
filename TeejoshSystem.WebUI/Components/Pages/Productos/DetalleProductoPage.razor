@@ -1,0 +1,102 @@
+@page "/productos/{Id:int}"
+@attribute [Authorize(Roles = "Administrador,Operador")]
+@using TeejoshSystem.Application.Common.Dtos
+@using TeejoshSystem.Application.Ports.Inbound.Productos.Queries.ObtenerProductosPorId
+@inject IMediator Mediator
+@inject NavigationManager Navigation
+
+<section class="page-header">
+    <p class="eyebrow">Detalle de producto</p>
+    <h1>@_producto?.Nombre ?? "Producto"</h1>
+    <a class="btn secondary" href="/productos">Volver</a>
+</section>
+
+@if (_producto is null && _error is null)
+{
+    <LoadingOverlay IsVisible="true" Message="Cargando detalle..." />
+}
+else if (_error is not null)
+{
+    <div class="alert alert-danger" style="padding:1rem;background:#ffebee;border-radius:var(--tj-radius)">
+        <p>@_error</p>
+        <a class="btn primary" href="/productos">Volver a productos</a>
+    </div>
+}
+else
+{
+    <div class="metric-grid" style="margin-bottom:var(--tj-space-4)">
+        <article class="metric-card"><span>Id</span><strong>@_producto!.Id</strong></article>
+        <article class="metric-card"><span>Tipo</span><strong>@_producto.Tipo</strong></article>
+        <article class="metric-card"><span>Precio</span><strong>@_producto.Precio.ToString("C")</strong></article>
+        <article class="metric-card"><span>Stock</span><strong>@_producto.Unidades</strong></article>
+    </div>
+
+    <div class="form-section">
+        <div class="field"><label>Nombre</label><span>@_producto.Nombre</span></div>
+        @if (!string.IsNullOrWhiteSpace(_producto.ImagePath))
+        {
+            <div class="field"><label>Imagen</label><span>@_producto.ImagePath</span></div>
+        }
+    </div>
+
+    @if (_producto.Detalle is not null)
+    {
+        <div class="form-section" style="margin-top:var(--tj-space-4)">
+            <legend>Detalle especifico</legend>
+            @switch (_producto.Detalle)
+            {
+                case HotWheelsDetalleDto hw:
+                    <div class="field"><label>Modelo</label><span>@hw.Modelo</span></div>
+                    <div class="field"><label>Anio</label><span>@hw.Anio</span></div>
+                    <div class="field"><label>Serie</label><span>@hw.Serie</span></div>
+                    <div class="field"><label>Categoria</label><span>@hw.CategoriaNombre</span></div>
+                    break;
+                case FunkoDetalleDto fu:
+                    <div class="field"><label>Numero de caja</label><span>@fu.NumeroBox</span></div>
+                    <div class="field"><label>Licencia</label><span>@fu.Licencia</span></div>
+                    <div class="field"><label>Subtipo</label><span>@fu.SubtipoNombre</span></div>
+                    @if (fu.CaracteristicaEspecialNombre is not null)
+                    {
+                        <div class="field"><label>Caracteristica</label><span>@fu.CaracteristicaEspecialNombre</span></div>
+                    }
+                    break;
+                case TcgDetalleDto tcg:
+                    <div class="field"><label>Franquicia</label><span>@tcg.FranquiciaNombre</span></div>
+                    <div class="field"><label>Expansion</label><span>@tcg.ExpansionNombre</span></div>
+                    <div class="field"><label>Pack</label><span>@tcg.PackNombre</span></div>
+                    break;
+                case ToyDetalleDto toy:
+                    <div class="field"><label>Edad minima</label><span>@toy.EdadMinima</span></div>
+                    <div class="field"><label>Jugadores</label><span>@toy.JugadoresMinimo - @toy.JugadoresMaximo</span></div>
+                    <div class="field"><label>Juego de mesa</label><span>@(toy.EsJuegoMesa ? "Si" : "No")</span></div>
+                    break;
+                case VariosDetalleDto va:
+                    <div class="field"><label>Marca</label><span>@va.Marca</span></div>
+                    <div class="field"><label>Dimensiones</label><span>@va.Alto x @va.Ancho@(va.Largo is not null ? " x " + va.Largo : "")</span></div>
+                    <div class="field"><label>Material</label><span>@va.Material</span></div>
+                    <div class="field"><label>Ilustracion</label><span>@(va.TieneIlustracion ? "Si" : "No")</span></div>
+                    break;
+            }
+        </div>
+    }
+}
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    private ProductoDetalladoDto? _producto;
+    private string? _error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var result = await Mediator.Send(new ObtenerProductosPorIdQuery(Id));
+        if (result.IsSuccess)
+        {
+            _producto = result.Value;
+        }
+        else
+        {
+            _error = result.Error;
+        }
+    }
+}

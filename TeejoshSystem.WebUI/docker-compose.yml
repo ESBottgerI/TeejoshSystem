@@ -1,0 +1,38 @@
+services:
+  webui:
+    build:
+      context: ..
+      dockerfile: TeejoshSystem.WebUI/Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      Database__Provider: postgresql
+      Database__ConnectionString: Host=postgres;Port=5432;Database=teejosh;Username=teejosh;Password=${POSTGRES_PASSWORD};Include Error Detail=true
+      Supabase__Url: ${SUPABASE_URL}
+      Supabase__AnonKey: ${SUPABASE_ANON_KEY}
+      Supabase__JwtIssuer: ${SUPABASE_JWT_ISSUER}
+    depends_on:
+      - postgres
+    ports:
+      - "8080:8080"
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: teejosh
+      POSTGRES_USER: teejosh
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - teejosh-postgres:/var/lib/postgresql/data
+
+  nginx:
+    image: nginx:1.27-alpine
+    profiles: ["proxy"]
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - webui
+
+volumes:
+  teejosh-postgres:

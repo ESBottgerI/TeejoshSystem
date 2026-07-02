@@ -1,0 +1,48 @@
+:root,
+:root[data-theme="light"] {
+  color-scheme: light;
+  --tj-primary: #ff9800;
+  --tj-danger: #e53935;
+  --tj-success: #43a047;
+  --tj-info: #1565c0;
+  --tj-header: #2c3e50;
+  --tj-overlay: #cc000000;
+  --tj-surface: #ffffff;
+  --tj-background: #f5f5f5;
+  --tj-border: #e0e0e0;
+  --tj-muted: #666666;
+  --tj-error-text: #b00020;
+  --tj-on-surface: #212121;
+  --tj-focus: #1565c0;
+  --tj-space-1: .25rem;
+  --tj-space-2: .5rem;
+  --tj-space-3: .75rem;
+  --tj-space-4: 1rem;
+  --tj-space-6: 1.5rem;
+  --tj-radius: .5rem;
+  --tj-font: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --tj-surface: #1e1e1e;
+    --tj-background: #121212;
+    --tj-border: #404040;
+    --tj-muted: #9e9e9e;
+    --tj-error-text: #cf6679;
+    --tj-on-surface: #e0e0e0;
+    --tj-focus: #ffb74d;
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --tj-surface: #1e1e1e;
+  --tj-background: #121212;
+  --tj-border: #404040;
+  --tj-muted: #9e9e9e;
+  --tj-error-text: #cf6679;
+  --tj-on-surface: #e0e0e0;
+  --tj-focus: #ffb74d;
+}

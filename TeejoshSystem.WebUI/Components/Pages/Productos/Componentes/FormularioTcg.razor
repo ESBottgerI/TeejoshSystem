@@ -1,0 +1,11 @@
+@using TeejoshSystem.Application.Ports.Inbound.Catalogos.Queries.ObtenerCatalogos
+@using static TeejoshSystem.WebUI.Components.Pages.Productos.CrearProductoPage
+
+<fieldset class="form-section">
+    <legend>Detalle TCG</legend>
+    <div class="field"><label>Franquicia</label><select class="input">@foreach (var item in Catalogos.FranquiciasTcg) { <option value="@item.Id">@item.Nombre</option> }</select></div>
+    <CustomInputNumber Label="Expansion Id" Value="Model.ExpansionId" ValueChanged="v => Model.ExpansionId = (int)v" />
+    <CustomInputNumber Label="Pack Id" Value="Model.PackId" ValueChanged="v => Model.PackId = (int)v" />
+</fieldset>
+
+@code { [Parameter] public TcgFormModel Model { get; set; } = new(); [Parameter] public CatalogosDto Catalogos { get; set; } = new(); }

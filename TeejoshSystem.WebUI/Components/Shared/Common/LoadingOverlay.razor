@@ -1,0 +1,12 @@
+@if (IsVisible)
+{
+    <div class="loading-overlay" role="status" aria-live="assertive" aria-busy="true" tabindex="0">
+        <span class="spinner" aria-hidden="true"></span>
+        <span>@Message</span>
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsVisible { get; set; }
+    [Parameter] public string Message { get; set; } = "Cargando";
+}

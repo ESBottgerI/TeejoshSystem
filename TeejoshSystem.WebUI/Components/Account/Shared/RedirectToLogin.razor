@@ -1,0 +1,14 @@
+@inject NavigationManager Navigation
+
+<section class="auth-card" role="status" aria-live="polite">
+    <h1>Sesion requerida</h1>
+    <p>Redirigiendo al inicio de sesion.</p>
+</section>
+
+@code {
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+            Navigation.NavigateTo($"/login?returnUrl={Uri.EscapeDataString(Navigation.ToBaseRelativePath(Navigation.Uri))}", forceLoad: false);
+    }
+}

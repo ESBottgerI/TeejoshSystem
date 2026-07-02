@@ -1,0 +1,12 @@
+@using TeejoshSystem.Application.Ports.Inbound.Catalogos.Queries.ObtenerCatalogos
+@using static TeejoshSystem.WebUI.Components.Pages.Productos.CrearProductoPage
+
+<fieldset class="form-section">
+    <legend>Detalle Hot Wheels</legend>
+    <CustomInputText Label="Modelo" Value="Model.Modelo" ValueChanged="v => Model.Modelo = v ?? string.Empty" />
+    <CustomInputNumber Label="Anio" Value="Model.Anio" ValueChanged="v => Model.Anio = (int)v" />
+    <CustomInputText Label="Serie" Value="Model.Serie" ValueChanged="v => Model.Serie = v ?? string.Empty" />
+    <div class="field"><label>Categoria</label><select class="input" @bind="Model.CategoriaId">@foreach (var item in Catalogos.CategoriasHotWheels) { <option value="@item.Id">@item.Nombre</option> }</select></div>
+</fieldset>
+
+@code { [Parameter] public HotWheelsFormModel Model { get; set; } = new(); [Parameter] public CatalogosDto Catalogos { get; set; } = new(); }

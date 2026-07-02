@@ -1,5 +1,4 @@
-﻿using Microsoft.Data.Sqlite;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 
 using TeejoshSystem.Domain.Entities;
 using TeejoshSystem.Domain.Entities.Detalles;
@@ -49,57 +48,82 @@ public class ProductoRepository : IProductoRepository
         return await query.ToListAsync();
     }
 
-public async Task<IReadOnlyList<ProductoBusquedaResult>> SearchWithDetalleAsync(
-    string? nombre, TipoProducto? tipo)
-{
-    var sql = """
-    SELECT 
-        p.Id,
-        p.type        AS Type,
-        p.name        AS Name,
-        p.price       AS Price,
-        p.units       AS Units,
-        p.image_path  AS ImagePath,
-        CASE p.type
-            WHEN 'HotWheels' THEN hw.model || ' · ' || CAST(hw.year AS TEXT) || ' · ' || hw.serie
-            WHEN 'Funko'     THEN '#' || CAST(fu.box_number AS TEXT) || ' · ' || fu.license
-            WHEN 'Tcg'       THEN 'Pack ' || CAST(tcg.pack_id AS TEXT) || ' · Expansión ' || CAST(tcg.expansion_id AS TEXT)
-            WHEN 'Toy'       THEN CAST(toy.min_players AS TEXT) || '-' || CAST(toy.max_players AS TEXT) || ' jugadores'
-            WHEN 'Varios'    THEN v.brand || ' · ' || v.material
-            ELSE 'Sin detalle'
-        END AS DetalleResumen
-    FROM product p
-    LEFT JOIN hot_wheels hw ON hw.product_id = p.Id
-    LEFT JOIN funko fu      ON fu.product_id = p.Id
-    LEFT JOIN tcg           ON tcg.product_id = p.Id
-    LEFT JOIN toy           ON toy.product_id = p.Id
-    LEFT JOIN varios v      ON v.product_id   = p.Id
-    WHERE (@nombre IS NULL OR p.name LIKE '%' || @nombre || '%')
-      AND (@tipo   IS NULL OR p.type = @tipo)
-    """;
+    public async Task<IReadOnlyList<ProductoBusquedaResult>> SearchWithDetalleAsync(
+        string? nombre, TipoProducto? tipo)
+    {
+        var filtroNombre = string.IsNullOrWhiteSpace(nombre) ? null : nombre.Trim();
+        var filtroTipo = tipo?.ToString();
 
-    var nombreParam = nombre is null or { Length: 0 }
-        ? new SqliteParameter("@nombre", DBNull.Value)
-        : new SqliteParameter("@nombre", nombre);
+        var sql = _context.Database.IsNpgsql()
+            ? BuildPostgreSqlSearchQuery(filtroNombre, filtroTipo)
+            : BuildSqliteSearchQuery(filtroNombre, filtroTipo);
 
-    var tipoParam = tipo.HasValue
-        ? new SqliteParameter("@tipo", tipo.Value.ToString())
-        : new SqliteParameter("@tipo", DBNull.Value);
+        var resultados = await _context.Database
+            .SqlQuery<ProductoBusquedaRaw>(sql)
+            .ToListAsync();
 
-    var resultados = await _context.Database
-        .SqlQueryRaw<ProductoBusquedaRaw>(sql, nombreParam, tipoParam)
-        .ToListAsync();
+        return resultados.Select(r => new ProductoBusquedaResult(
+            r.Id,
+            Enum.Parse<TipoProducto>(r.Type),
+            r.Name,
+            r.Price,
+            r.Units,
+            r.DetalleResumen ?? "Sin detalle",
+            r.ImagePath
+        )).ToList();
+    }
 
-    return resultados.Select(r => new ProductoBusquedaResult(
-        r.Id,
-        Enum.Parse<TipoProducto>(r.Type),
-        r.Name,
-        r.Price,
-        r.Units,
-        r.DetalleResumen ?? "Sin detalle",
-        r.ImagePath        // NUEVO
-    )).ToList();
-}
+    private static FormattableString BuildSqliteSearchQuery(string? nombre, string? tipo) => $"""
+        SELECT 
+            p.Id,
+            p.type        AS Type,
+            p.name        AS Name,
+            p.price       AS Price,
+            p.units       AS Units,
+            p.image_path  AS ImagePath,
+            CASE p.type
+                WHEN 'HotWheels' THEN hw.model || ' - ' || CAST(hw.year AS TEXT) || ' - ' || hw.serie
+                WHEN 'Funko'     THEN '#' || CAST(fu.box_number AS TEXT) || ' - ' || fu.license
+                WHEN 'Tcg'       THEN 'Pack ' || CAST(tcg.pack_id AS TEXT) || ' - Expansion ' || CAST(tcg.expansion_id AS TEXT)
+                WHEN 'Toy'       THEN CAST(toy.min_players AS TEXT) || '-' || CAST(toy.max_players AS TEXT) || ' jugadores'
+                WHEN 'Varios'    THEN v.brand || ' - ' || v.material
+                ELSE 'Sin detalle'
+            END AS DetalleResumen
+        FROM product p
+        LEFT JOIN hot_wheels hw ON hw.product_id = p.Id
+        LEFT JOIN funko fu      ON fu.product_id = p.Id
+        LEFT JOIN tcg           ON tcg.product_id = p.Id
+        LEFT JOIN toy           ON toy.product_id = p.Id
+        LEFT JOIN varios v      ON v.product_id   = p.Id
+        WHERE ({nombre} IS NULL OR p.name LIKE '%' || {nombre} || '%')
+          AND ({tipo}   IS NULL OR p.type = {tipo})
+        """;
+
+    private static FormattableString BuildPostgreSqlSearchQuery(string? nombre, string? tipo) => $"""
+        SELECT 
+            p."Id"       AS "Id",
+            p.type        AS "Type",
+            p.name        AS "Name",
+            p.price       AS "Price",
+            p.units       AS "Units",
+            p.image_path  AS "ImagePath",
+            CASE p.type
+                WHEN 'HotWheels' THEN hw.model || ' - ' || CAST(hw.year AS TEXT) || ' - ' || hw.serie
+                WHEN 'Funko'     THEN '#' || CAST(fu.box_number AS TEXT) || ' - ' || fu.license
+                WHEN 'Tcg'       THEN 'Pack ' || CAST(tcg.pack_id AS TEXT) || ' - Expansion ' || CAST(tcg.expansion_id AS TEXT)
+                WHEN 'Toy'       THEN CAST(toy.min_players AS TEXT) || '-' || CAST(toy.max_players AS TEXT) || ' jugadores'
+                WHEN 'Varios'    THEN v.brand || ' - ' || v.material
+                ELSE 'Sin detalle'
+            END AS "DetalleResumen"
+        FROM product p
+        LEFT JOIN hot_wheels hw ON hw.product_id = p."Id"
+        LEFT JOIN funko fu      ON fu.product_id = p."Id"
+        LEFT JOIN tcg           ON tcg.product_id = p."Id"
+        LEFT JOIN toy           ON toy.product_id = p."Id"
+        LEFT JOIN varios v      ON v.product_id   = p."Id"
+        WHERE ({nombre} IS NULL OR p.name ILIKE '%' || {nombre} || '%')
+          AND ({tipo}   IS NULL OR p.type = {tipo})
+        """;
 
     public async Task<Producto?> GetByIdWithDetalleAsync(int id)
     {

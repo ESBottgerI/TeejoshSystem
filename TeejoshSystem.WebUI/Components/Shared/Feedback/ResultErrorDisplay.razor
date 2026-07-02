@@ -1,0 +1,19 @@
+@using TeejoshSystem.Application.Common
+
+@if (_showError)
+{
+    <p class="field-error" role="alert">@_errorMessage</p>
+}
+
+@code {
+    [Parameter] public Result? Result { get; set; }
+
+    private bool _showError;
+    private string? _errorMessage;
+
+    protected override void OnParametersSet()
+    {
+        _showError = Result is not null && !Result.IsSuccess;
+        _errorMessage = Result?.Error;
+    }
+}

@@ -21,6 +21,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TeejoshSystem.Infrastructur
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TeejoshSystem.AvaloniaUI.Tests", "Tests\TeejoshSystem.AvaloniaUI.Tests\TeejoshSystem.AvaloniaUI.Tests.csproj", "{5CDBA7ED-9239-4234-9282-EAE8068C3C86}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TeejoshSystem.WebUI", "TeejoshSystem.WebUI\TeejoshSystem.WebUI.csproj", "{E92FCA39-E61D-46BC-A5F0-FCC4A7D65D12}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -127,6 +129,18 @@ Global
 		{5CDBA7ED-9239-4234-9282-EAE8068C3C86}.Release|x64.Build.0 = Release|Any CPU
 		{5CDBA7ED-9239-4234-9282-EAE8068C3C86}.Release|x86.ActiveCfg = Release|Any CPU
 		{5CDBA7ED-9239-4234-9282-EAE8068C3C86}.Release|x86.Build.0 = Release|Any CPU
+		{E92FCA39-E61D-46BC-A5F0-FCC4A7D65D12}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E92FCA39-E61D-46BC-A5F0-FCC4A7D65D12}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E92FCA39-E61D-46BC-A5F0-FCC4A7D65D12}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{E92FCA39-E61D-46BC-A5F0-FCC4A7D65D12}.Debug|x64.Build.0 = Debug|Any CPU
+		{E92FCA39-E61D-46BC-A5F0-FCC4A7D65D12}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{E92FCA39-E61D-46BC-A5F0-FCC4A7D65D12}.Debug|x86.Build.0 = Debug|Any CPU
+		{E92FCA39-E61D-46BC-A5F0-FCC4A7D65D12}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E92FCA39-E61D-46BC-A5F0-FCC4A7D65D12}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E92FCA39-E61D-46BC-A5F0-FCC4A7D65D12}.Release|x64.ActiveCfg = Release|Any CPU
+		{E92FCA39-E61D-46BC-A5F0-FCC4A7D65D12}.Release|x64.Build.0 = Release|Any CPU
+		{E92FCA39-E61D-46BC-A5F0-FCC4A7D65D12}.Release|x86.ActiveCfg = Release|Any CPU
+		{E92FCA39-E61D-46BC-A5F0-FCC4A7D65D12}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

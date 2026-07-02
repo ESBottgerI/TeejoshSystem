@@ -1,0 +1,98 @@
+@page "/productos"
+@attribute [Authorize(Roles = "Administrador")]
+@using TeejoshSystem.Application.Ports.Inbound.Productos.Commands.EliminarProducto
+@using TeejoshSystem.Application.Ports.Inbound.Productos.Queries.BuscarProductos
+@inject IMediator Mediator
+@inject BlazorNotificationService Notifications
+@inject IJSRuntime JS
+
+<section class="page-header">
+    <p class="eyebrow">Operacion</p>
+    <h1>Gestionar productos</h1>
+    <a class="btn primary" href="/productos/crear">Nuevo producto</a>
+</section>
+
+<InventarioTableGrid Items="Productos" />
+
+<div class="table-shell">
+    <table class="data-table">
+        <thead><tr><th>Nombre</th><th>Acciones</th></tr></thead>
+        <tbody>
+            @foreach (var producto in Productos)
+            {
+                <tr>
+                    <td>@producto.Nombre</td>
+                    <td class="toolbar" style="margin:0">
+                        <a class="btn secondary" href="/productos/editar/@producto.Id">Editar</a>
+                        <button class="btn danger" @onclick="() => ConfirmarEliminar(producto)" disabled="@_isBusy">Eliminar</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@if (_productoAEliminar is not null)
+{
+    <div class="loading-overlay" style="cursor:default" @onclick:stopPropagation="true">
+        <div class="auth-card" style="width:auto;max-width:28rem" @onclick:stopPropagation>
+            <h2>Confirmar eliminacion</h2>
+            <p>Esta seguro de eliminar el producto <strong>@_productoAEliminar.Nombre</strong>?</p>
+            <div class="toolbar" style="justify-content:end">
+                <button class="btn secondary" @onclick="CancelarEliminar" disabled="@_isBusy">Cancelar</button>
+                <button class="btn danger" @onclick="EliminarAsync" disabled="@_isBusy">
+                    @if (_isBusy) { <span class="spinner"></span> }
+                    Eliminar
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+<LoadingOverlay IsVisible="_isBusy && _productoAEliminar is null" Message="Cargando..." />
+
+@code {
+    private List<ProductoBusquedaDto> Productos { get; set; } = new();
+    private ProductoBusquedaDto? _productoAEliminar;
+    private bool _isBusy;
+
+    protected override async Task OnInitializedAsync() => await CargarAsync();
+
+    private async Task CargarAsync()
+    {
+        _isBusy = true;
+        Productos = await Mediator.Send(new BuscarProductosQuery(null, null));
+        _isBusy = false;
+    }
+
+    private void ConfirmarEliminar(ProductoBusquedaDto producto)
+    {
+        _productoAEliminar = producto;
+    }
+
+    private void CancelarEliminar()
+    {
+        _productoAEliminar = null;
+    }
+
+    private async Task EliminarAsync()
+    {
+        if (_productoAEliminar is null) return;
+
+        _isBusy = true;
+        var id = _productoAEliminar.Id;
+        var result = await Mediator.Send(new EliminarProductoCommand(new List<int> { id }));
+        _isBusy = false;
+        _productoAEliminar = null;
+
+        if (result.IsSuccess)
+        {
+            await Notifications.ShowSuccessAsync("Producto eliminado.");
+            await CargarAsync();
+        }
+        else
+        {
+            await Notifications.ShowErrorAsync(result.Error ?? "No se pudo eliminar el producto.");
+        }
+    }
+}

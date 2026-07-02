@@ -1,0 +1,42 @@
+@implements IDisposable
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager Navigation
+
+@code {
+    private bool _isInteractive;
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+            _isInteractive = true;
+    }
+
+    protected override void OnInitialized()
+    {
+        AuthStateProvider.AuthenticationStateChanged += OnAuthenticationStateChanged;
+    }
+
+    private void OnAuthenticationStateChanged(Task<AuthenticationState> task)
+    {
+        if (!_isInteractive) return;
+
+        _ = InvokeAsync(async () =>
+        {
+            try
+            {
+                var state = await task;
+                if (!(state.User.Identity?.IsAuthenticated ?? false))
+                    Navigation.NavigateTo("/login");
+            }
+            catch
+            {
+                // Auth state not yet available — ignore during pre-render
+            }
+        });
+    }
+
+    public void Dispose()
+    {
+        AuthStateProvider.AuthenticationStateChanged -= OnAuthenticationStateChanged;
+    }
+}

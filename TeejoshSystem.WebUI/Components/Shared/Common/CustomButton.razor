@@ -1,0 +1,21 @@
+<button type="@Type" class="btn @Variant" disabled="@(Disabled || IsBusy)" aria-busy="@IsBusy" @onclick="OnClick">
+    @if (IsBusy)
+    {
+        <span class="spinner" aria-hidden="true"></span>
+        <span>@BusyText</span>
+    }
+    else
+    {
+        @ChildContent
+    }
+</button>
+
+@code {
+    [Parameter] public string Type { get; set; } = "button";
+    [Parameter] public string Variant { get; set; } = "primary";
+    [Parameter] public bool IsBusy { get; set; }
+    [Parameter] public bool Disabled { get; set; }
+    [Parameter] public string BusyText { get; set; } = "Procesando";
+    [Parameter] public EventCallback OnClick { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+}

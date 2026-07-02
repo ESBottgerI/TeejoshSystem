@@ -1,0 +1,81 @@
+@page "/ventas"
+@attribute [Authorize(Roles = "Administrador,Operador")]
+@using TeejoshSystem.Application.Ports.Inbound.Productos.Queries.BuscarProductos
+@using TeejoshSystem.Application.Ports.Inbound.Ventas.Commands.RegistrarVenta
+@inject IMediator Mediator
+@inject CircuitStateStore StateStore
+@inject BlazorNotificationService Notifications
+
+<section class="page-header">
+    <p class="eyebrow">Punto de venta</p>
+    <h1>Ventas</h1>
+</section>
+
+<section class="split-view">
+    <div>
+        <form class="toolbar" @onsubmit="BuscarAsync" @onsubmit:preventDefault="true">
+            <input class="input" placeholder="Buscar producto" @bind="Nombre" aria-label="Buscar producto para venta" />
+            <CustomButton Type="submit" IsBusy="IsBusy">Buscar</CustomButton>
+        </form>
+        <div class="table-shell">
+            <table class="data-table">
+                <thead><tr><th>Producto</th><th>Precio</th><th>Stock</th><th></th></tr></thead>
+                <tbody>
+                    @foreach (var producto in Productos)
+                    {
+                        <tr>
+                            <td>@producto.Nombre</td>
+                            <td>@producto.Precio.ToString("C")</td>
+                            <td>@producto.Unidades</td>
+                            <td><button class="btn primary" disabled="@(producto.Unidades <= 0)" @onclick="() => Agregar(producto)">Agregar</button></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <CarritoVenta OnConfirm="RegistrarAsync" />
+</section>
+
+<HistorialVentasTable />
+
+@code {
+    private string? Nombre { get; set; }
+    private bool IsBusy { get; set; }
+    private List<ProductoBusquedaDto> Productos { get; set; } = new();
+
+    protected override async Task OnInitializedAsync() => await BuscarAsync();
+
+    private async Task BuscarAsync()
+    {
+        IsBusy = true;
+        Productos = await Mediator.Send(new BuscarProductosQuery(Nombre, null));
+        IsBusy = false;
+    }
+
+    private void Agregar(ProductoBusquedaDto producto)
+        => StateStore.AddOrIncrement(producto.Id, producto.Nombre, producto.Precio, producto.Unidades);
+
+    private async Task RegistrarAsync()
+    {
+        if (StateStore.CartItems.Count == 0) return;
+
+        IsBusy = true;
+        var command = new RegistrarVentaCommand(StateStore.CartItems
+            .Select(i => new RegistrarVentaItemCommand(i.ProductId, i.Quantity))
+            .ToList());
+        var result = await Mediator.Send(command);
+        IsBusy = false;
+
+        if (result.IsSuccess)
+        {
+            StateStore.Clear();
+            await Notifications.ShowSuccessAsync($"Venta registrada #{result.Value}.");
+            await BuscarAsync();
+        }
+        else
+        {
+            await Notifications.ShowErrorAsync(result.Error ?? "No se pudo registrar la venta.");
+        }
+    }
+}

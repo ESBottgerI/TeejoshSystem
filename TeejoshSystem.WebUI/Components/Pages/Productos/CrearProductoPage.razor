@@ -1,0 +1,135 @@
+@page "/productos/crear"
+@attribute [Authorize(Roles = "Administrador")]
+@using TeejoshSystem.Application.Common
+@using TeejoshSystem.Application.Ports.Inbound.Catalogos.Queries.ObtenerCatalogos
+@using TeejoshSystem.Application.Ports.Inbound.Productos.Commands.CrearProducto
+@using TeejoshSystem.Domain.Enums
+@inject IMediator Mediator
+@inject BlazorNotificationService Notifications
+@inject NavigationManager Navigation
+
+<section class="page-header">
+    <p class="eyebrow">Alta de inventario</p>
+    <h1>Crear producto</h1>
+</section>
+
+<form class="form-grid" @onsubmit="CrearAsync" @onsubmit:preventDefault="true">
+    <div class="field">
+        <label for="tipo">Tipo de producto</label>
+        <select id="tipo" class="input" @bind="Model.Tipo">
+            @foreach (var tipo in Enum.GetValues<TipoProducto>())
+            {
+                <option value="@tipo">@tipo</option>
+            }
+        </select>
+    </div>
+    <CustomInputText Label="Nombre" Value="Model.Nombre" ValueChanged="v => Model.Nombre = v ?? string.Empty" Error="@NombreError" Disabled="IsBusy" />
+    <CustomInputNumber Label="Precio" Value="Model.Precio" ValueChanged="v => Model.Precio = v" Step="0.01" Disabled="IsBusy" />
+    <CustomInputNumber Label="Unidades" Value="Model.Unidades" ValueChanged="v => Model.Unidades = (int)v" Disabled="IsBusy" />
+
+    @switch (Model.Tipo)
+    {
+        case TipoProducto.Funko:
+            <FormularioFunko Model="Model.Funko" Catalogos="Catalogos" />
+            break;
+        case TipoProducto.HotWheels:
+            <FormularioHotWheels Model="Model.HotWheels" Catalogos="Catalogos" />
+            break;
+        case TipoProducto.Tcg:
+            <FormularioTcg Model="Model.Tcg" Catalogos="Catalogos" />
+            break;
+        case TipoProducto.Toy:
+            <FormularioToy Model="Model.Toy" />
+            break;
+        case TipoProducto.Varios:
+            <FormularioVarios Model="Model.Varios" />
+            break;
+    }
+
+    <div class="field">
+        <label for="imagen">Imagen (opcional)</label>
+        <InputFile id="imagen" OnChange="OnImageSelected" accept=".png,.jpg,.jpeg,.gif,.webp" disabled="@IsBusy" />
+    </div>
+
+    <ResultErrorDisplay Result="_crearResult" />
+    <CustomButton Type="submit" IsBusy="IsBusy" BusyText="Guardando">Crear producto</CustomButton>
+</form>
+
+@code {
+    private CrearProductoFormModel Model { get; set; } = new();
+    private CatalogosDto Catalogos { get; set; } = new();
+    private bool IsBusy { get; set; }
+    private Result? _crearResult;
+    private string? NombreError { get; set; }
+    private string? _tempImagePath;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Catalogos = await Mediator.Send(new ObtenerCatalogosQuery());
+    }
+
+    private async Task OnImageSelected(InputFileChangeEventArgs args)
+    {
+        var file = args.File;
+        if (file is null) return;
+
+        var ext = Path.GetExtension(file.Name);
+        var tempPath = Path.Combine(Path.GetTempPath(), $"teejosh_upload_{Guid.NewGuid()}{ext}");
+        await using var stream = file.OpenReadStream(maxAllowedSize: 5 * 1024 * 1024);
+        await using var fs = new FileStream(tempPath, FileMode.Create);
+        await stream.CopyToAsync(fs);
+
+        _tempImagePath = tempPath;
+    }
+
+    private async Task CrearAsync()
+    {
+        NombreError = string.IsNullOrWhiteSpace(Model.Nombre) ? "El nombre es obligatorio." : null;
+        if (NombreError is not null) return;
+
+        IsBusy = true;
+        _crearResult = null;
+        var command = Model.ToCommand();
+        command = command with { ImagePath = _tempImagePath };
+        _crearResult = await Mediator.Send(command);
+        IsBusy = false;
+
+        if (_crearResult.IsSuccess)
+        {
+            await Notifications.ShowSuccessAsync("Producto creado correctamente.");
+            Navigation.NavigateTo("/productos");
+        }
+    }
+
+    public sealed class CrearProductoFormModel
+    {
+        public TipoProducto Tipo { get; set; } = TipoProducto.HotWheels;
+        public string Nombre { get; set; } = string.Empty;
+        public decimal Precio { get; set; }
+        public int Unidades { get; set; }
+        public HotWheelsFormModel HotWheels { get; set; } = new();
+        public FunkoFormModel Funko { get; set; } = new();
+        public TcgFormModel Tcg { get; set; } = new();
+        public ToyFormModel Toy { get; set; } = new();
+        public VariosFormModel Varios { get; set; } = new();
+
+        public CrearProductoCommand ToCommand() => new()
+        {
+            Tipo = Tipo,
+            Nombre = Nombre,
+            Precio = Precio,
+            Unidades = Unidades,
+            HotWheels = Tipo == TipoProducto.HotWheels ? new CrearHotWheelsDetalleDto(HotWheels.Modelo, HotWheels.Anio, HotWheels.Serie, HotWheels.CategoriaId) : null,
+            Funko = Tipo == TipoProducto.Funko ? new CrearFunkoDetalleDto(Funko.NumeroBox, Funko.Licencia, Funko.SubtipoId, Funko.CaracteristicaEspecialId) : null,
+            Tcg = Tipo == TipoProducto.Tcg ? new CrearTcgDetalleDto(Tcg.PackId, Tcg.ExpansionId) : null,
+            Toy = Tipo == TipoProducto.Toy ? new CrearToyDetalleDto(Toy.EdadMinima, Toy.JugadoresMinimo, Toy.JugadoresMaximo, Toy.EsJuegoMesa) : null,
+            Varios = Tipo == TipoProducto.Varios ? new CrearVariosDetalleDto(Varios.Marca, Varios.Alto, Varios.Ancho, Varios.Largo, Varios.Material, Varios.TieneIlustracion) : null
+        };
+    }
+
+    public sealed class HotWheelsFormModel { public string Modelo { get; set; } = string.Empty; public int Anio { get; set; } = DateTime.Today.Year; public string Serie { get; set; } = string.Empty; public int CategoriaId { get; set; } = 1; }
+    public sealed class FunkoFormModel { public int NumeroBox { get; set; } public string Licencia { get; set; } = string.Empty; public int SubtipoId { get; set; } = 1; public int? CaracteristicaEspecialId { get; set; } }
+    public sealed class TcgFormModel { public int PackId { get; set; } = 1; public int ExpansionId { get; set; } = 1; }
+    public sealed class ToyFormModel { public int EdadMinima { get; set; } = 3; public int JugadoresMinimo { get; set; } = 1; public int JugadoresMaximo { get; set; } = 1; public bool EsJuegoMesa { get; set; } }
+    public sealed class VariosFormModel { public string Marca { get; set; } = string.Empty; public decimal Alto { get; set; } public decimal Ancho { get; set; } public decimal? Largo { get; set; } public string Material { get; set; } = string.Empty; public bool TieneIlustracion { get; set; } }
+}

@@ -1,0 +1,35 @@
+@page "/"
+@attribute [Authorize(Roles = "Administrador,Operador")]
+@using TeejoshSystem.Application.Ports.Inbound.Productos.Queries.BuscarProductos
+@using TeejoshSystem.Application.Ports.Inbound.Ventas.Queries.ObtenerVentas
+@inject IMediator Mediator
+
+<section class="page-header">
+    <p class="eyebrow">Resumen operativo</p>
+    <h1>Dashboard</h1>
+    <p>Metricas rapidas de inventario y ventas cargadas desde Application.</p>
+</section>
+
+<section class="metric-grid" aria-label="Metricas principales">
+    <article class="metric-card"><span>Productos</span><strong>@_productos</strong></article>
+    <article class="metric-card"><span>Sin stock</span><strong>@_sinStock</strong></article>
+    <article class="metric-card"><span>Ventas hoy</span><strong>@_ventasHoy</strong></article>
+    <article class="metric-card"><span>Ingresos hoy</span><strong>@_ingresosHoy.ToString("C")</strong></article>
+</section>
+
+@code {
+    private int _productos;
+    private int _sinStock;
+    private int _ventasHoy;
+    private decimal _ingresosHoy;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var productos = await Mediator.Send(new BuscarProductosQuery(null, null));
+        var ventas = await Mediator.Send(new ObtenerVentasQuery(DateTime.Today, DateTime.Today));
+        _productos = productos.Count;
+        _sinStock = productos.Count(p => p.Unidades <= 0);
+        _ventasHoy = ventas.Count;
+        _ingresosHoy = ventas.Sum(v => v.Total);
+    }
+}

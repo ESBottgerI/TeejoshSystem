@@ -1,0 +1,121 @@
+@page "/productos/editar/{Id:int}"
+@attribute [Authorize(Roles = "Administrador")]
+@using TeejoshSystem.Application.Common
+@using TeejoshSystem.Application.Common.Dtos
+@using TeejoshSystem.Application.Ports.Inbound.Productos.Queries.ObtenerProductosPorId
+@using TeejoshSystem.Application.Ports.Inbound.Productos.Commands.ActualizarProducto
+@using TeejoshSystem.Application.Ports.Inbound.Catalogos.Queries.ObtenerCatalogos
+@using TeejoshSystem.Domain.Enums
+@inject IMediator Mediator
+@inject BlazorNotificationService Notifications
+@inject NavigationManager Navigation
+
+<section class="page-header">
+    <p class="eyebrow">Edicion de inventario</p>
+    <h1>Editar producto</h1>
+</section>
+
+@if (_guardarResult is not null && !_guardarResult.IsSuccess)
+{
+    <section class="page-header">
+        <p>@_guardarResult.Error</p>
+        <a class="btn primary" href="/productos">Volver</a>
+    </section>
+}
+else if (_producto is null)
+{
+    <LoadingOverlay IsVisible="true" Message="Cargando producto..." />
+}
+else
+{
+    <form class="form-grid" @onsubmit="GuardarAsync" @onsubmit:preventDefault="true">
+        <CustomInputText Label="Nombre" Value="_nombre" ValueChanged="v => _nombre = v ?? string.Empty" Error="@_nombreError" Disabled="_isBusy" />
+        <CustomInputNumber Label="Precio" Value="_precio" ValueChanged="v => _precio = v" Step="0.01" Disabled="_isBusy" />
+        <CustomInputNumber Label="Unidades" Value="_unidades" ValueChanged="v => _unidades = (int)v" Disabled="_isBusy" />
+
+        <div class="field">
+            <label>Imagen actual</label>
+            @if (!string.IsNullOrWhiteSpace(_producto.ImagePath))
+            {
+                <span>@_producto.ImagePath</span>
+            }
+            else
+            {
+                <span class="muted">Sin imagen</span>
+            }
+        </div>
+
+        <div class="field">
+            <label for="imagen">Nueva imagen (opcional)</label>
+            <InputFile id="imagen" OnChange="OnImageSelected" accept=".png,.jpg,.jpeg,.gif,.webp" disabled="@_isBusy" />
+        </div>
+
+        <ResultErrorDisplay Result="_guardarResult" />
+
+        <div class="toolbar" style="grid-column:1/-1">
+            <CustomButton Type="submit" IsBusy="_isBusy" BusyText="Guardando">Guardar cambios</CustomButton>
+            <a class="btn secondary" href="/productos">Cancelar</a>
+        </div>
+    </form>
+}
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    private ProductoDetalladoDto? _producto;
+    private string _nombre = string.Empty;
+    private decimal _precio;
+    private int _unidades;
+    private string? _nombreError;
+    private Result? _guardarResult;
+    private bool _isBusy;
+    private string? _tempImagePath;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var result = await Mediator.Send(new ObtenerProductosPorIdQuery(Id));
+        if (!result.IsSuccess || result.Value is null)
+        {
+            _guardarResult = Result.Failure(result.Error ?? "Producto no encontrado.");
+            return;
+        }
+
+        _producto = result.Value;
+        _nombre = _producto.Nombre;
+        _precio = _producto.Precio;
+        _unidades = _producto.Unidades;
+    }
+
+    private async Task OnImageSelected(InputFileChangeEventArgs args)
+    {
+        var file = args.File;
+        if (file is null) return;
+
+        var ext = Path.GetExtension(file.Name);
+        var tempPath = Path.Combine(Path.GetTempPath(), $"teejosh_upload_{Guid.NewGuid()}{ext}");
+        await using var stream = file.OpenReadStream(maxAllowedSize: 5 * 1024 * 1024);
+        await using var fs = new FileStream(tempPath, FileMode.Create);
+        await stream.CopyToAsync(fs);
+
+        _tempImagePath = tempPath;
+    }
+
+    private async Task GuardarAsync()
+    {
+        _nombreError = string.IsNullOrWhiteSpace(_nombre) ? "El nombre es obligatorio." : null;
+        if (_nombreError is not null) return;
+
+        _isBusy = true;
+        _guardarResult = null;
+
+        var command = new ActualizarProductoCommand(Id, _nombre, _precio, _unidades, _tempImagePath);
+        _guardarResult = await Mediator.Send(command);
+        _isBusy = false;
+
+        if (_guardarResult.IsSuccess)
+        {
+            await Notifications.ShowSuccessAsync("Producto actualizado correctamente.");
+            Navigation.NavigateTo("/productos");
+        }
+    }
+}

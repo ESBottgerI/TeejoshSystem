@@ -1,0 +1,21 @@
+@using System.Security.Claims
+@inject TeejoshSystem.WebUI.Infrastructure.Auth.CustomAuthenticationStateProvider AuthProvider
+
+<header class="top-header">
+    <div>
+        <p class="eyebrow">Canal Web</p>
+        <strong>TeejoshSystem 0.2.0</strong>
+    </div>
+    <AuthorizeView>
+        <Authorized>
+            <div class="user-chip" aria-label="Usuario activo">
+                <span>@context.User.FindFirstValue(ClaimTypes.Name)</span>
+                <button type="button" class="link-button" @onclick="CerrarSesionAsync">Salir</button>
+            </div>
+        </Authorized>
+    </AuthorizeView>
+</header>
+
+@code {
+    private async Task CerrarSesionAsync() => await AuthProvider.SignOutAsync();
+}

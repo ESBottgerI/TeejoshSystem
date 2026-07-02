@@ -1,0 +1,29 @@
+@implements IDisposable
+@inject BlazorNotificationService Notifications
+
+<div class="toast-region" aria-live="polite" aria-atomic="true">
+    @foreach (var toast in _toasts)
+    {
+        <div class="toast @toast.Kind" role="status">@toast.Message</div>
+    }
+</div>
+
+@code {
+    private readonly List<ToastMessage> _toasts = new();
+
+    protected override void OnInitialized()
+    {
+        Notifications.OnNotify += AddToast;
+    }
+
+    private async void AddToast(ToastMessage toast)
+    {
+        _toasts.Add(toast);
+        await InvokeAsync(StateHasChanged);
+        await Task.Delay(4500);
+        _toasts.Remove(toast);
+        await InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose() => Notifications.OnNotify -= AddToast;
+}

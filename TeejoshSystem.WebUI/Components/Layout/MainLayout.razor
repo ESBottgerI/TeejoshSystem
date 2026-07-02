@@ -1,0 +1,28 @@
+﻿@inherits LayoutComponentBase
+
+<div class="app-shell">
+    <AuthStatusValidator />
+    <NavMenu />
+    <div class="app-content">
+        <UserProfileHeader />
+        <main id="main-content" tabindex="-1" class="content-panel">
+            <ErrorBoundary>
+                <ChildContent>@Body</ChildContent>
+                <ErrorContent>
+                    <section class="alert alert-danger" role="alert">
+                        <h1>Error de interfaz</h1>
+                        <p>La vista no pudo renderizarse. Recargue la pagina o contacte al administrador.</p>
+                    </section>
+                </ErrorContent>
+            </ErrorBoundary>
+        </main>
+    </div>
+</div>
+
+<ToastNotification />
+
+<div id="blazor-error-ui" role="alert">
+    Ocurrio un error inesperado.
+    <a href="" class="reload">Recargar</a>
+    <a class="dismiss">Cerrar</a>
+</div>

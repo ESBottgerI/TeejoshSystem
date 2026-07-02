@@ -1,0 +1,41 @@
+@page "/inventario"
+@attribute [Authorize(Roles = "Administrador,Operador")]
+@using TeejoshSystem.Application.Ports.Inbound.Productos.Queries.BuscarProductos
+@using TeejoshSystem.Domain.Enums
+@inject IMediator Mediator
+
+<section class="page-header">
+    <p class="eyebrow">Stock general</p>
+    <h1>Inventario</h1>
+</section>
+
+<form class="toolbar" @onsubmit="BuscarAsync" @onsubmit:preventDefault="true">
+    <input class="input" placeholder="Buscar por nombre" @bind="Nombre" aria-label="Buscar por nombre" />
+    <select class="input" @bind="Tipo" aria-label="Filtrar por tipo">
+        <option value="">Todos</option>
+        @foreach (var tipo in Enum.GetValues<TipoProducto>())
+        {
+            <option value="@tipo">@tipo</option>
+        }
+    </select>
+    <CustomButton Type="submit" IsBusy="IsBusy">Buscar</CustomButton>
+</form>
+
+<InventarioTableGrid Items="Productos" />
+<LoadingOverlay IsVisible="IsBusy" Message="Consultando inventario" />
+
+@code {
+    private string? Nombre { get; set; }
+    private TipoProducto? Tipo { get; set; }
+    private bool IsBusy { get; set; }
+    private List<ProductoBusquedaDto> Productos { get; set; } = new();
+
+    protected override async Task OnInitializedAsync() => await BuscarAsync();
+
+    private async Task BuscarAsync()
+    {
+        IsBusy = true;
+        Productos = await Mediator.Send(new BuscarProductosQuery(Nombre, Tipo));
+        IsBusy = false;
+    }
+}

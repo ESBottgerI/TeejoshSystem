@@ -1,0 +1,87 @@
+@page "/smoke"
+@attribute [AllowAnonymous]
+@using TeejoshSystem.Application.Common.Dtos
+@using TeejoshSystem.Application.Ports.Inbound.Productos.Queries.ObtenerProductos
+@inject IMediator Mediator
+
+<section class="page-header">
+    <h1>Smoke Test</h1>
+    <p>Verificacion de integracion Application + Infrastructure</p>
+</section>
+
+@if (_productos is null)
+{
+    <LoadingOverlay IsVisible="true" Message="Ejecutando ObtenerProductosQuery..." />
+}
+else
+{
+    <div class="metric-grid" style="margin-bottom:1rem">
+        <article class="metric-card">
+            <span>Productos en DB</span>
+            <strong>@_productos.Count</strong>
+        </article>
+        <article class="metric-card">
+            <span>Query ejecutado</span>
+            <strong>ObtenerProductosQuery</strong>
+        </article>
+        <article class="metric-card">
+            <span>Handler</span>
+            <strong>ObtenerProductosQueryHandler</strong>
+        </article>
+        <article class="metric-card">
+            <span>MediatR</span>
+            <strong style="color:var(--tj-success)">@( _error is null ? "OK" : "Error" )</strong>
+        </article>
+    </div>
+
+    @if (_error is not null)
+    {
+        <div class="alert alert-danger" role="alert" style="padding:1rem;background:#ffebee;border-radius:var(--tj-radius);margin-bottom:1rem">
+            <strong>Error:</strong> @_error
+        </div>
+    }
+
+    @if (_productos.Count > 0)
+    {
+        <div class="table-shell">
+            <table class="data-table">
+                <thead>
+                    <tr><th>Id</th><th>Nombre</th><th>Tipo</th><th>Precio</th><th>Stock</th></tr>
+                </thead>
+                <tbody>
+                    @foreach (var p in _productos)
+                    {
+                        <tr>
+                            <td>@p.Id</td>
+                            <td>@p.Nombre</td>
+                            <td>@p.Tipo</td>
+                            <td>@p.Precio.ToString("C")</td>
+                            <td>@p.Unidades</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <p>No se encontraron productos. La base de datos esta vacia o la migracion no se ejecuto.</p>
+    }
+}
+
+@code {
+    private IReadOnlyList<ProductoDto>? _productos;
+    private string? _error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _productos = await Mediator.Send(new ObtenerProductosQuery());
+        }
+        catch (Exception ex)
+        {
+            _error = $"{ex.GetType().Name}: {ex.Message}";
+        }
+    }
+}

@@ -1,0 +1,27 @@
+@inject CircuitStateStore StateStore
+
+<aside class="cart-panel" aria-labelledby="cart-title">
+    <h2 id="cart-title">Venta en curso</h2>
+    @if (StateStore.CartItems.Count == 0)
+    {
+        <p>No hay productos en el carrito.</p>
+    }
+    else
+    {
+        <ul class="cart-list">
+            @foreach (var item in StateStore.CartItems)
+            {
+                <li>
+                    <span>@item.Name</span>
+                    <input class="input quantity" type="number" min="1" max="@item.Stock" @bind="item.Quantity" aria-label="Cantidad de @item.Name" />
+                    <strong>@item.Subtotal.ToString("C")</strong>
+                    <button class="link-button danger-text" @onclick="() => StateStore.Remove(item.ProductId)">Quitar</button>
+                </li>
+            }
+        </ul>
+        <p class="cart-total">Total <strong>@StateStore.CartItems.Sum(i => i.Subtotal).ToString("C")</strong></p>
+        <button class="btn primary" @onclick="OnConfirm">Registrar venta</button>
+    }
+</aside>
+
+@code { [Parameter] public EventCallback OnConfirm { get; set; } }

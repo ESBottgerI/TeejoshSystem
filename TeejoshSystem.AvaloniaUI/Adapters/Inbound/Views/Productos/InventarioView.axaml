@@ -15,7 +15,7 @@
 
         <!-- Header -->
         <Border Grid.Row="0"
-                Background="#FF9800"
+                Background="{DynamicResource TeejoshPrimaryBrush}"
                 Padding="24,16">
             <TextBlock Text="Inventario"
                        FontSize="20"
@@ -27,15 +27,13 @@
         <!-- Contenido -->
         <Border Grid.Row="1"
                 Margin="16"
-                Background="{DynamicResource TeejoshSurfaceBrush}"
-                CornerRadius="4">
+                Theme="{StaticResource ContentPanel}">
             <Grid RowDefinitions="Auto,*">
 
                 <!-- Filtros -->
                 <StackPanel Grid.Row="0" Margin="24,24,24,16">
                     <TextBlock Text="Búsqueda y Filtros"
-                               FontSize="16"
-                               FontWeight="SemiBold"
+                               Theme="{StaticResource SectionTitle}"
                                Margin="0,0,0,16"/>
                     <Grid ColumnDefinitions="*,16,200,16,Auto">
                         <TextBox Grid.Column="0"
@@ -50,11 +48,8 @@
 
                         <Button Grid.Column="4"
                                 Command="{Binding CargarCommand}"
-                                Background="#FF9800"
-                                Foreground="White"
-                                Content="Buscar"
-                                Height="40"
-                                Padding="24,0"/>
+                                Theme="{StaticResource BrandButton}"
+                                Content="Buscar"/>
                     </Grid>
                 </StackPanel>
 
@@ -79,7 +74,7 @@
                                                Stretch="UniformToFill"
                                                IsVisible="{Binding ImagePath, Converter={x:Static ObjectConverters.IsNotNull}}"/>
                                         <!-- Placeholder si no existe -->
-                                        <Border Background="#E0E0E0" CornerRadius="4"
+                                        <Border Background="{DynamicResource TeejoshBorderBrush}" CornerRadius="4"
                                                 Width="50" Height="50"
                                                 IsVisible="{Binding ImagePath, Converter={x:Static ObjectConverters.IsNull}}">
                                             <TextBlock Text="🖼" FontSize="20"
@@ -118,27 +113,25 @@
         <!-- Footer -->
         <Border Grid.Row="2"
                 Margin="16,0,16,16"
-                Background="{DynamicResource TeejoshSurfaceBrush}"
-                Padding="16">
+                Theme="{StaticResource FooterPanel}">
             <Grid ColumnDefinitions="*,Auto">
                 <TextBlock VerticalAlignment="Center">
                     <Run Text="Total de productos: "/>
                     <Run Text="{Binding Productos.Count, Mode=OneWay}"
                          FontWeight="Bold"
-                         Foreground="#FF9800"/>
+                         Foreground="{DynamicResource TeejoshPrimaryBrush}"/>
                 </TextBlock>
 
                 <Button Grid.Column="1"
                         Command="{Binding VolverCommand}"
-                        Content="Volver"
-                        Height="40"
-                        Padding="24,0"/>
+                        Theme="{StaticResource StandardButton}"
+                        Content="Volver"/>
             </Grid>
         </Border>
 
         <!-- Loading Overlay -->
         <Border Grid.RowSpan="3"
-                Background="#CC000000"
+                Theme="{StaticResource LoadingOverlay}"
                 IsVisible="{Binding IsBusy}">
             <StackPanel HorizontalAlignment="Center"
                         VerticalAlignment="Center">

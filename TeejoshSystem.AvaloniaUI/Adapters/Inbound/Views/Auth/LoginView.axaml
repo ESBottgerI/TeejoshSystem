@@ -17,18 +17,18 @@
                        Margin="0,0,0,8"/>
 
             <StackPanel Spacing="4">
-                <TextBlock Text="Usuario"/>
+                <TextBlock Text="Usuario" Theme="{StaticResource FieldLabel}"/>
                 <TextBox Text="{Binding NombreUsuario}"
                          Watermark="Nombre de usuario"
                          IsEnabled="{Binding !IsBusy}"/>
             </StackPanel>
 
             <StackPanel Spacing="4">
-                <TextBlock Text="Contraseña"/>
+                <TextBlock Text="Contraseña" Theme="{StaticResource FieldLabel}"/>
                 <!--
-                    Avalonia no tiene PasswordBox nativo.
-                    PasswordChar enmascara la entrada visualmente.
-                    El valor se envía al ViewModel via TextChanged en code-behind.
+                Avalonia no tiene PasswordBox nativo.
+                PasswordChar enmascara la entrada visualmente.
+                El valor se envía al ViewModel via TextChanged en code-behind.
                 -->
                 <TextBox x:Name="PasswordBox"
                          PasswordChar="●"
@@ -37,13 +37,14 @@
             </StackPanel>
 
             <TextBlock Text="{Binding MensajeError}"
-                       Foreground="Red"
+                       Theme="{StaticResource ValidationError}"
                        TextWrapping="Wrap"
                        IsVisible="{Binding MensajeError,
-                                   Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                       Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
 
             <Button Content="Iniciar sesión"
                     Command="{Binding IniciarSesionCommand}"
+                    Theme="{StaticResource BrandButton}"
                     HorizontalAlignment="Stretch"
                     HorizontalContentAlignment="Center"
                     IsDefault="True"/>

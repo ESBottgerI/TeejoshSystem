@@ -38,7 +38,18 @@ namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Menu
         public bool EsAdministrador
             => _sesionContext.SesionActual?.Rol == RolUsuario.Administrador;
 
-        // resto de m�todos sin cambios
+        public string UsuarioActivo =>
+            _sesionContext.SesionActual?.NombreUsuario ?? "—";
+
+        public string VersionApp
+        {
+            get
+            {
+                var version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
+                return version != null ? $"v{version.ToString(3)}" : "v0.2.0";
+            }
+        }
+
         [RelayCommand]
         private void VisualizarInventario()
         {

@@ -22,12 +22,29 @@
 
     <Application.Resources>
         <ResourceDictionary>
+            <SolidColorBrush x:Key="TeejoshPrimaryBrush">#FF9800</SolidColorBrush>
+            <SolidColorBrush x:Key="TeejoshDangerBrush">#E53935</SolidColorBrush>
+            <SolidColorBrush x:Key="TeejoshSuccessBrush">#43A047</SolidColorBrush>
+            <SolidColorBrush x:Key="TeejoshInfoBrush">#1565C0</SolidColorBrush>
+            <SolidColorBrush x:Key="TeejoshHeaderDarkBrush">#2C3E50</SolidColorBrush>
+            <SolidColorBrush x:Key="TeejoshOverlayBrush">#CC000000</SolidColorBrush>
+
             <ResourceDictionary.ThemeDictionaries>
                 <ResourceDictionary x:Key="Light">
                     <SolidColorBrush x:Key="TeejoshSurfaceBrush">White</SolidColorBrush>
+                    <SolidColorBrush x:Key="TeejoshBackgroundBrush">#F5F5F5</SolidColorBrush>
+                    <SolidColorBrush x:Key="TeejoshBorderBrush">#E0E0E0</SolidColorBrush>
+                    <SolidColorBrush x:Key="TeejoshMutedBrush">#666666</SolidColorBrush>
+                    <SolidColorBrush x:Key="TeejoshErrorTextBrush">#B00020</SolidColorBrush>
+                    <SolidColorBrush x:Key="TeejoshOnSurfaceBrush">#212121</SolidColorBrush>
                 </ResourceDictionary>
                 <ResourceDictionary x:Key="Dark">
-                    <SolidColorBrush x:Key="TeejoshSurfaceBrush">Black</SolidColorBrush>
+                    <SolidColorBrush x:Key="TeejoshSurfaceBrush">#1E1E1E</SolidColorBrush>
+                    <SolidColorBrush x:Key="TeejoshBackgroundBrush">#121212</SolidColorBrush>
+                    <SolidColorBrush x:Key="TeejoshBorderBrush">#404040</SolidColorBrush>
+                    <SolidColorBrush x:Key="TeejoshMutedBrush">#9E9E9E</SolidColorBrush>
+                    <SolidColorBrush x:Key="TeejoshErrorTextBrush">#CF6679</SolidColorBrush>
+                    <SolidColorBrush x:Key="TeejoshOnSurfaceBrush">#E0E0E0</SolidColorBrush>
                 </ResourceDictionary>
             </ResourceDictionary.ThemeDictionaries>
         </ResourceDictionary>
@@ -36,6 +53,7 @@
     <Application.Styles>
         <FluentTheme />
         <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml"/>
+        <StyleInclude Source="avares://TeejoshSystem.AvaloniaUI/AppStyles.axaml"/>
 
         <Style Selector="ComboBox">
             <Setter Property="helpers:ControlExtensions.BlockScroll" Value="True" />
@@ -82,7 +100,7 @@
         <DataTemplate DataType="{x:Type vmVentas:HistorialVentasViewModel}">
             <viewsVentas:HistorialVentasView />
         </DataTemplate>
-        
+
         <DataTemplate DataType="{x:Type vmCatalogos:SincronizarCatalogosViewModel}">
             <viewsCatalogos:SincronizarCatalogosView/>
         </DataTemplate>

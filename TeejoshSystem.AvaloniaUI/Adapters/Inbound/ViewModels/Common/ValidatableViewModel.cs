@@ -50,5 +50,7 @@ namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Common
 
             OnPropertyChanged(nameof(HasErrors));
         }
+
+        protected virtual void ValidarTodo() { }
     }
 }

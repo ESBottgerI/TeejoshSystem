@@ -5,28 +5,28 @@
 
     <Grid RowDefinitions="Auto,*,Auto">
 
-        <Border Grid.Row="0" Background="#FF9800" Padding="24,16">
+        <Border Grid.Row="0" Background="{DynamicResource TeejoshPrimaryBrush}" Padding="24,16">
             <TextBlock Text="Sincronizar Catálogos"
                        FontSize="20" FontWeight="SemiBold"
                        Foreground="White" VerticalAlignment="Center"/>
         </Border>
 
-        <Border Grid.Row="1" Margin="16" Background="{DynamicResource TeejoshSurfaceBrush}" CornerRadius="4">
+        <Border Grid.Row="1" Margin="16" Theme="{StaticResource ContentPanel}">
             <StackPanel Margin="24" Spacing="16">
 
                 <TextBlock Text="Sincronización de catálogos TCG"
-                           FontSize="16" FontWeight="SemiBold"/>
+                           Theme="{StaticResource SectionTitle}"/>
 
-                <TextBlock TextWrapping="Wrap" Foreground="#666666">
+                <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource TeejoshMutedBrush}">
                     Conecta con TCGdex (Pokémon), Scryfall (Magic) y YGOProDeck (Yu-Gi-Oh!)
                     para actualizar las expansiones disponibles.
                     One Piece y Bluey se gestionan manualmente.
                 </TextBlock>
 
                 <!-- Resultado -->
-                <Border Background="#F5F5F5" CornerRadius="4" Padding="16"
+                <Border Background="{DynamicResource TeejoshBackgroundBrush}" CornerRadius="4" Padding="16"
                         IsVisible="{Binding Resultado,
-                            Converter={x:Static ObjectConverters.IsNotNull}}">
+                        Converter={x:Static ObjectConverters.IsNotNull}}">
                     <StackPanel Spacing="8">
                         <TextBlock Text="Resultado:" FontWeight="SemiBold"/>
                         <TextBlock Text="{Binding Resultado}"
@@ -45,21 +45,19 @@
             </StackPanel>
         </Border>
 
-        <Border Grid.Row="2" Margin="16,0,16,16" Background="{DynamicResource TeejoshSurfaceBrush}" Padding="16">
+        <Border Grid.Row="2" Margin="16,0,16,16" Theme="{StaticResource FooterPanel}">
             <Grid ColumnDefinitions="*,Auto,8,Auto">
                 <Button Grid.Column="1"
                         Command="{Binding SincronizarCommand}"
                         Content="Sincronizar ahora"
-                        Background="#FF9800"
-                        Foreground="White"
-                        Height="40" Padding="24,0"
+                        Theme="{StaticResource BrandButton}"
                         IsEnabled="{Binding IsBusy,
-                            Converter={x:Static BoolConverters.Not}}"/>
+                        Converter={x:Static BoolConverters.Not}}"/>
 
                 <Button Grid.Column="3"
                         Command="{Binding VolverCommand}"
-                        Content="Volver"
-                        Height="40" Padding="24,0"/>
+                        Theme="{StaticResource StandardButton}"
+                        Content="Volver"/>
             </Grid>
         </Border>
     </Grid>

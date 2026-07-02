@@ -5,12 +5,12 @@
         Width="1024"
         Height="768"
         WindowStartupLocation="CenterScreen"
-		x:CompileBindings="False">
+        x:CompileBindings="False">
 
-	<Grid RowDefinitions="Auto,*">
-        
+    <Grid RowDefinitions="Auto,*">
+
         <!-- Barra de título -->
-        <Border Grid.Row="0" Background="#2C3E50" Height="50">
+        <Border Grid.Row="0" Background="{DynamicResource TeejoshHeaderDarkBrush}" Height="50">
             <Grid ColumnDefinitions="*,Auto">
                 <TextBlock Text="TeejoshSystem - Gestion de Inventario"
                            Foreground="White"
@@ -33,9 +33,9 @@
                 </StackPanel>
             </Grid>
         </Border>
-        
+
         <!-- Contenido dinámico -->
-		<ContentControl Grid.Row="1"
-						Content="{Binding CurrentView}" />
+        <ContentControl Grid.Row="1"
+                        Content="{Binding CurrentView}" />
     </Grid>
 </Window>

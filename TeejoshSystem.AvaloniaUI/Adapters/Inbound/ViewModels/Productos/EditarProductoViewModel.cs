@@ -160,6 +160,11 @@ public partial class EditarProductoViewModel : ValidatableViewModel, ILoadable
     {
         if (IsBusy) return;
 
+        ValidarTodo();
+
+        if (HasErrors)
+            return;
+
         var confirmar = await _confirmation.ConfirmAsync(
             "¿Desea guardar los cambios del producto?");
         if (!confirmar) return;
@@ -196,26 +201,39 @@ public partial class EditarProductoViewModel : ValidatableViewModel, ILoadable
 
     private bool CanGuardar() => !HasErrors && !IsBusy;
 
-    partial void OnNombreChanged(string? value)
+    private void ValidarNombre(string? value)
     {
         ClearErrors(nameof(Nombre));
+
         if (string.IsNullOrWhiteSpace(value))
             AddError(nameof(Nombre), "El nombre es obligatorio.");
-        else if (value.Length > 50)
-            AddError(nameof(Nombre), "Máximo 50 caracteres.");
     }
 
-    partial void OnPrecioChanged(decimal value)
+    partial void OnNombreChanged(string? value)
+        => ValidarNombre(value);
+
+    private void ValidarPrecio(decimal value)
     {
         ClearErrors(nameof(Precio));
         if (value < 0)
             AddError(nameof(Precio), "El precio no puede ser negativo.");
     }
 
-    partial void OnUnidadesChanged(int value)
+    partial void OnPrecioChanged(decimal value)
+        => ValidarPrecio(value);
+
+    private void ValidarUnidades(int value)
     {
         ClearErrors(nameof(Unidades));
         if (value < 0)
             AddError(nameof(Unidades), "Las unidades no pueden ser negativas.");
+    }
+
+    partial void OnUnidadesChanged(int value)
+        => ValidarUnidades(value);
+
+    protected override void ValidarTodo()
+    {
+        ValidarNombre(Nombre);
     }
 }

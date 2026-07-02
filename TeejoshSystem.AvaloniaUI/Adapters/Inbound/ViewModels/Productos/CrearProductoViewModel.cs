@@ -280,7 +280,12 @@ public partial class CrearProductoViewModel : ValidatableViewModel
     [RelayCommand(CanExecute = nameof(CanGuardar))]
     private async Task GuardarAsync()
     {
+        ValidarTodo();
+
         if (IsBusy) return;
+
+        if (HasErrors)
+            return;
 
         var confirmar = await _confirmation.ConfirmAsync("¿Desea crear el producto?");
         if (!confirmar) return;
@@ -347,27 +352,80 @@ public partial class CrearProductoViewModel : ValidatableViewModel
 
     private bool CanGuardar() => !HasErrors && !IsBusy && CatalogosCargados;
 
-    partial void OnNombreChanged(string? value)
+    private void ValidarNombre(string? value)
     {
         ClearErrors(nameof(Nombre));
         if (string.IsNullOrWhiteSpace(value))
             AddError(nameof(Nombre), "El nombre es obligatorio.");
-        else if (value.Length > 50)
-            AddError(nameof(Nombre), "Máximo 50 caracteres.");
+    }
+
+    partial void OnNombreChanged(string? value)
+        => ValidarNombre(value);
+
+    private void ValidarPrecio(decimal value)
+    {
+        ClearErrors(nameof(Precio));
+        if (value == 0m)
+            AddError(nameof(Precio), "El precio es obligatorio.");
     }
 
     partial void OnPrecioChanged(decimal value)
+        => ValidarPrecio(value);
+
+    private void ValidarUnidades(int value)
     {
-        ClearErrors(nameof(Precio));
-        if (value < 0)
-            AddError(nameof(Precio), "El precio no puede ser negativo.");
+        ClearErrors(nameof(Unidades));
+        if (value == 0)
+            AddError(nameof(Unidades), "Las unidades son obligatorias.");
     }
 
     partial void OnUnidadesChanged(int value)
+        => ValidarUnidades(value);
+
+    private void ValidarHwModelo(string? value)
     {
-        ClearErrors(nameof(Unidades));
-        if (value < 0)
-            AddError(nameof(Unidades), "Las unidades no pueden ser negativas.");
+        ClearErrors(nameof(HwModelo));
+        if (string.IsNullOrWhiteSpace(value))
+            AddError(nameof(HwModelo), "El modelo es obligatorio.");
+    }
+
+    partial void OnHwModeloChanged(string? value)
+        => ValidarHwModelo(value);
+
+    private void ValidarHwSerie(string? value)
+    {
+        ClearErrors(nameof(HwSerie));
+        if (string.IsNullOrWhiteSpace(value))
+            AddError(nameof(HwSerie), "La serie es obligatoria.");
+    }
+
+    partial void OnHwSerieChanged(string? value)
+        => ValidarHwSerie(value);
+
+    private void ValidarFunkoLicencia(string? value)
+    {
+        ClearErrors(nameof(FunkoLicencia));
+        if (string.IsNullOrWhiteSpace(value))
+            AddError(nameof(FunkoLicencia), "La licencia es obligatoria.");
+    }
+
+    partial void OnFunkoLicenciaChanged(string? value)
+        => ValidarFunkoLicencia(value);
+
+    protected override void ValidarTodo()
+    {
+        ValidarNombre(Nombre);
+
+        if (MostrarHotWheels)
+        {
+            ValidarHwModelo(HwModelo);
+            ValidarHwSerie(HwSerie);
+        }
+
+        if (MostrarFunko)
+        {
+            ValidarFunkoLicencia(FunkoLicencia);
+        }
     }
 
     [RelayCommand]

@@ -27,6 +27,7 @@ namespace TeejoshSystem.Infrastructure.DependencyInjection
             services.AddScoped<ICatalogoRepository, CatalogoRepository>();
             services.AddScoped<IVentaRepository, VentaRepository>();
             services.AddScoped<IAuthService, LocalAuthService>();
+            services.AddScoped<IAuditLogRepository, AuditLogRepository>();
 
             services.AddSingleton<IImageStorageService, LocalImageStorageService>();
 

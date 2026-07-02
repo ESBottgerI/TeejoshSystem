@@ -9,6 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="8.0.0" />
     <PackageReference Include="Reqnroll" Version="3.3.4" />
     <PackageReference Include="Reqnroll.Tools.MsBuild.Generation" Version="3.3.4" />
     <PackageReference Include="Reqnroll.xUnit" Version="3.3.4" />
@@ -29,6 +30,7 @@
   <ItemGroup>
     <ProjectReference Include="../../TeejoshSystem.Domain/TeejoshSystem.Domain.csproj" />
     <ProjectReference Include="../../TeejoshSystem.Application/TeejoshSystem.Application.csproj" />
+    <ProjectReference Include="..\..\TeejoshSystem.Infrastructure\TeejoshSystem.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

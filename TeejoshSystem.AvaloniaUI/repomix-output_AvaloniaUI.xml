@@ -56,9 +56,11 @@ Adapters/
       NavigationService.cs
       NotificationService.cs
       SessionContext.cs
+      SessionCurrentUserProvider.cs
       ThemePreferenceService.cs
     ViewModels/
       Admin/
+        AuditLogViewModel.cs
         CambiarPasswordViewModel.cs
         GestionarUsuariosViewModel.cs
       Auth/
@@ -83,6 +85,8 @@ Adapters/
         RegistrarVentaViewModel.cs
     Views/
       Admin/
+        AuditLogView.axaml
+        AuditLogView.axaml.cs
         CambiarPasswordView.axaml
         CambiarPasswordView.axaml.cs
         GestionarUsuariosView.axaml
@@ -510,6 +514,25 @@ namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.Services
 }
 </file>
 
+<file path="Adapters/Inbound/Services/SessionCurrentUserProvider.cs">
+using TeejoshSystem.Domain.Ports.Outbound;
+
+namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.Services
+{
+    public class SessionCurrentUserProvider : ICurrentUserProvider
+    {
+        private readonly SesionContext _sesionContext;
+
+        public SessionCurrentUserProvider(SesionContext sesionContext)
+        {
+            _sesionContext = sesionContext;
+        }
+
+        public string? UsuarioActual => _sesionContext.SesionActual?.NombreUsuario;
+    }
+}
+</file>
+
 <file path="Adapters/Inbound/Services/ThemePreferenceService.cs">
 using System;
 using System.IO;
@@ -561,6 +584,74 @@ public sealed class ThemePreferenceService : IThemePreferenceService
         {
             // No interrumpir el flujo principal de la interfaz de usuario si no se puede guardar la preferencia. (O añadir log del suceso)
         }
+    }
+}
+</file>
+
+<file path="Adapters/Inbound/ViewModels/Admin/AuditLogViewModel.cs">
+using System;
+using System.Collections.ObjectModel;
+using System.Threading.Tasks;
+
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using MediatR;
+
+using TeejoshSystem.Application.Ports.Inbound.Auditoria.Queries.ConsultarAuditLog;
+using TeejoshSystem.AvaloniaUI.Adapters.Inbound.Services;
+using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Common;
+
+namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Admin
+{
+    public partial class AuditLogViewModel : ViewModelBase, ILoadable
+    {
+        private readonly IMediator _mediator;
+        private readonly INavigationService _navigation;
+
+        [ObservableProperty]
+        private string? _filtroEntidad;
+
+        [ObservableProperty]
+        private string? _filtroUsuario;
+
+        public ObservableCollection<AuditLogDto> Entradas { get; } = new();
+
+        public AuditLogViewModel(IMediator mediator, INavigationService navigation)
+        {
+            _mediator = mediator;
+            _navigation = navigation;
+        }
+
+        public void OnLoaded()
+        {
+            _ = CargarAsync();
+        }
+
+        [RelayCommand]
+        private async Task CargarAsync()
+        {
+            if (IsBusy) return;
+
+            try
+            {
+                IsBusy = true;
+
+                var resultado = await _mediator.Send(new ConsultarAuditLogQuery(
+                    Entidad: string.IsNullOrWhiteSpace(FiltroEntidad) ? null : FiltroEntidad,
+                    Usuario: string.IsNullOrWhiteSpace(FiltroUsuario) ? null : FiltroUsuario));
+
+                Entradas.Clear();
+                foreach (var entrada in resultado)
+                    Entradas.Add(entrada);
+            }
+            finally
+            {
+                IsBusy = false;
+            }
+        }
+
+        [RelayCommand]
+        private void Volver() => _navigation.NavigateToMenu();
     }
 }
 </file>
@@ -1080,19 +1171,22 @@ namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Menu
         private readonly SesionContext _sesionContext;
         private readonly INotificationService _notification;
         private readonly SincronizarCatalogosViewModel _sincronizarVm;
+        private readonly AuditLogViewModel _auditLogVm;
 
         public MenuPrincipalViewModel(
             IServiceProvider serviceProvider,
             INavigationService navigation,
             SesionContext sesionContext,
             INotificationService notification,
-            SincronizarCatalogosViewModel sincronizarVm)
+            SincronizarCatalogosViewModel sincronizarVm,
+            AuditLogViewModel auditLogVm)
         {
             _serviceProvider = serviceProvider;
             _navigation = navigation;
             _sesionContext = sesionContext;
             _notification = notification;
             _sincronizarVm = sincronizarVm;
+            _auditLogVm = auditLogVm;
         }
 
         public bool EsAdministrador
@@ -1174,6 +1268,10 @@ namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Menu
         [RelayCommand]
         private void SincronizarCatalogos() =>
             _navigation.NavigateTo(_sincronizarVm);
+
+        [RelayCommand]
+        private void VerAuditLog() => 
+            _navigation.NavigateTo(_auditLogVm);
     }
 }
 </file>
@@ -2332,7 +2430,16 @@ public partial class RegistrarVentaViewModel : ViewModelBase
             {
                 await _notification.ShowSuccessAsync(
                     $"Venta #{result.Value} registrada correctamente.");
-                _navigation.NavigateToMenu();
+
+                ItemsVenta.Clear();
+                TotalVenta = 0;
+                CantidadSeleccionada = 1;
+                ProductoSeleccionado = null;
+                TextoBusqueda = null;
+
+                await BuscarProductosAsync();
+
+                ConfirmarVentaCommand.NotifyCanExecuteChanged();
             }
             else
             {
@@ -2373,6 +2480,94 @@ public partial class ItemVentaVm : ObservableObject
     private int _cantidad;
 
     public decimal Subtotal => PrecioUnitario * Cantidad;
+}
+</file>
+
+<file path="Adapters/Inbound/Views/Admin/AuditLogView.axaml">
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="TeejoshSystem.AvaloniaUI.Adapters.Inbound.Views.Admin.AuditLogView"
+             x:CompileBindings="False">
+
+    <Grid RowDefinitions="Auto,*,Auto">
+
+        <Border Grid.Row="0" Background="#FF9800" Padding="24,16">
+            <TextBlock Text="Historial de Cambios"
+                       FontSize="20" FontWeight="SemiBold"
+                       Foreground="White" VerticalAlignment="Center"/>
+        </Border>
+
+        <Border Grid.Row="1" Margin="16" Background="White" CornerRadius="4">
+            <Grid RowDefinitions="Auto,*">
+
+                <StackPanel Grid.Row="0" Margin="24,24,24,16">
+                    <Grid ColumnDefinitions="*,16,*,16,Auto">
+                        <TextBox Grid.Column="0"
+                                 Text="{Binding FiltroEntidad}"
+                                 Watermark="Entidad (ej. Producto)"/>
+                        <TextBox Grid.Column="2"
+                                 Text="{Binding FiltroUsuario}"
+                                 Watermark="Usuario"/>
+                        <Button Grid.Column="4"
+                                Command="{Binding CargarCommand}"
+                                Content="Buscar"
+                                Background="#FF9800"
+                                Foreground="White"
+                                Height="40" Padding="24,0"/>
+                    </Grid>
+                </StackPanel>
+
+                <DataGrid Grid.Row="1"
+                          ItemsSource="{Binding Entradas}"
+                          IsReadOnly="True"
+                          AutoGenerateColumns="False"
+                          Margin="24,0,24,24">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Fecha"
+                                            Binding="{Binding Timestamp}"
+                                            Width="160"/>
+                        <DataGridTextColumn Header="Usuario"
+                                            Binding="{Binding Usuario}"
+                                            Width="120"/>
+                        <DataGridTextColumn Header="Entidad"
+                                            Binding="{Binding Entidad}"
+                                            Width="120"/>
+                        <DataGridTextColumn Header="ID"
+                                            Binding="{Binding EntidadId}"
+                                            Width="80"/>
+                        <DataGridTextColumn Header="Acción"
+                                            Binding="{Binding Accion}"
+                                            Width="100"/>
+                        <DataGridTextColumn Header="Cambios"
+                                            Binding="{Binding Cambios}"
+                                            Width="2*"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Grid>
+        </Border>
+
+        <Border Grid.Row="2" Margin="16,0,16,16" Background="White" Padding="16">
+            <Button Command="{Binding VolverCommand}"
+                    Content="Volver"
+                    Height="40" Padding="24,0"
+                    HorizontalAlignment="Right"/>
+        </Border>
+    </Grid>
+</UserControl>
+</file>
+
+<file path="Adapters/Inbound/Views/Admin/AuditLogView.axaml.cs">
+using Avalonia.Controls;
+
+namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.Views.Admin
+{
+    public partial class AuditLogView : UserControl
+    {
+        public AuditLogView()
+        {
+            InitializeComponent();
+        }
+    }
 }
 </file>
 
@@ -2833,6 +3028,13 @@ namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.Views.Catalogos
                         IsVisible="{Binding EsAdministrador}"/>
 
 		<Separator Margin="0,8"/>
+
+                <Button Content="📋 Historial de cambios"
+                        Command="{Binding VerAuditLogCommand}"
+                        Width="200" HorizontalAlignment="Center"
+                        IsVisible="{Binding EsAdministrador}"/>
+
+                <Separator Margin="0,8"/>
 
 		<Button Content="Cerrar sesión"
 				Command="{Binding CerrarSesionCommand}"
@@ -4033,6 +4235,10 @@ public partial class RegistrarVentaView : UserControl
             <viewsAdmin:CambiarPasswordView/>
         </DataTemplate>
 
+        <DataTemplate DataType="{x:Type vmAdmin:AuditLogViewModel}">
+            <viewsAdmin:AuditLogView/>
+        </DataTemplate>
+
         <DataTemplate DataType="{x:Type vmProductos:InventarioViewModel}">
             <viewsProductos:InventarioView />
         </DataTemplate>
@@ -4078,6 +4284,7 @@ using Serilog;                               // NUEVO
 using System;
 using System.ComponentModel;
 using System.Threading.Tasks;
+using TeejoshSystem.Domain.Ports.Outbound;
 using TeejoshSystem.AvaloniaUI.Adapters.Inbound.Services;
 using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Admin;
 using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Auth;
@@ -4110,6 +4317,13 @@ public partial class App : Avalonia.Application
             .AddEnvironmentVariables()
             .Build();
 
+        // ── DEBUG TEMPORAL ─────────────────────────────────────
+        var dbProvider = configuration["Database:Provider"] ?? "(no encontrado)";
+        var dbCs = configuration["Database:ConnectionString"] ?? "(no encontrado)";
+        Console.WriteLine($"[STARTUP] Provider  : {dbProvider}");
+        Console.WriteLine($"[STARTUP] ConnString: {dbCs[..Math.Min(50, dbCs.Length)]}...");
+        // ───────────────────────────────────────────────────────
+
         // NUEVO — Serilog lee su configuración completa desde appsettings.json
         Log.Logger = new LoggerConfiguration()
             .ReadFrom.Configuration(configuration)
@@ -4141,9 +4355,11 @@ public partial class App : Avalonia.Application
                 services.AddTransient<GestionarProductosViewModel>();
                 services.AddTransient<CrearProductoViewModel>();
                 services.AddTransient<SincronizarCatalogosViewModel>();
+                services.AddTransient<AuditLogViewModel>();
 
                 // Auth
                 services.AddSingleton<SesionContext>();
+                services.AddSingleton<ICurrentUserProvider, SessionCurrentUserProvider>();
                 services.AddTransient<LoginViewModel>();
                 services.AddTransient<GestionarUsuariosViewModel>();
                 services.AddTransient<CambiarPasswordViewModel>();
@@ -4233,7 +4449,8 @@ public partial class App : Avalonia.Application
 <file path="appsettings.json">
 {
   "Database": {
-    "Provider": "sqlite"
+    "Provider": "sqlite",
+    "ConnectionString": "Data Source={LocalAppData}/TeejoshSystem/inventario.db"
   },
 
   "Serilog": {
@@ -4272,33 +4489,29 @@ public partial class App : Avalonia.Application
 {
   "Database": {
     "Provider": "postgresql",
-    "ConnectionString": "Host=aws-1-us-east-2.pooler.supabase.com;Database=postgres;Username=postgres.aecdxyqppbumolmuftmt;Password=----"
+    "ConnectionString": "Host=db.wembmejrmztqhvvsownj.supabase.co;Port=5432;Database=postgres;Username=postgres;Password=Teejosh2026;SSL Mode=Require;Trust Server Certificate=true"
   },
 
-  "Logging": {
-    "MinLevel": "Information",
-
-    "Serilog": {
-      "MinimumLevel": {
-        "Default": "Information",
-        "Override": {
-          "Microsoft": "Warning",
-          "Microsoft.EntityFrameworkCore": "Warning",
-          "System": "Warning"
+  "Serilog": {
+    "MinimumLevel": {
+      "Default": "Information",
+      "Override": {
+        "Microsoft": "Warning",
+        "Microsoft.EntityFrameworkCore": "Warning",
+        "System": "Warning"
+      }
+    },
+    "WriteTo": [
+      {
+        "Name": "File",
+        "Args": {
+          "path": "/var/log/teejosh/teejosh-.log",
+          "rollingInterval": "Day",
+          "retainedFileCountLimit": 90,
+          "outputTemplate": "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {SourceContext} — {Message:lj}{NewLine}{Exception}"
         }
-      },
-      "WriteTo": [
-        {
-          "Name": "File",
-          "Args": {
-            "path": "/var/log/teejosh/teejosh-.log",
-            "rollingInterval": "Day",
-            "retainedFileCountLimit": 90,
-            "outputTemplate": "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {SourceContext} — {Message:lj}{NewLine}{Exception}"
-          }
-        }
-      ]
-    }
+      }
+    ]
   }
 }
 </file>

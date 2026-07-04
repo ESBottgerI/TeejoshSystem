@@ -1,0 +1,71 @@
+@* ──────────────────────────────────────────────────────────────────────────
+   Página TEMPORAL de validación (tarea 0.4 del plan).
+   Objetivo único: demostrar que Blazor → Mediator → Application →
+   Infrastructure → DB funciona de punta a punta con datos reales.
+
+   Eliminar esta página al cerrar la Fase 1 (cuando exista Inventario real,
+   que cubre exactamente lo mismo pero como funcionalidad definitiva).
+   ────────────────────────────────────────────────────────────────────────── *@
+@page "/smoke-test"
+@using MediatR
+@using TeejoshSystem.Application.Ports.Inbound.Productos.Queries.ObtenerProductos
+@inject IMediator Mediator
+
+<PageTitle>Smoke Test — Integración Application/Infrastructure</PageTitle>
+
+<h3>Smoke Test: Blazor → Mediator → Application → Infrastructure → DB</h3>
+
+@if (_cargando)
+{
+    <p><em>Consultando productos...</em></p>
+}
+else if (_error is not null)
+{
+    <div class="alert alert-danger">
+        <strong>Error:</strong> @_error
+    </div>
+}
+else
+{
+    <div class="alert alert-success">
+        Conexión OK. Se encontraron <strong>@_cantidadProductos</strong> producto(s) en la base de datos.
+    </div>
+
+    @if (_cantidadProductos > 0)
+    {
+        <ul>
+            @foreach (var producto in _productos!)
+            {
+                <li>@producto.Nombre — @producto.TipoDescripcion — S/ @producto.Precio (stock: @producto.Unidades)</li>
+            }
+        </ul>
+    }
+}
+
+@code {
+    private bool _cargando = true;
+    private string? _error;
+    private int _cantidadProductos;
+    private IReadOnlyList<TeejoshSystem.Application.Common.Dtos.ProductoDto>? _productos;
+
+    // Nota: ObtenerProductosQuery devuelve IReadOnlyList<ProductoDto> directamente,
+    // NO un Result<T> — a diferencia de AutenticarUsuarioCommand. No todos los
+    // Commands/Queries de Application siguen el mismo contrato de retorno;
+    // conviene revisar cada uno antes de asumir que todos usan Result<T>.
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _productos = await Mediator.Send(new ObtenerProductosQuery());
+            _cantidadProductos = _productos.Count;
+        }
+        catch (Exception ex)
+        {
+            _error = $"Excepción no controlada: {ex.Message}";
+        }
+        finally
+        {
+            _cargando = false;
+        }
+    }
+}

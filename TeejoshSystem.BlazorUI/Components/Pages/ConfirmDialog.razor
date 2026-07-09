@@ -1,0 +1,32 @@
+@* ──────────────────────────────────────────────────────────────────────────
+   Equivalente Razor de IConfirmationService de Avalonia. La intención se
+   reutiliza (confirmar antes de una acción destructiva); la implementación
+   no puede ser la misma porque allá es una Window nativa y acá es HTML/CSS.
+   ────────────────────────────────────────────────────────────────────────── *@
+<div class="modal @(Visible ? "d-block" : "d-none")" tabindex="-1" style="background:rgba(0,0,0,0.5);">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">@Titulo</h5>
+            </div>
+            <div class="modal-body">
+                <p class="mb-0">@Mensaje</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" @onclick="OnCancelarAsync">Cancelar</button>
+                <button class="btn btn-danger" @onclick="OnConfirmarAsync">Confirmar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public bool Visible { get; set; }
+    [Parameter] public string Titulo { get; set; } = "Confirmar";
+    [Parameter] public string Mensaje { get; set; } = "¿Estás seguro?";
+    [Parameter] public EventCallback OnConfirm { get; set; }
+    [Parameter] public EventCallback OnCancel { get; set; }
+
+    private Task OnConfirmarAsync() => OnConfirm.InvokeAsync();
+    private Task OnCancelarAsync() => OnCancel.InvokeAsync();
+}

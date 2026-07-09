@@ -1,0 +1,143 @@
+@page "/productos"
+@attribute [Authorize(Roles = AuthorizationConstants.Administrador)]
+@rendermode InteractiveServer
+@using MediatR
+@using TeejoshSystem.Application.Ports.Inbound.Productos.Queries.ObtenerProductos
+@using TeejoshSystem.Application.Ports.Inbound.Productos.Commands.EliminarProducto
+@inject IMediator Mediator
+@inject NavigationManager Navigation
+
+<PageTitle>Gestionar Productos</PageTitle>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="mb-0">Gestionar Productos</h3>
+    <a class="btn btn-primary" href="productos/crear">Añadir Producto</a>
+</div>
+
+@if (_mensajeExito is not null)
+{
+    <div class="alert alert-success">@_mensajeExito</div>
+}
+
+@if (_cargando)
+{
+    <p><em>Cargando productos...</em></p>
+}
+else if (_error is not null)
+{
+    <div class="alert alert-danger">@_error</div>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Tipo</th>
+                <th>Nombre</th>
+                <th class="text-end">Precio</th>
+                <th class="text-end">Stock</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var producto in _productos)
+            {
+                <tr>
+                    <td>@producto.TipoDescripcion</td>
+                    <td>@producto.Nombre</td>
+                    <td class="text-end">S/ @producto.Precio.ToString("0.00")</td>
+                    <td class="text-end">@producto.Unidades</td>
+                    <td class="text-end">
+                        <a class="btn btn-sm btn-outline-secondary" href="productos/editar/@producto.Id">
+                            Editar
+                        </a>
+                        <button class="btn btn-sm btn-outline-danger" @onclick="() => PedirConfirmacionEliminar(producto.Id, producto.Nombre)">
+                            Eliminar
+                        </button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+<ConfirmDialog Visible="_mostrarConfirmacion"
+               Titulo="Eliminar producto"
+               Mensaje="@_mensajeConfirmacion"
+               OnConfirm="EliminarConfirmadoAsync"
+               OnCancel="CancelarEliminacion" />
+
+@code {
+    private List<TeejoshSystem.Application.Common.Dtos.ProductoDto> _productos = new();
+    private bool _cargando = true;
+    private string? _error;
+    private string? _mensajeExito;
+
+    private bool _mostrarConfirmacion;
+    private string _mensajeConfirmacion = string.Empty;
+    private int _idAEliminar;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarAsync();
+    }
+
+    private async Task CargarAsync()
+    {
+        _cargando = true;
+        _error = null;
+        try
+        {
+            var productos = await Mediator.Send(new ObtenerProductosQuery());
+            _productos = productos.ToList();
+        }
+        catch (Exception ex)
+        {
+            _error = $"No se pudo cargar el listado: {ex.Message}";
+        }
+        finally
+        {
+            _cargando = false;
+        }
+    }
+
+    private void PedirConfirmacionEliminar(int id, string nombre)
+    {
+        _idAEliminar = id;
+        _mensajeConfirmacion = $"¿Eliminar \"{nombre}\"? Esta acción no se puede deshacer.";
+        _mostrarConfirmacion = true;
+    }
+
+    private void CancelarEliminacion()
+    {
+        _mostrarConfirmacion = false;
+    }
+
+    private async Task EliminarConfirmadoAsync()
+    {
+        _mostrarConfirmacion = false;
+        _mensajeExito = null;
+        _error = null;
+
+        try
+        {
+            // EliminarProductoCommand acepta una lista (borrado en lote);
+            // aquí se usa con un solo elemento para el caso de un botón por fila.
+            var resultado = await Mediator.Send(new EliminarProductoCommand(new List<int> { _idAEliminar }));
+
+            if (resultado.IsSuccess)
+            {
+                _mensajeExito = "Producto eliminado correctamente.";
+                await CargarAsync();
+            }
+            else
+            {
+                _error = resultado.Error;
+            }
+        }
+        catch (Exception ex)
+        {
+            _error = $"Error inesperado al eliminar: {ex.Message}";
+        }
+    }
+}

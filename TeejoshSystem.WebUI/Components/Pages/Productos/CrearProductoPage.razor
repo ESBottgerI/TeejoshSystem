@@ -23,9 +23,9 @@
             }
         </select>
     </div>
-    <CustomInputText Label="Nombre" Value="Model.Nombre" ValueChanged="v => Model.Nombre = v ?? string.Empty" Error="@NombreError" Disabled="IsBusy" />
-    <CustomInputNumber Label="Precio" Value="Model.Precio" ValueChanged="v => Model.Precio = v" Step="0.01" Disabled="IsBusy" />
-    <CustomInputNumber Label="Unidades" Value="Model.Unidades" ValueChanged="v => Model.Unidades = (int)v" Disabled="IsBusy" />
+    <CustomInputText Label="Nombre" Value="@Model.Nombre" ValueChanged="v => Model.Nombre = v ?? string.Empty" Error="@NombreError" Disabled="IsBusy" />
+    <CustomInputNumber Label="Precio" Value="@Model.Precio" ValueChanged="v => Model.Precio = v" Step="0.01" Disabled="IsBusy" />
+    <CustomInputNumber Label="Unidades" Value="@Model.Unidades" ValueChanged="v => Model.Unidades = (int)v" Disabled="IsBusy" />
 
     @switch (Model.Tipo)
     {

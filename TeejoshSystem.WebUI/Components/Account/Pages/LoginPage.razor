@@ -8,10 +8,10 @@
         <p class="eyebrow">Acceso seguro</p>
         <h1 id="login-title">Iniciar sesion</h1>
         <form @onsubmit="LoginAsync" @onsubmit:preventDefault="true" novalidate>
-            <CustomInputText Label="Usuario" Value="NombreUsuario" ValueChanged="v => NombreUsuario = v ?? string.Empty" Error="@NombreUsuarioError" Disabled="IsBusy" />
+            <CustomInputText Label="Usuario" Value="@NombreUsuario" ValueChanged="v => NombreUsuario = v ?? string.Empty" Error="@NombreUsuarioError" Disabled="IsBusy" />
             <div class="field">
                 <label for="password">Password</label>
-                <input id="password" class="input" type="password" @bind="Password" disabled="@IsBusy" aria-invalid="@(!string.IsNullOrWhiteSpace(PasswordError))" />
+                <input id="password" class="input" type="password" @bind="Password" @bind:event="oninput" disabled="@IsBusy" aria-invalid="@(!string.IsNullOrWhiteSpace(PasswordError))" />
                 @if (!string.IsNullOrWhiteSpace(PasswordError))
                 {
                     <p class="field-error" role="alert">@PasswordError</p>

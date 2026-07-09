@@ -3,8 +3,8 @@
 
 <fieldset class="form-section">
     <legend>Detalle Funko</legend>
-    <CustomInputNumber Label="Numero de caja" Value="Model.NumeroBox" ValueChanged="v => Model.NumeroBox = (int)v" />
-    <CustomInputText Label="Licencia" Value="Model.Licencia" ValueChanged="v => Model.Licencia = v ?? string.Empty" />
+    <CustomInputNumber Label="Numero de caja" Value="@Model.NumeroBox" ValueChanged="v => Model.NumeroBox = (int)v" />
+    <CustomInputText Label="Licencia" Value="@Model.Licencia" ValueChanged="v => Model.Licencia = v ?? string.Empty" />
     <div class="field"><label>Subtipo</label><select class="input" @bind="Model.SubtipoId">@foreach (var item in Catalogos.SubtiposFunko) { <option value="@item.Id">@item.Nombre</option> }</select></div>
     <div class="field"><label>Caracteristica</label><select class="input" @bind="Model.CaracteristicaEspecialId"><option value="">Ninguna</option>@foreach (var item in Catalogos.CaracteristicasFunko) { <option value="@item.Id">@item.Nombre</option> }</select></div>
 </fieldset>

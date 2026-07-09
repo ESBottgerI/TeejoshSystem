@@ -2,9 +2,9 @@
 
 <fieldset class="form-section">
     <legend>Detalle Toy</legend>
-    <CustomInputNumber Label="Edad minima" Value="Model.EdadMinima" ValueChanged="v => Model.EdadMinima = (int)v" />
-    <CustomInputNumber Label="Jugadores minimo" Value="Model.JugadoresMinimo" ValueChanged="v => Model.JugadoresMinimo = (int)v" />
-    <CustomInputNumber Label="Jugadores maximo" Value="Model.JugadoresMaximo" ValueChanged="v => Model.JugadoresMaximo = (int)v" />
+    <CustomInputNumber Label="Edad minima" Value="@Model.EdadMinima" ValueChanged="v => Model.EdadMinima = (int)v" />
+    <CustomInputNumber Label="Jugadores minimo" Value="@Model.JugadoresMinimo" ValueChanged="v => Model.JugadoresMinimo = (int)v" />
+    <CustomInputNumber Label="Jugadores maximo" Value="@Model.JugadoresMaximo" ValueChanged="v => Model.JugadoresMaximo = (int)v" />
     <label class="check"><input type="checkbox" @bind="Model.EsJuegoMesa" /> Juego de mesa</label>
 </fieldset>
 

@@ -1,5 +1,6 @@
 @page "/ventas"
 @attribute [Authorize(Roles = "Administrador,Operador")]
+@using TeejoshSystem.Application.Common
 @using TeejoshSystem.Application.Ports.Inbound.Productos.Queries.BuscarProductos
 @using TeejoshSystem.Application.Ports.Inbound.Ventas.Commands.RegistrarVenta
 @inject IMediator Mediator
@@ -37,12 +38,15 @@
     <CarritoVenta OnConfirm="RegistrarAsync" />
 </section>
 
-<HistorialVentasTable />
+<ResultErrorDisplay Result="_ventaResult" />
+<HistorialVentasTable @key="_historialKey" />
 
 @code {
     private string? Nombre { get; set; }
     private bool IsBusy { get; set; }
     private List<ProductoBusquedaDto> Productos { get; set; } = new();
+    private Result<int>? _ventaResult;
+    private int _historialKey;
 
     protected override async Task OnInitializedAsync() => await BuscarAsync();
 
@@ -61,15 +65,18 @@
         if (StateStore.CartItems.Count == 0) return;
 
         IsBusy = true;
+        _ventaResult = null;
         var command = new RegistrarVentaCommand(StateStore.CartItems
             .Select(i => new RegistrarVentaItemCommand(i.ProductId, i.Quantity))
             .ToList());
         var result = await Mediator.Send(command);
         IsBusy = false;
+        _ventaResult = result;
 
         if (result.IsSuccess)
         {
             StateStore.Clear();
+            _historialKey++;
             await Notifications.ShowSuccessAsync($"Venta registrada #{result.Value}.");
             await BuscarAsync();
         }

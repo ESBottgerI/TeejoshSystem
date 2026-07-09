@@ -1,6 +1,8 @@
 @page "/inventario"
 @attribute [Authorize(Roles = "Administrador,Operador")]
+@using TeejoshSystem.Application.Common.Dtos
 @using TeejoshSystem.Application.Ports.Inbound.Productos.Queries.BuscarProductos
+@using TeejoshSystem.Application.Ports.Inbound.Productos.Queries.ObtenerProductos
 @using TeejoshSystem.Domain.Enums
 @inject IMediator Mediator
 
@@ -30,12 +32,35 @@
     private bool IsBusy { get; set; }
     private List<ProductoBusquedaDto> Productos { get; set; } = new();
 
-    protected override async Task OnInitializedAsync() => await BuscarAsync();
+    protected override async Task OnInitializedAsync() => await CargarListadoAsync();
 
     private async Task BuscarAsync()
     {
         IsBusy = true;
-        Productos = await Mediator.Send(new BuscarProductosQuery(Nombre, Tipo));
+        if (string.IsNullOrWhiteSpace(Nombre) && Tipo is null)
+        {
+            await CargarListadoAsync();
+        }
+        else
+        {
+            Productos = await Mediator.Send(new BuscarProductosQuery(Nombre, Tipo));
+        }
         IsBusy = false;
     }
+
+    private async Task CargarListadoAsync()
+    {
+        var productos = await Mediator.Send(new ObtenerProductosQuery());
+        Productos = productos.Select(ToBusquedaDto).ToList();
+    }
+
+    private static ProductoBusquedaDto ToBusquedaDto(ProductoDto producto) => new()
+    {
+        Id = producto.Id,
+        Tipo = producto.Tipo,
+        Nombre = producto.Nombre,
+        Precio = producto.Precio,
+        Unidades = producto.Unidades,
+        DetalleResumen = producto.DetalleResumen
+    };
 }

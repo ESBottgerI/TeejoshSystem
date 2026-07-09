@@ -29,9 +29,9 @@ else if (_producto is null)
 else
 {
     <form class="form-grid" @onsubmit="GuardarAsync" @onsubmit:preventDefault="true">
-        <CustomInputText Label="Nombre" Value="_nombre" ValueChanged="v => _nombre = v ?? string.Empty" Error="@_nombreError" Disabled="_isBusy" />
-        <CustomInputNumber Label="Precio" Value="_precio" ValueChanged="v => _precio = v" Step="0.01" Disabled="_isBusy" />
-        <CustomInputNumber Label="Unidades" Value="_unidades" ValueChanged="v => _unidades = (int)v" Disabled="_isBusy" />
+        <CustomInputText Label="Nombre" Value="@_nombre" ValueChanged="v => _nombre = v ?? string.Empty" Error="@_nombreError" Disabled="_isBusy" />
+        <CustomInputNumber Label="Precio" Value="@_precio" ValueChanged="v => _precio = v" Step="0.01" Disabled="_isBusy" />
+        <CustomInputNumber Label="Unidades" Value="@_unidades" ValueChanged="v => _unidades = (int)v" Disabled="_isBusy" />
 
         <div class="field">
             <label>Imagen actual</label>

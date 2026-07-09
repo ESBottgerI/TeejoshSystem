@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
 using TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence;
 using TeejoshSystem.Infrastructure.DependencyInjection;
@@ -16,6 +17,10 @@ public static class ServiceCollectionExtensions
     {
         services.AddHttpClient();
         services.AddHttpContextAccessor();
+        services.AddAuthentication(BlazorCircuitAuthenticationHandler.SchemeName)
+            .AddScheme<AuthenticationSchemeOptions, BlazorCircuitAuthenticationHandler>(
+                BlazorCircuitAuthenticationHandler.SchemeName,
+                options => { });
         services.AddAuthenticationCore();
         services.AddAuthorization();
         services.AddCascadingAuthenticationState();
@@ -39,6 +44,13 @@ public static class ServiceCollectionExtensions
     public static async Task ApplyTeejoshDatabaseAsync(this IServiceProvider services)
     {
         using var scope = services.CreateScope();
+        var configuration = scope.ServiceProvider.GetRequiredService<IConfiguration>();
+
+        if (!configuration.GetValue<bool>("Database:ApplyMigrationsOnStartup"))
+        {
+            return;
+        }
+
         var db = scope.ServiceProvider.GetRequiredService<InventarioDbContext>();
         await db.Database.MigrateAsync();
         DatabaseSeeder.SeedUsuarioAdmin(db);

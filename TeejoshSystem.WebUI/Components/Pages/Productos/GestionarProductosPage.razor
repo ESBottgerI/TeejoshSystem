@@ -1,10 +1,10 @@
 @page "/productos"
 @attribute [Authorize(Roles = "Administrador")]
+@using TeejoshSystem.Application.Common
 @using TeejoshSystem.Application.Ports.Inbound.Productos.Commands.EliminarProducto
 @using TeejoshSystem.Application.Ports.Inbound.Productos.Queries.BuscarProductos
 @inject IMediator Mediator
 @inject BlazorNotificationService Notifications
-@inject IJSRuntime JS
 
 <section class="page-header">
     <p class="eyebrow">Operacion</p>
@@ -12,16 +12,22 @@
     <a class="btn primary" href="/productos/crear">Nuevo producto</a>
 </section>
 
-<InventarioTableGrid Items="Productos" />
+<ResultErrorDisplay Result="_eliminarResult" />
 
 <div class="table-shell">
     <table class="data-table">
-        <thead><tr><th>Nombre</th><th>Acciones</th></tr></thead>
+        <thead>
+            <tr><th>Producto</th><th>Tipo</th><th>Precio</th><th>Stock</th><th>Detalle</th><th>Acciones</th></tr>
+        </thead>
         <tbody>
             @foreach (var producto in Productos)
             {
                 <tr>
-                    <td>@producto.Nombre</td>
+                    <td><a class="nav-link" style="padding:0;color:var(--tj-on-surface)" href="/productos/@producto.Id">@producto.Nombre</a></td>
+                    <td>@producto.Tipo</td>
+                    <td>@producto.Precio.ToString("C")</td>
+                    <td><BadgeStatus Stock="producto.Unidades" /></td>
+                    <td>@producto.DetalleResumen</td>
                     <td class="toolbar" style="margin:0">
                         <a class="btn secondary" href="/productos/editar/@producto.Id">Editar</a>
                         <button class="btn danger" @onclick="() => ConfirmarEliminar(producto)" disabled="@_isBusy">Eliminar</button>
@@ -54,6 +60,7 @@
 @code {
     private List<ProductoBusquedaDto> Productos { get; set; } = new();
     private ProductoBusquedaDto? _productoAEliminar;
+    private Result? _eliminarResult;
     private bool _isBusy;
 
     protected override async Task OnInitializedAsync() => await CargarAsync();
@@ -80,10 +87,12 @@
         if (_productoAEliminar is null) return;
 
         _isBusy = true;
+        _eliminarResult = null;
         var id = _productoAEliminar.Id;
         var result = await Mediator.Send(new EliminarProductoCommand(new List<int> { id }));
         _isBusy = false;
         _productoAEliminar = null;
+        _eliminarResult = result;
 
         if (result.IsSuccess)
         {

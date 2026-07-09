@@ -1,0 +1,162 @@
+@page "/inventario/{Id:int}"
+@attribute [Authorize(Roles = AuthorizationConstants.Administrador)]
+@rendermode InteractiveServer
+@using MediatR
+@using TeejoshSystem.Application.Common.Dtos
+@using TeejoshSystem.Application.Ports.Inbound.Productos.Queries.ObtenerProductosPorId
+@using TeejoshSystem.BlazorUI.Services
+@inject IMediator Mediator
+@inject NavigationManager Navigation
+
+<PageTitle>Detalle de Producto</PageTitle>
+
+<button class="btn btn-link mb-3 p-0" @onclick='() => Navigation.NavigateTo("/inventario")'>
+    ← Volver al inventario
+</button>
+
+@if (_cargando)
+{
+    <p><em>Cargando producto...</em></p>
+}
+else if (_error is not null)
+{
+    <div class="alert alert-danger">@_error</div>
+}
+else if (_producto is not null)
+{
+    <h3>@_producto.Nombre</h3>
+    <p class="text-muted">@TipoProductoDisplay.ToDisplayName(_producto.Tipo)</p>
+
+    <dl class="row">
+        <dt class="col-sm-3">Precio</dt>
+        <dd class="col-sm-9">S/ @_producto.Precio.ToString("0.00")</dd>
+
+        <dt class="col-sm-3">Stock</dt>
+        <dd class="col-sm-9">@_producto.Unidades unidades</dd>
+    </dl>
+
+    @* El manejo real de ImagePath (servir el archivo, no solo la ruta) es
+       tarea explícita de la Fase 5.4 — Avalonia lo resuelve con un
+       IValueConverter local que no aplica a un servidor remoto. Por ahora
+       solo se muestra si existe la ruta, sin renderizar la imagen. *@
+    @if (!string.IsNullOrWhiteSpace(_producto.ImagePath))
+    {
+        <p class="text-muted"><small>Imagen registrada (pendiente Fase 5.4): @_producto.ImagePath</small></p>
+    }
+
+    @switch (_producto.Detalle)
+    {
+        case FunkoDetalleDto funko:
+            <h5>Detalle Funko</h5>
+            <dl class="row">
+                <dt class="col-sm-3">N.º de Box</dt>
+                <dd class="col-sm-9">@funko.NumeroBox</dd>
+                <dt class="col-sm-3">Licencia</dt>
+                <dd class="col-sm-9">@funko.Licencia</dd>
+                <dt class="col-sm-3">Subtipo</dt>
+                <dd class="col-sm-9">@funko.SubtipoNombre</dd>
+                @if (funko.CaracteristicaEspecialNombre is not null)
+                {
+                    <dt class="col-sm-3">Característica especial</dt>
+                    <dd class="col-sm-9">@funko.CaracteristicaEspecialNombre</dd>
+                }
+            </dl>
+            break;
+
+        case HotWheelsDetalleDto hw:
+            <h5>Detalle Hot Wheels</h5>
+            <dl class="row">
+                <dt class="col-sm-3">Modelo</dt>
+                <dd class="col-sm-9">@hw.Modelo</dd>
+                <dt class="col-sm-3">Año</dt>
+                <dd class="col-sm-9">@hw.Anio</dd>
+                <dt class="col-sm-3">Serie</dt>
+                <dd class="col-sm-9">@hw.Serie</dd>
+                <dt class="col-sm-3">Categoría</dt>
+                <dd class="col-sm-9">@hw.CategoriaNombre</dd>
+            </dl>
+            break;
+
+        case TcgDetalleDto tcg:
+            <h5>Detalle TCG</h5>
+            <dl class="row">
+                <dt class="col-sm-3">Pack</dt>
+                <dd class="col-sm-9">@tcg.PackNombre</dd>
+                <dt class="col-sm-3">Expansión</dt>
+                <dd class="col-sm-9">@tcg.ExpansionNombre</dd>
+                <dt class="col-sm-3">Franquicia</dt>
+                <dd class="col-sm-9">@tcg.FranquiciaNombre</dd>
+            </dl>
+            break;
+
+        case ToyDetalleDto toy:
+            <h5>Detalle Juguete</h5>
+            <dl class="row">
+                <dt class="col-sm-3">Edad mínima</dt>
+                <dd class="col-sm-9">@toy.EdadMinima</dd>
+                <dt class="col-sm-3">Jugadores</dt>
+                <dd class="col-sm-9">@toy.JugadoresMinimo – @toy.JugadoresMaximo</dd>
+                <dt class="col-sm-3">¿Juego de mesa?</dt>
+                <dd class="col-sm-9">@(toy.EsJuegoMesa ? "Sí" : "No")</dd>
+            </dl>
+            break;
+
+        case VariosDetalleDto varios:
+            <h5>Detalle Varios</h5>
+            <dl class="row">
+                <dt class="col-sm-3">Marca</dt>
+                <dd class="col-sm-9">@varios.Marca</dd>
+                <dt class="col-sm-3">Material</dt>
+                <dd class="col-sm-9">@varios.Material</dd>
+                <dt class="col-sm-3">Dimensiones</dt>
+                <dd class="col-sm-9">
+                    @varios.Alto x @varios.Ancho@(varios.Largo is not null ? $" x {varios.Largo}" : "")
+                </dd>
+                <dt class="col-sm-3">¿Tiene ilustración?</dt>
+                <dd class="col-sm-9">@(varios.TieneIlustracion ? "Sí" : "No")</dd>
+            </dl>
+            break;
+    }
+}
+else
+{
+    <p>Producto no encontrado.</p>
+}
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private ProductoDetalladoDto? _producto;
+    private bool _cargando = true;
+    private string? _error;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _cargando = true;
+        _error = null;
+        _producto = null;
+
+        try
+        {
+            var resultado = await Mediator.Send(new ObtenerProductosPorIdQuery(Id));
+
+            if (resultado.IsSuccess)
+            {
+                _producto = resultado.Value;
+            }
+            else
+            {
+                _error = resultado.Error;
+            }
+        }
+        catch (Exception ex)
+        {
+            _error = $"Error inesperado al cargar el producto: {ex.Message}";
+        }
+        finally
+        {
+            _cargando = false;
+        }
+    }
+}

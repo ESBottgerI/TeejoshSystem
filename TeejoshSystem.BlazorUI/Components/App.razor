@@ -1,5 +1,5 @@
-﻿<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html>
+<html lang="es">
 
 <head>
     <meta charset="utf-8" />
@@ -13,6 +13,11 @@
 </head>
 
 <body>
+    @* Render mode NO global (a diferencia de la versión anterior de Fase 2):
+       ahora la sesión vive en la cookie de ASP.NET Core, no en el circuito,
+       así que cada página declara su propio @rendermode según si necesita
+       interactividad. Login se mantiene deliberadamente estática — necesita
+       HttpContext real (solo disponible en SSR) para escribir la cookie. *@
     <Routes />
     <script src="_framework/blazor.web.js"></script>
 </body>

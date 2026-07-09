@@ -1,0 +1,146 @@
+@page "/productos/editar/{Id:int}"
+@attribute [Authorize(Roles = AuthorizationConstants.Administrador)]
+@rendermode InteractiveServer
+@using MediatR
+@using Microsoft.AspNetCore.Components.Forms
+@using TeejoshSystem.Application.Common.Dtos
+@using TeejoshSystem.Application.Ports.Inbound.Productos.Queries.ObtenerProductosPorId
+@using TeejoshSystem.Application.Ports.Inbound.Productos.Commands.ActualizarProducto
+@using TeejoshSystem.BlazorUI.Services
+@inject IMediator Mediator
+@inject NavigationManager Navigation
+
+<PageTitle>Editar Producto</PageTitle>
+
+<h3>Editar Producto</h3>
+
+@if (_cargando)
+{
+    <p><em>Cargando producto...</em></p>
+}
+else if (_productoOriginal is null)
+{
+    <div class="alert alert-danger">@(_error ?? "Producto no encontrado.")</div>
+}
+else
+{
+    @* Aviso explícito: ActualizarProductoCommand solo admite estos 4 campos.
+       El tipo y el detalle específico (Modelo, Licencia, etc.) NO son
+       editables desde este formulario — el backend actual no lo soporta.
+       Cambiar eso requeriría un Command nuevo en Application, coordinado
+       con el equipo de backend; está fuera del alcance de BlazorUI. *@
+    <div class="alert alert-secondary">
+        <strong>@TipoProductoDisplay.ToDisplayName(_productoOriginal.Tipo)</strong> — @_productoOriginal.DetalleResumen
+        <br />
+        <small>El tipo y el detalle específico no son editables desde aquí.</small>
+    </div>
+
+    <EditForm Model="this" OnValidSubmit="GuardarAsync">
+        <div class="row g-3">
+            <div class="col-md-8">
+                <label class="form-label">Nombre</label>
+                <input class="form-control" @bind="_nombre" />
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label">Precio</label>
+                <input class="form-control" type="number" step="0.01" @bind="_precio" />
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label">Unidades (stock)</label>
+                <input class="form-control" type="number" @bind="_unidades" />
+            </div>
+
+            <div class="col-md-8">
+                <label class="form-label">Reemplazar imagen (opcional)</label>
+                <InputFile class="form-control" OnChange="OnImagenSeleccionadaAsync" />
+                <div class="form-text">Si no seleccionas nada, se conserva la imagen actual.</div>
+            </div>
+        </div>
+
+        @if (_error is not null)
+        {
+            <div class="alert alert-danger mt-3">@_error</div>
+        }
+
+        <div class="mt-4">
+            <button class="btn btn-primary" type="submit" disabled="@_guardando">
+                @(_guardando ? "Guardando..." : "Guardar cambios")
+            </button>
+            <a class="btn btn-outline-secondary" href="productos">Cancelar</a>
+        </div>
+    </EditForm>
+}
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private ProductoDetalladoDto? _productoOriginal;
+    private string _nombre = string.Empty;
+    private decimal _precio;
+    private int _unidades;
+    private string? _rutaImagenTemporal;
+
+    private bool _cargando = true;
+    private bool _guardando;
+    private string? _error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var resultado = await Mediator.Send(new ObtenerProductosPorIdQuery(Id));
+
+        if (resultado.IsSuccess)
+        {
+            _productoOriginal = resultado.Value;
+            _nombre = _productoOriginal.Nombre;
+            _precio = _productoOriginal.Precio;
+            _unidades = _productoOriginal.Unidades;
+        }
+        else
+        {
+            _error = resultado.Error;
+        }
+
+        _cargando = false;
+    }
+
+    private async Task OnImagenSeleccionadaAsync(InputFileChangeEventArgs e)
+    {
+        ImagenTemporalHelper.BorrarSiExiste(_rutaImagenTemporal);
+        _rutaImagenTemporal = await ImagenTemporalHelper.GuardarComoTemporalAsync(e.File);
+    }
+
+    private async Task GuardarAsync()
+    {
+        _error = null;
+        _guardando = true;
+
+        try
+        {
+            // _rutaImagenTemporal queda en null si no se seleccionó archivo
+            // nuevo — el handler interpreta null como "no cambiar imagen".
+            var resultado = await Mediator.Send(
+                new ActualizarProductoCommand(Id, _nombre, _precio, _unidades, _rutaImagenTemporal));
+
+            if (resultado.IsSuccess)
+            {
+                Navigation.NavigateTo("/productos");
+            }
+            else
+            {
+                _error = resultado.Error;
+            }
+        }
+        catch (Exception ex)
+        {
+            _error = $"Error inesperado al guardar: {ex.Message}";
+        }
+        finally
+        {
+            ImagenTemporalHelper.BorrarSiExiste(_rutaImagenTemporal);
+            _guardando = false;
+        }
+    }
+}

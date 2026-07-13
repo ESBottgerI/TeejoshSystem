@@ -1,4 +1,4 @@
-﻿using System.Text.Json;
+using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 
@@ -19,16 +19,17 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence
             typeof(Venta),
             typeof(Usuario)
         };
+        
+        // Constructor principal — usado por DI cuando provider está configurado
+        public InventarioDbContext(DbContextOptions<InventarioDbContext> options) : base(options) { }
 
-        public InventarioDbContext(
-            DbContextOptions<InventarioDbContext> options,
-            ICurrentUserProvider? currentUserProvider = null)
-            : base(options)
-        {
-            _currentUserProvider = currentUserProvider;
-        }
-
+        // Constructor protegido no-genérico — requerido para que clases derivadas
+        // (LocalDbContext) puedan pasar sus propias DbContextOptions<T> a la base.
+        // EF Core define este patrón exactamente para soportar herencia de DbContext.
+        protected InventarioDbContext(DbContextOptions options) : base(options) { }
+        // DbSets principales
         public DbSet<Producto> Productos { get; set; }
+
         public DbSet<HotWheelsDetalle> HotWheelsDetalles { get; set; }
         public DbSet<FunkoDetalle> FunkoDetalles { get; set; }
         public DbSet<TcgDetalle> TcgDetalles { get; set; }

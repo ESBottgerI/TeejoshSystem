@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 
 using TeejoshSystem.Domain.Entities;
 using TeejoshSystem.Domain.Entities.Catalogos;
@@ -8,7 +8,13 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence
 {
     public class InventarioDbContext : DbContext
     {
+        // Constructor principal — usado por DI cuando provider está configurado
         public InventarioDbContext(DbContextOptions<InventarioDbContext> options) : base(options) { }
+
+        // Constructor protegido no-genérico — requerido para que clases derivadas
+        // (LocalDbContext) puedan pasar sus propias DbContextOptions<T> a la base.
+        // EF Core define este patrón exactamente para soportar herencia de DbContext.
+        protected InventarioDbContext(DbContextOptions options) : base(options) { }
 
         // DbSets principales
         public DbSet<Producto> Productos { get; set; }

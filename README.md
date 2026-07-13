@@ -8,7 +8,7 @@
 ![Platform](https://img.shields.io/badge/plataforma-Windows%20%7C%20Linux-lightgrey)
 ![Framework](https://img.shields.io/badge/.NET-8.0-purple)
 ![UI](https://img.shields.io/badge/UI-Avalonia%2011-blueviolet)
-![DB](https://img.shields.io/badge/BD-SQLite-003B57)
+![DB](https://img.shields.io/badge/BD-SQLite%20%7C%20PostgreSQL-003B57)
 ![Status](https://img.shields.io/badge/estado-activo-brightgreen)
 
 </div>
@@ -42,7 +42,8 @@ Funciona completamente **offline** — sin servicios externos en runtime, sin in
 ```
 Lenguaje      C# 12 / .NET 8
 UI            Avalonia 11 · CommunityToolkit.Mvvm
-Base de datos SQLite · Entity Framework Core 8 (Code-First)
+Base de datos SQLite (local/offline) · PostgreSQL vía Supabase (producción)
+ORM           Entity Framework Core 8 (Code-First · dual provider)
 CQRS          MediatR 12
 Validaciones  FluentValidation 11 · BCrypt.Net
 Tests         SpecFlow (BDD) · Stryker.NET (Mutation) · xUnit
@@ -76,10 +77,11 @@ Infrastructure ──→ Domain
 ```
 IProductoRepository    IVentaRepository       IAuthService
 ICatalogoRepository    IUsuarioRepository     IImageStorageService
-ITcgCatalogoApiService IAppLogger
+ITcgCatalogoApiService IAppLogger             IConnectivityService
+ISyncOutboxRepository  IRealtimeService
 ```
 
-Cada uno tiene una implementación local activa. Agregar adaptadores alternativos (ej: Supabase) no requiere tocar el dominio.
+Cada puerto tiene implementación local (SQLite) y adaptador Supabase (PostgreSQL). El `RoutingRepository` selecciona transparentemente cuál usar según el estado de conectividad.
 
 ---
 
@@ -100,10 +102,14 @@ TeejoshSystem/
 ├── TeejoshSystem.Infrastructure/   # Implementaciones técnicas
 │   └── Adapters/Outbound/
 │       ├── Apis/                   # ScryfallAdapter, TcgdexAdapter, YgoprodeckAdapter
-│       ├── Auth/                   # LocalAuthService, UsuarioRepository
-│       ├── Backup/                 # BackupService
-│       ├── Persistence/            # EF Core · SQLite · Migrations · Repositories
-│       └── Storage/                # LocalImageStorageService
+│       ├── Auth/                   # LocalAuthService, SupabaseAuthService, UsuarioRepository
+│       ├── Backup/                 # BackupService (solo modo SQLite)
+│       ├── Connectivity/           # SupabaseConnectivityService (ping + estado online/offline)
+│       ├── Persistence/            # EF Core · InventarioDbContext · LocalDbContext · Migrations
+│       ├── Realtime/               # SupabaseRealtimeService (WebSocket · Phoenix Channels)
+│       ├── Routing/                # RoutingProductoRepository · VentaRepository · CatalogoRepository
+│       ├── Storage/                # LocalImageStorageService · SupabaseImageStorageService
+│       └── Sync/                   # SyncService · SyncOutboxRepository · CatalogRefreshService
 │
 ├── TeejoshSystem.AvaloniaUI/       # Presentación MVVM
 │   └── Adapters/Inbound/
@@ -152,6 +158,68 @@ dotnet test
 
 ---
 
+## Configuración de Base de Datos
+
+### Modo SQLite — desarrollo y operación offline
+
+No requiere configuración adicional. El archivo `appsettings.json` tiene `Provider: "sqlite"` por defecto.
+
+```
+Windows:  %LOCALAPPDATA%\TeejoshSystem\inventario.db
+Linux:    ~/.local/share/TeejoshSystem/inventario.db
+```
+
+### Modo PostgreSQL — producción con Supabase
+
+Establece la variable de entorno `DOTNET_ENVIRONMENT=Production` o edita `appsettings.Production.json` con los valores reales del proyecto de Supabase.
+
+#### Variables de entorno requeridas
+
+| Variable de entorno | Sección en appsettings | Descripción | Dónde obtenerla |
+|---|---|---|---|
+| `DOTNET_ENVIRONMENT` | — | Establecer en `Production` para activar Supabase | Variable del SO |
+| `Database__Provider` | `Database:Provider` | Valor: `postgresql` | — |
+| `Database__ConnectionString` | `Database:ConnectionString` | Connection string de PostgreSQL | Supabase → Settings → Database → Connection string (modo `Session`) |
+| `Supabase__Url` | `Supabase:Url` | URL base del proyecto | Supabase → Settings → API → Project URL |
+| `Supabase__AnonKey` | `Supabase:AnonKey` | Clave pública JWT (`anon public`) — empieza con `eyJ...` | Supabase → Settings → API → Project API keys → `anon public` |
+| `Supabase__ServiceKey` | `Supabase:ServiceKey` | Clave secreta (`service_role`) — mantener privada | Supabase → Settings → API → Project API keys → `service_role` |
+| `Supabase__BucketName` | `Supabase:BucketName` | Nombre del bucket de Storage (default: `product-images`) | Supabase → Storage → crear bucket público |
+
+#### Diferencia entre AnonKey y ServiceKey
+
+- **AnonKey** (`anon public`): clave pública usada para el ping de conectividad y suscripciones Realtime. Puede exponerse en el cliente.
+- **ServiceKey** (`service_role`): clave con permisos de administrador. Usada para subir imágenes a Storage y aplicar el outbox de sync. **No incluir en repositorios públicos.**
+
+#### Ejemplo de configuración por variables de entorno (PowerShell)
+
+```powershell
+$env:DOTNET_ENVIRONMENT = "Production"
+$env:Database__ConnectionString = "Host=aws-0-us-east-1.pooler.supabase.com;Port=5432;Database=postgres;Username=postgres.XXXX;Password=XXXX;SSL Mode=Require;Trust Server Certificate=true"
+$env:Supabase__Url = "https://XXXX.supabase.co"
+$env:Supabase__AnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+$env:Supabase__ServiceKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+dotnet run --project TeejoshSystem.AvaloniaUI
+```
+
+#### Arquitectura offline-first con Supabase
+
+Cuando `Provider=postgresql`, la app opera con la siguiente estrategia:
+
+```
+Online:   Handler → RoutingRepository → PostgreSQL (Supabase)
+                                      → replica en SQLite local (best-effort)
+
+Offline:  Handler → RoutingRepository → SQLite local
+                                      → SyncOutbox (cola de operaciones pendientes)
+
+Reconexión: SyncService detecta conectividad → aplica outbox → Supabase REST API
+            CatalogRefreshService → descarga catálogos y productos → SQLite local
+```
+
+El `device.id` del dispositivo se genera automáticamente en `%LOCALAPPDATA%\TeejoshSystem\device.id` y se incluye en cada entrada del outbox para trazabilidad multi-caja futura.
+
+---
+
 ## Base de Datos
 
 Esquema generado por EF Core Code-First. Una sola migración (`InitialCreate`) construye todo el esquema desde cero.
@@ -197,18 +265,37 @@ dotnet test Tests/TeejoshSystem.AvaloniaUI.Tests
 
 ## Migraciones EF Core
 
+El proyecto mantiene **dos contextos** y **dos carpetas de migraciones**:
+
+| Contexto | Proveedor | Carpeta de migraciones |
+|---|---|---|
+| `InventarioDbContext` | SQLite (dev) / PostgreSQL (prod) | `Adapters/Outbound/Persistence/Migrations/` |
+| `LocalDbContext` | SQLite siempre (réplica offline + outbox) | `Adapters/Outbound/Persistence/Migrations/Local/` |
+
 ```bash
-# Nueva migración
+# Migración para InventarioDbContext con PostgreSQL (producción)
 dotnet ef migrations add <Nombre> \
   --project TeejoshSystem.Infrastructure \
   --startup-project TeejoshSystem.AvaloniaUI \
-  --output-dir Adapters/Outbound/Persistence/Migrations
+  --context InventarioDbContext \
+  --output-dir Adapters/Outbound/Persistence/Migrations \
+  -- --provider postgresql
 
-# Aplicar
+# Migración para LocalDbContext (SQLite — réplica offline)
+dotnet ef migrations add <Nombre> \
+  --project TeejoshSystem.Infrastructure \
+  --startup-project TeejoshSystem.AvaloniaUI \
+  --context LocalDbContext \
+  --output-dir Adapters/Outbound/Persistence/Migrations/Local
+
+# Aplicar migraciones (se ejecuta automáticamente en el arranque de la app)
 dotnet ef database update \
   --project TeejoshSystem.Infrastructure \
-  --startup-project TeejoshSystem.AvaloniaUI
+  --startup-project TeejoshSystem.AvaloniaUI \
+  --context InventarioDbContext
 ```
+
+> El argumento `-- --provider postgresql` es leído por `InventarioDbContextFactory` para generar los tipos de columna correctos de Npgsql (`numeric`, `character varying`, `boolean`, `timestamp with time zone`) en lugar de los tipos genéricos de SQLite.
 
 ---
 
@@ -244,7 +331,7 @@ dotnet ef database update \
 
 ### Baja 🟢
 - [x] Backup automático · Temas claro/oscuro
-- [ ] Despliegue en VPS con Supabase (PostgreSQL)
+- [x] Migración a Supabase (PostgreSQL + Auth + Storage + offline sync)
 - [ ] API REST / WebUI Blazor Server
 - [ ] Internacionalización (i18n)
 

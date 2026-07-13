@@ -1,4 +1,4 @@
-﻿using System.Text.Json;
+using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 
@@ -11,22 +11,16 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence
 {
     public class InventarioDbContext : DbContext
     {
-        private readonly ICurrentUserProvider? _currentUserProvider;
+        // Constructor principal — usado por DI cuando provider está configurado
+        public InventarioDbContext(DbContextOptions<InventarioDbContext> options) : base(options) { }
 
-        private static readonly HashSet<Type> EntidadesAuditadas = new()
-        {
-            typeof(Producto),
-            typeof(Venta),
-            typeof(Usuario)
-        };
+        // Constructor protegido no-genérico — requerido para que clases derivadas
+        // (LocalDbContext) puedan pasar sus propias DbContextOptions<T> a la base.
+        // EF Core define este patrón exactamente para soportar herencia de DbContext.
+        protected InventarioDbContext(DbContextOptions options) : base(options) { }
 
-        public InventarioDbContext(
-            DbContextOptions<InventarioDbContext> options,
-            ICurrentUserProvider? currentUserProvider = null)
-            : base(options)
-        {
-            _currentUserProvider = currentUserProvider;
-        }
+        // DbSets principales
+        public DbSet<Producto> Productos { get; set; }
 
         public DbSet<Producto> Productos { get; set; }
         public DbSet<HotWheelsDetalle> HotWheelsDetalles { get; set; }

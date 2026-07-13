@@ -11,16 +11,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TeejoshSystem.Infrastructur
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TeejoshSystem.AvaloniaUI", "TeejoshSystem.AvaloniaUI\TeejoshSystem.AvaloniaUI.csproj", "{5C323801-3314-4643-8D40-659B0C18703C}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{0AB3BF05-4346-4AA6-1389-037BE0695223}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TeejoshSystem.Domain.Tests", "Tests\TeejoshSystem.Domain.Tests\TeejoshSystem.Domain.Tests.csproj", "{59EACBA0-B76F-48D3-992C-020E5AA4E5A8}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TeejoshSystem.Application.Tests", "Tests\TeejoshSystem.Application.Tests\TeejoshSystem.Application.Tests.csproj", "{70445783-B0D9-4DB7-B3B2-7C48741DBEDB}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TeejoshSystem.Infrastructure.Tests", "Tests\TeejoshSystem.Infrastructure.Tests\TeejoshSystem.Infrastructure.Tests.csproj", "{8A567E31-75C4-41E1-9DDA-40FA209E9C3B}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TeejoshSystem.AvaloniaUI.Tests", "Tests\TeejoshSystem.AvaloniaUI.Tests\TeejoshSystem.AvaloniaUI.Tests.csproj", "{5CDBA7ED-9239-4234-9282-EAE8068C3C86}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -79,63 +69,9 @@ Global
 		{5C323801-3314-4643-8D40-659B0C18703C}.Release|x64.Build.0 = Release|Any CPU
 		{5C323801-3314-4643-8D40-659B0C18703C}.Release|x86.ActiveCfg = Release|Any CPU
 		{5C323801-3314-4643-8D40-659B0C18703C}.Release|x86.Build.0 = Release|Any CPU
-		{59EACBA0-B76F-48D3-992C-020E5AA4E5A8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{59EACBA0-B76F-48D3-992C-020E5AA4E5A8}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{59EACBA0-B76F-48D3-992C-020E5AA4E5A8}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{59EACBA0-B76F-48D3-992C-020E5AA4E5A8}.Debug|x64.Build.0 = Debug|Any CPU
-		{59EACBA0-B76F-48D3-992C-020E5AA4E5A8}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{59EACBA0-B76F-48D3-992C-020E5AA4E5A8}.Debug|x86.Build.0 = Debug|Any CPU
-		{59EACBA0-B76F-48D3-992C-020E5AA4E5A8}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{59EACBA0-B76F-48D3-992C-020E5AA4E5A8}.Release|Any CPU.Build.0 = Release|Any CPU
-		{59EACBA0-B76F-48D3-992C-020E5AA4E5A8}.Release|x64.ActiveCfg = Release|Any CPU
-		{59EACBA0-B76F-48D3-992C-020E5AA4E5A8}.Release|x64.Build.0 = Release|Any CPU
-		{59EACBA0-B76F-48D3-992C-020E5AA4E5A8}.Release|x86.ActiveCfg = Release|Any CPU
-		{59EACBA0-B76F-48D3-992C-020E5AA4E5A8}.Release|x86.Build.0 = Release|Any CPU
-		{70445783-B0D9-4DB7-B3B2-7C48741DBEDB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{70445783-B0D9-4DB7-B3B2-7C48741DBEDB}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{70445783-B0D9-4DB7-B3B2-7C48741DBEDB}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{70445783-B0D9-4DB7-B3B2-7C48741DBEDB}.Debug|x64.Build.0 = Debug|Any CPU
-		{70445783-B0D9-4DB7-B3B2-7C48741DBEDB}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{70445783-B0D9-4DB7-B3B2-7C48741DBEDB}.Debug|x86.Build.0 = Debug|Any CPU
-		{70445783-B0D9-4DB7-B3B2-7C48741DBEDB}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{70445783-B0D9-4DB7-B3B2-7C48741DBEDB}.Release|Any CPU.Build.0 = Release|Any CPU
-		{70445783-B0D9-4DB7-B3B2-7C48741DBEDB}.Release|x64.ActiveCfg = Release|Any CPU
-		{70445783-B0D9-4DB7-B3B2-7C48741DBEDB}.Release|x64.Build.0 = Release|Any CPU
-		{70445783-B0D9-4DB7-B3B2-7C48741DBEDB}.Release|x86.ActiveCfg = Release|Any CPU
-		{70445783-B0D9-4DB7-B3B2-7C48741DBEDB}.Release|x86.Build.0 = Release|Any CPU
-		{8A567E31-75C4-41E1-9DDA-40FA209E9C3B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{8A567E31-75C4-41E1-9DDA-40FA209E9C3B}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{8A567E31-75C4-41E1-9DDA-40FA209E9C3B}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{8A567E31-75C4-41E1-9DDA-40FA209E9C3B}.Debug|x64.Build.0 = Debug|Any CPU
-		{8A567E31-75C4-41E1-9DDA-40FA209E9C3B}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{8A567E31-75C4-41E1-9DDA-40FA209E9C3B}.Debug|x86.Build.0 = Debug|Any CPU
-		{8A567E31-75C4-41E1-9DDA-40FA209E9C3B}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{8A567E31-75C4-41E1-9DDA-40FA209E9C3B}.Release|Any CPU.Build.0 = Release|Any CPU
-		{8A567E31-75C4-41E1-9DDA-40FA209E9C3B}.Release|x64.ActiveCfg = Release|Any CPU
-		{8A567E31-75C4-41E1-9DDA-40FA209E9C3B}.Release|x64.Build.0 = Release|Any CPU
-		{8A567E31-75C4-41E1-9DDA-40FA209E9C3B}.Release|x86.ActiveCfg = Release|Any CPU
-		{8A567E31-75C4-41E1-9DDA-40FA209E9C3B}.Release|x86.Build.0 = Release|Any CPU
-		{5CDBA7ED-9239-4234-9282-EAE8068C3C86}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{5CDBA7ED-9239-4234-9282-EAE8068C3C86}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{5CDBA7ED-9239-4234-9282-EAE8068C3C86}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{5CDBA7ED-9239-4234-9282-EAE8068C3C86}.Debug|x64.Build.0 = Debug|Any CPU
-		{5CDBA7ED-9239-4234-9282-EAE8068C3C86}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{5CDBA7ED-9239-4234-9282-EAE8068C3C86}.Debug|x86.Build.0 = Debug|Any CPU
-		{5CDBA7ED-9239-4234-9282-EAE8068C3C86}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{5CDBA7ED-9239-4234-9282-EAE8068C3C86}.Release|Any CPU.Build.0 = Release|Any CPU
-		{5CDBA7ED-9239-4234-9282-EAE8068C3C86}.Release|x64.ActiveCfg = Release|Any CPU
-		{5CDBA7ED-9239-4234-9282-EAE8068C3C86}.Release|x64.Build.0 = Release|Any CPU
-		{5CDBA7ED-9239-4234-9282-EAE8068C3C86}.Release|x86.ActiveCfg = Release|Any CPU
-		{5CDBA7ED-9239-4234-9282-EAE8068C3C86}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
-	EndGlobalSection
-	GlobalSection(NestedProjects) = preSolution
-		{59EACBA0-B76F-48D3-992C-020E5AA4E5A8} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
-		{70445783-B0D9-4DB7-B3B2-7C48741DBEDB} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
-		{8A567E31-75C4-41E1-9DDA-40FA209E9C3B} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
-		{5CDBA7ED-9239-4234-9282-EAE8068C3C86} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {B947969F-EEB2-419B-8513-2CD5742DE132}

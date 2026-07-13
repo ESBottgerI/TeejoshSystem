@@ -1,0 +1,202 @@
+@page "/inventario"
+@attribute [Authorize(Roles = AuthorizationConstants.Administrador)]
+@rendermode InteractiveServer
+@using MediatR
+@using Microsoft.AspNetCore.Components.Web
+@using TeejoshSystem.Application.Ports.Inbound.Productos.Queries.ObtenerProductos
+@using TeejoshSystem.Application.Ports.Inbound.Productos.Queries.BuscarProductos
+@using TeejoshSystem.Domain.Enums
+@using TeejoshSystem.BlazorUI.Services
+@inject IMediator Mediator
+@inject NavigationManager Navigation
+
+<PageTitle>Ver Inventario</PageTitle>
+
+<h3>Inventario</h3>
+
+<div class="row mb-3 g-2 align-items-end">
+    <div class="col-auto">
+        <label class="form-label">Buscar por nombre</label>
+        <input class="form-control" @bind="_filtroNombre" @bind:event="oninput"
+               @onkeyup="AplicarFiltroConDebounce" placeholder="Nombre del producto..." />
+    </div>
+    <div class="col-auto">
+        <label class="form-label">Tipo</label>
+        <select class="form-select" @bind="_filtroTipoNombre" @bind:after="AplicarFiltroAsync">
+            @foreach (var item in _tiposFiltro)
+            {
+                <option value="@item.Nombre">@item.Nombre</option>
+            }
+        </select>
+    </div>
+    <div class="col-auto">
+        <button class="btn btn-outline-secondary" @onclick="LimpiarFiltrosAsync">Limpiar</button>
+    </div>
+</div>
+
+@if (_cargando)
+{
+    <LoadingIndicator Mensaje="Cargando inventario..." />
+}
+else if (_error is not null)
+{
+    <ErrorAlert Mensaje="@_error" />
+}
+else if (_productos.Count == 0)
+{
+    <p>No se encontraron productos con ese criterio.</p>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Tipo</th>
+                <th>Nombre</th>
+                <th>Detalle</th>
+                <th class="text-end">Precio</th>
+                <th class="text-end">Stock</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var producto in _productos)
+            {
+                <tr>
+                    <td>@producto.Tipo</td>
+                    <td>@producto.Nombre</td>
+                    <td>@producto.DetalleResumen</td>
+                    <td class="text-end">S/ @producto.Precio.ToString("0.00")</td>
+                    <td class="text-end">@producto.Unidades</td>
+                    <td>
+                        <button class="btn btn-sm btn-link" @onclick="() => VerDetalle(producto.Id)">
+                            Ver detalle
+                        </button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    // Modelo local unificado: ObtenerProductosQuery devuelve ProductoDto y
+    // BuscarProductosQuery devuelve ProductoBusquedaDto — DTOs distintos con
+    // casi los mismos campos. Se normalizan a este record para no bifurcar
+    // el markup de la tabla según de dónde vino el dato.
+    private record ProductoListadoItem(int Id, string Tipo, string Nombre, decimal Precio, int Unidades, string DetalleResumen);
+
+    private readonly List<(string Nombre, TipoProducto? Valor)> _tiposFiltro = new()
+    {
+        ("Todos", null),
+        ("Funko", TipoProducto.Funko),
+        ("Hot Wheels", TipoProducto.HotWheels),
+        ("TCG", TipoProducto.Tcg),
+        ("Juguete", TipoProducto.Toy),
+        ("Varios", TipoProducto.Varios),
+    };
+
+    private List<ProductoListadoItem> _productos = new();
+    private bool _cargando = true;
+    private string? _error;
+    private string _filtroNombre = string.Empty;
+    private string _filtroTipoNombre = "Todos";
+    private CancellationTokenSource? _debounceCts;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarListadoCompletoAsync();
+    }
+
+    private async Task CargarListadoCompletoAsync()
+    {
+        _cargando = true;
+        _error = null;
+        try
+        {
+            var productos = await Mediator.Send(new ObtenerProductosQuery());
+            _productos = productos
+                .Select(p => new ProductoListadoItem(p.Id, p.TipoDescripcion, p.Nombre, p.Precio, p.Unidades, p.DetalleResumen))
+                .ToList();
+        }
+        catch (Exception ex)
+        {
+            _error = $"No se pudo cargar el inventario: {ex.Message}";
+        }
+        finally
+        {
+            _cargando = false;
+        }
+    }
+
+    private void AplicarFiltroConDebounce(KeyboardEventArgs args)
+    {
+        // Sin esto, cada tecla dispara una query nueva contra la DB.
+        _debounceCts?.Cancel();
+        _debounceCts = new CancellationTokenSource();
+        var token = _debounceCts.Token;
+
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await Task.Delay(350, token);
+                if (!token.IsCancellationRequested)
+                {
+                    await InvokeAsync(AplicarFiltroAsync);
+                }
+            }
+            catch (TaskCanceledException)
+            {
+                // Cancelación esperada por debounce, no es un error real.
+            }
+        });
+    }
+
+    private async Task AplicarFiltroAsync()
+    {
+        var tipoSeleccionado = _tiposFiltro.FirstOrDefault(t => t.Nombre == _filtroTipoNombre).Valor;
+
+        // Sin ningún filtro activo, se vuelve al listado completo
+        // (ObtenerProductosQuery) en vez de pedirle a BuscarProductosQuery
+        // que reproduzca lo mismo con ambos parámetros en null.
+        if (string.IsNullOrWhiteSpace(_filtroNombre) && tipoSeleccionado is null)
+        {
+            await CargarListadoCompletoAsync();
+            return;
+        }
+
+        _cargando = true;
+        _error = null;
+        StateHasChanged();
+
+        try
+        {
+            var resultados = await Mediator.Send(new BuscarProductosQuery(
+                string.IsNullOrWhiteSpace(_filtroNombre) ? null : _filtroNombre,
+                tipoSeleccionado));
+
+            _productos = resultados
+                .Select(p => new ProductoListadoItem(
+                    p.Id, TipoProductoDisplay.ToDisplayName(p.Tipo), p.Nombre, p.Precio, p.Unidades, p.DetalleResumen))
+                .ToList();
+        }
+        catch (Exception ex)
+        {
+            _error = $"No se pudo buscar en el inventario: {ex.Message}";
+        }
+        finally
+        {
+            _cargando = false;
+        }
+    }
+
+    private async Task LimpiarFiltrosAsync()
+    {
+        _filtroNombre = string.Empty;
+        _filtroTipoNombre = "Todos";
+        await CargarListadoCompletoAsync();
+    }
+
+    private void VerDetalle(int id) => Navigation.NavigateTo($"/inventario/{id}");
+}

@@ -1,0 +1,23 @@
+<Router AppAssembly="typeof(Program).Assembly">
+    <Found Context="routeData">
+        <AuthorizeRouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)">
+            @* NotAuthorized cubre DOS casos distintos, hay que diferenciarlos:
+               - sin sesión → redirigir a /login
+               - con sesión pero sin el rol exigido → mostrar "acceso denegado"
+                 (hoy no debería pasar nunca, porque Login ya solo deja entrar
+                 administradores — pero si mañana se relaja esa regla o hay un
+                 bug, este camino evita que alguien vea contenido que no debe). *@
+            <NotAuthorized Context="authState">
+                @if (authState.User.Identity?.IsAuthenticated == true)
+                {
+                    <AccessDenied />
+                }
+                else
+                {
+                    <RedirectToLogin />
+                }
+            </NotAuthorized>
+        </AuthorizeRouteView>
+        <FocusOnNavigate RouteData="routeData" Selector="h1" />
+    </Found>
+</Router>

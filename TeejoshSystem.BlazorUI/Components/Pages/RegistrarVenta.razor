@@ -1,0 +1,228 @@
+@page "/ventas/registrar"
+@attribute [Authorize(Roles = AuthorizationConstants.Administrador)]
+@rendermode InteractiveServer
+@using MediatR
+@using Microsoft.AspNetCore.Components.Web
+@using TeejoshSystem.Application.Ports.Inbound.Productos.Queries.BuscarProductos
+@using TeejoshSystem.Application.Ports.Inbound.Ventas.Commands.RegistrarVenta
+@using TeejoshSystem.BlazorUI.Services
+@inject IMediator Mediator
+@inject NavigationManager Navigation
+
+<PageTitle>Registrar Venta</PageTitle>
+
+<h3>Registrar Venta</h3>
+
+<div class="row mb-3">
+    <div class="col-md-6">
+        <label class="form-label">Buscar producto</label>
+        <input class="form-control" @bind="_busqueda" @bind:event="oninput"
+               @onkeyup="BuscarConDebounce" placeholder="Nombre del producto..." />
+    </div>
+</div>
+
+@if (_resultadosBusqueda.Count > 0)
+{
+    <table class="table table-sm">
+        <thead>
+            <tr>
+                <th>Producto</th>
+                <th>Precio</th>
+                <th>Stock</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var producto in _resultadosBusqueda)
+            {
+                <tr>
+                    <td>@producto.Nombre</td>
+                    <td>S/ @producto.Precio.ToString("0.00")</td>
+                    <td>@producto.Unidades</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary"
+                                disabled="@(producto.Unidades <= 0)"
+                                @onclick="() => AgregarAlCarrito(producto)">
+                            Agregar
+                        </button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+<hr class="my-4" />
+
+<h5>Carrito</h5>
+@if (_carrito.Count == 0)
+{
+    <p class="text-muted">Sin productos agregados.</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Producto</th>
+                <th>Precio unit.</th>
+                <th style="width:110px">Cantidad</th>
+                <th>Subtotal</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in _carrito)
+            {
+                <tr>
+                    <td>@item.Nombre</td>
+                    <td>S/ @item.PrecioUnitario.ToString("0.00")</td>
+                    <td>
+                        <input type="number" class="form-control form-control-sm"
+                               min="1" max="@item.StockDisponible" value="@item.Cantidad"
+                               @onchange="e => CambiarCantidad(item, e.Value)" />
+                    </td>
+                    <td>S/ @((item.PrecioUnitario * item.Cantidad).ToString("0.00"))</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-danger" @onclick="() => QuitarDelCarrito(item)">
+                            Quitar
+                        </button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+        <tfoot>
+            <tr>
+                <th colspan="3" class="text-end">Total</th>
+                <th>S/ @_total.ToString("0.00")</th>
+                <th></th>
+            </tr>
+        </tfoot>
+    </table>
+}
+
+@if (_error is not null)
+{
+    <ErrorAlert Mensaje="@_error" />
+}
+
+<button class="btn btn-success" disabled="@(_carrito.Count == 0 || _guardando)" @onclick="RegistrarAsync">
+    @(_guardando ? "Registrando..." : "Registrar Venta")
+</button>
+
+@code {
+    private class ItemCarrito
+    {
+        public int ProductoId { get; init; }
+        public string Nombre { get; init; } = string.Empty;
+        public decimal PrecioUnitario { get; init; }
+        public int Cantidad { get; set; }
+        public int StockDisponible { get; init; }
+    }
+
+    private string _busqueda = string.Empty;
+    private List<ProductoBusquedaDto> _resultadosBusqueda = new();
+    private readonly List<ItemCarrito> _carrito = new();
+    private CancellationTokenSource? _debounceCts;
+    private string? _error;
+    private bool _guardando;
+
+    private decimal _total => _carrito.Sum(i => i.PrecioUnitario * i.Cantidad);
+
+    private void BuscarConDebounce(KeyboardEventArgs args)
+    {
+        _debounceCts?.Cancel();
+        _debounceCts = new CancellationTokenSource();
+        var token = _debounceCts.Token;
+
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await Task.Delay(350, token);
+                if (!token.IsCancellationRequested)
+                {
+                    await InvokeAsync(BuscarAsync);
+                }
+            }
+            catch (TaskCanceledException)
+            {
+                // Cancelación esperada por debounce.
+            }
+        });
+    }
+
+    private async Task BuscarAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_busqueda))
+        {
+            _resultadosBusqueda = new();
+            StateHasChanged();
+            return;
+        }
+
+        var resultados = await Mediator.Send(new BuscarProductosQuery(_busqueda, null));
+        _resultadosBusqueda = resultados.ToList();
+        StateHasChanged();
+    }
+
+    private void AgregarAlCarrito(ProductoBusquedaDto producto)
+    {
+        var existente = _carrito.FirstOrDefault(i => i.ProductoId == producto.Id);
+        if (existente is not null)
+        {
+            if (existente.Cantidad < producto.Unidades)
+            {
+                existente.Cantidad++;
+            }
+        }
+        else
+        {
+            _carrito.Add(new ItemCarrito
+            {
+                ProductoId = producto.Id,
+                Nombre = producto.Nombre,
+                PrecioUnitario = producto.Precio,
+                Cantidad = 1,
+                StockDisponible = producto.Unidades
+            });
+        }
+    }
+
+    private void CambiarCantidad(ItemCarrito item, object? valor)
+    {
+        if (int.TryParse(valor?.ToString(), out var cantidad))
+        {
+            item.Cantidad = Math.Clamp(cantidad, 1, Math.Max(1, item.StockDisponible));
+        }
+    }
+
+    private void QuitarDelCarrito(ItemCarrito item) => _carrito.Remove(item);
+
+    private async Task RegistrarAsync()
+    {
+        _error = null;
+        _guardando = true;
+
+        var items = _carrito
+            .Select(i => new RegistrarVentaItemCommand(i.ProductoId, i.Cantidad))
+            .ToList();
+
+        // El handler revalida stock contra la DB en el momento de
+        // confirmar — es la fuente de verdad real, por si el stock cambió
+        // entre que se buscó el producto y se registró la venta.
+        var (ventaId, error) = await OperacionUiHelper.EjecutarAsync(
+            () => Mediator.Send(new RegistrarVentaCommand(items)));
+
+        _guardando = false;
+
+        if (error is null)
+        {
+            Navigation.NavigateTo("/ventas/historial");
+        }
+        else
+        {
+            _error = error;
+        }
+    }
+}

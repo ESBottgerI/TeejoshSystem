@@ -1,0 +1,14 @@
+@* ──────────────────────────────────────────────────────────────────────────
+   Antes de Fase 7, cada página tenía su propio <p><em>Cargando...</em></p>
+   con texto ligeramente distinto. Esto unifica la apariencia y deja un solo
+   lugar donde ajustar el estilo del loading en toda la app.
+   ────────────────────────────────────────────────────────────────────────── *@
+<div class="d-flex align-items-center gap-2 text-muted py-3">
+    <div class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></div>
+    <span>@Mensaje</span>
+</div>
+
+@code {
+    [Parameter]
+    public string Mensaje { get; set; } = "Cargando...";
+}

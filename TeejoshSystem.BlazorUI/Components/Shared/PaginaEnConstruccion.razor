@@ -1,0 +1,35 @@
+@* ──────────────────────────────────────────────────────────────────────────
+   Placeholder genérico para rutas ya navegables pero sin funcionalidad real
+   todavía (Fase 1 del plan: shell + navegación, sin lógica de negocio).
+
+   Se reemplaza por la implementación real en la fase indicada; hasta entonces
+   confirma que el routing y el layout funcionan de punta a punta.
+   ────────────────────────────────────────────────────────────────────────── *@
+<div class="alert alert-info">
+    <h4 class="alert-heading">@Titulo</h4>
+    <p class="mb-0">
+        Esta pantalla todavía no está implementada.
+        @if (Fase is not null)
+        {
+            <span>Corresponde a la <strong>Fase @Fase</strong> del plan de BlazorUI.</span>
+        }
+        else
+        {
+            <span>No forma parte del backlog actual — agregada al menú solo por
+            paridad de navegación con AvaloniaUI. Requiere decisión del equipo
+            antes de implementarse.</span>
+        }
+    </p>
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public string Titulo { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Número de fase del plan que implementa esta pantalla.
+    /// Null si la pantalla no está en el backlog actual (ver nota en el mensaje).
+    /// </summary>
+    [Parameter]
+    public int? Fase { get; set; }
+}

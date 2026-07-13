@@ -1,0 +1,106 @@
+@page "/login"
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Authentication
+@using Microsoft.AspNetCore.Authentication.Cookies
+@using MediatR
+@using TeejoshSystem.Application.Ports.Inbound.Auth.Commands.AutenticarUsuario
+@using TeejoshSystem.Domain.Enums
+@inject IMediator Mediator
+@inject NavigationManager Navigation
+
+@* ──────────────────────────────────────────────────────────────────────────
+   DELIBERADAMENTE SIN @rendermode: esta página debe quedarse en SSR estática.
+   HttpContext (necesario para HttpContext.SignInAsync, que es lo que
+   realmente crea la cookie de autenticación) solo está disponible como
+   cascading parameter durante el renderizado estático — una vez que una
+   página pasa a un circuito interactivo, ya no hay una respuesta HTTP viva
+   a la que escribirle un Set-Cookie. Mismo patrón que usa la plantilla
+   oficial de ASP.NET Core Identity para Blazor Web Apps.
+   ────────────────────────────────────────────────────────────────────────── *@
+
+<PageTitle>Iniciar sesión</PageTitle>
+
+<div class="login-box" style="max-width:360px;">
+    <h3>Iniciar sesión</h3>
+
+    <EditForm Model="Modelo" FormName="login" method="post" OnValidSubmit="ManejarLoginAsync">
+        <div class="mb-3">
+            <label>Usuario</label>
+            <InputText class="form-control" @bind-Value="Modelo.NombreUsuario" />
+        </div>
+
+        <div class="mb-3">
+            <label>Contraseña</label>
+            <InputText class="form-control" type="password" @bind-Value="Modelo.Password" />
+        </div>
+
+        @if (_error is not null)
+        {
+            <div class="alert alert-danger" role="alert">@_error</div>
+        }
+
+        <button class="btn btn-primary" type="submit">Ingresar</button>
+    </EditForm>
+</div>
+
+@code {
+    // Solo disponible en SSR estática — es justamente lo que necesitamos aquí.
+    [CascadingParameter]
+    private HttpContext HttpContext { get; set; } = default!;
+
+    [SupplyParameterFromForm]
+    public LoginModelo Modelo { get; set; } = new();
+
+    [SupplyParameterFromQuery]
+    public string? ReturnUrl { get; set; }
+
+    private string? _error;
+
+    private async Task ManejarLoginAsync()
+    {
+        _error = null;
+
+        var resultado = await Mediator.Send(
+            new AutenticarUsuarioCommand(Modelo.NombreUsuario, Modelo.Password));
+
+        if (!resultado.IsSuccess)
+        {
+            // Mismo mensaje que ya genera Application — no se reinventa
+            // ninguna regla de negocio de credenciales aquí.
+            _error = resultado.Error;
+            return;
+        }
+
+        var sesion = resultado.Value;
+
+        // Regla EXCLUSIVA de BlazorUI (decisión de equipo, no vive en
+        // Application): solo administradores pueden usar la web. No se toca
+        // AutenticarUsuarioCommand porque debe seguir permitiendo otros
+        // roles para Avalonia.
+        if (sesion.Rol != RolUsuario.Administrador)
+        {
+            _error = "Esta plataforma es exclusiva para administradores.";
+            return;
+        }
+
+        var claims = new List<Claim>
+        {
+            new(ClaimTypes.NameIdentifier, sesion.UsuarioId.ToString()),
+            new(ClaimTypes.Name, sesion.NombreUsuario),
+            new(ClaimTypes.Role, sesion.Rol.ToString())
+        };
+        var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+        var principal = new ClaimsPrincipal(identity);
+
+        await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
+
+        var destino = string.IsNullOrWhiteSpace(ReturnUrl) ? "/" : ReturnUrl;
+        Navigation.NavigateTo(destino, forceLoad: true);
+    }
+
+    public class LoginModelo
+    {
+        public string NombreUsuario { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
+    }
+}

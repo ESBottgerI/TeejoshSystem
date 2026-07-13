@@ -1,0 +1,145 @@
+@page "/admin/audit-log"
+@attribute [Authorize(Roles = AuthorizationConstants.Administrador)]
+@rendermode InteractiveServer
+@using MediatR
+@using TeejoshSystem.Application.Ports.Inbound.Auditoria.Queries.ConsultarAuditLog
+@inject IMediator Mediator
+
+<PageTitle>Historial de cambios</PageTitle>
+
+<h3>Historial de cambios</h3>
+
+<div class="row mb-3 g-2 align-items-end">
+    <div class="col-auto">
+        <label class="form-label">Entidad</label>
+        <input class="form-control" @bind="_entidad" placeholder="Ej: Producto" />
+    </div>
+    <div class="col-auto">
+        <label class="form-label">Usuario</label>
+        <input class="form-control" @bind="_usuario" placeholder="Ej: admin" />
+    </div>
+    <div class="col-auto">
+        <button class="btn btn-outline-secondary" @onclick="BuscarAsync">Filtrar</button>
+    </div>
+    <div class="col-auto">
+        <button class="btn btn-link" @onclick="LimpiarAsync">Limpiar</button>
+    </div>
+</div>
+
+@if (_cargando)
+{
+    <p><em>Cargando historial...</em></p>
+}
+else if (_error is not null)
+{
+    <div class="alert alert-danger">@_error</div>
+}
+else if (_registros.Count == 0)
+{
+    <p>No hay registros con ese criterio.</p>
+}
+else
+{
+    <table class="table table-sm">
+        <thead>
+            <tr>
+                <th>Fecha</th>
+                <th>Usuario</th>
+                <th>Entidad</th>
+                <th>ID</th>
+                <th>Acción</th>
+                <th>Cambios</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var registro in _registros)
+            {
+                <tr>
+                    <td>@registro.Timestamp.ToString("dd/MM/yyyy HH:mm")</td>
+                    <td>@(registro.Usuario ?? "—")</td>
+                    <td>@registro.Entidad</td>
+                    <td>@registro.EntidadId</td>
+                    <td>@registro.Accion</td>
+                    <td><small>@registro.Cambios</small></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <div class="d-flex gap-2">
+        <button class="btn btn-sm btn-outline-secondary" disabled="@(_pagina <= 1)" @onclick="PaginaAnteriorAsync">
+            ← Anterior
+        </button>
+        <span class="align-self-center">Página @_pagina</span>
+        <button class="btn btn-sm btn-outline-secondary" disabled="@(_registros.Count < _tamanioPagina)" @onclick="PaginaSiguienteAsync">
+            Siguiente →
+        </button>
+    </div>
+}
+
+@code {
+    private const int _tamanioPagina = 50;
+
+    private string _entidad = string.Empty;
+    private string _usuario = string.Empty;
+    private int _pagina = 1;
+    private List<AuditLogDto> _registros = new();
+    private bool _cargando = true;
+    private string? _error;
+
+    protected override async Task OnInitializedAsync() => await CargarAsync();
+
+    private async Task BuscarAsync()
+    {
+        _pagina = 1;
+        await CargarAsync();
+    }
+
+    private async Task LimpiarAsync()
+    {
+        _entidad = string.Empty;
+        _usuario = string.Empty;
+        _pagina = 1;
+        await CargarAsync();
+    }
+
+    private async Task PaginaAnteriorAsync()
+    {
+        if (_pagina > 1)
+        {
+            _pagina--;
+            await CargarAsync();
+        }
+    }
+
+    private async Task PaginaSiguienteAsync()
+    {
+        _pagina++;
+        await CargarAsync();
+    }
+
+    private async Task CargarAsync()
+    {
+        _cargando = true;
+        _error = null;
+
+        try
+        {
+            var registros = await Mediator.Send(new ConsultarAuditLogQuery(
+                string.IsNullOrWhiteSpace(_entidad) ? null : _entidad,
+                string.IsNullOrWhiteSpace(_usuario) ? null : _usuario,
+                _pagina,
+                _tamanioPagina));
+
+            _registros = registros;
+        }
+        catch (Exception ex)
+        {
+            _error = $"No se pudo cargar el historial: {ex.Message}";
+        }
+        finally
+        {
+            _cargando = false;
+        }
+    }
+}

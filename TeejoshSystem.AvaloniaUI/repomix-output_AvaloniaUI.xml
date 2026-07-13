@@ -1,0 +1,5095 @@
+This file is a merged representation of the entire codebase, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of the entire repository's contents.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+Adapters/
+  Inbound/
+    Converters/
+      PathToImageConverter.cs
+    Helpers/
+      ControlExtensions.cs
+    Services/
+      ConfirmationService.cs
+      IConfirmationService.cs
+      ILoadable.cs
+      INavigationService.cs
+      INotificationService.cs
+      IThemePreferenceService.cs
+      NavigationService.cs
+      NotificationService.cs
+      SessionContext.cs
+      SessionCurrentUserProvider.cs
+      ThemePreferenceService.cs
+    ViewModels/
+      Admin/
+        AuditLogViewModel.cs
+        CambiarPasswordViewModel.cs
+        GestionarUsuariosViewModel.cs
+      Auth/
+        LoginViewModel.cs
+      Catalogos/
+        SincronizarCatalogosViewModel.cs
+      Common/
+        TipoProductoFiltroItem.cs
+        ValidatableViewModel.cs
+        ViewModelBase.cs
+      Menu/
+        MenuPrincipalViewModel.cs
+      Productos/
+        CrearProductoViewModel.cs
+        EditarProductoViewModel.cs
+        GestionarProductosViewModel.cs
+        InventarioViewModel.cs
+      Shell/
+        MainViewModel.cs
+      Ventas/
+        HistorialVentasViewModel.cs
+        RegistrarVentaViewModel.cs
+    Views/
+      Admin/
+        AuditLogView.axaml
+        AuditLogView.axaml.cs
+        CambiarPasswordView.axaml
+        CambiarPasswordView.axaml.cs
+        GestionarUsuariosView.axaml
+        GestionarUsuariosView.axaml.cs
+      Auth/
+        LoginView.axaml
+        LoginView.axaml.cs
+      Catalogos/
+        SincronizarCatalogosView.axaml
+        SincronizarCatalogosView.axaml.cs
+      Menu/
+        MenuPrincipalView.axaml
+        MenuPrincipalView.axaml.cs
+      Productos/
+        CrearProductoView.axaml
+        CrearProductoView.axaml.cs
+        EditarProductoView.axaml
+        EditarProductoView.axaml.cs
+        GestionarProductosView.axaml
+        GestionarProductosView.axaml.cs
+        InventarioView.axaml
+        InventarioView.axaml.cs
+      Ventas/
+        HistorialVentasView.axaml
+        HistorialVentasView.axaml.cs
+        RegistrarVentaView.axaml
+        RegistrarVentaView.axaml.cs
+App.axaml
+App.axaml.cs
+app.manifest
+appsettings.json
+appsettings.Production.json
+MainWindow.axaml
+MainWindow.axaml.cs
+Program.cs
+TeejoshSystem.AvaloniaUI.csproj
+TeejoshSystem.AvaloniaUI.csproj.lscache
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="Adapters/Inbound/Converters/PathToImageConverter.cs">
+using System;
+using System.Globalization;
+using System.IO;
+
+using Avalonia.Data.Converters;
+using Avalonia.Media.Imaging;
+
+namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.Converters
+{
+    public class PathToImageConverter : IValueConverter
+    {
+        public static readonly PathToImageConverter Instance = new();
+
+        public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+        {
+            if (value is string path && !string.IsNullOrWhiteSpace(path) && File.Exists(path))
+            {
+                try { return new Bitmap(path); }
+                catch { return null; }
+            }
+            return null;
+        }
+
+        public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+            => throw new NotImplementedException();
+    }
+}
+</file>
+
+<file path="Adapters/Inbound/Helpers/ControlExtensions.cs">
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Input;
+using Avalonia.Interactivity;
+
+namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.Helpers
+{
+    public static class ControlExtensions
+    {
+        public static readonly AttachedProperty<bool> BlockScrollProperty =
+            AvaloniaProperty.RegisterAttached<Control, bool>("BlockScroll", typeof(ControlExtensions));
+
+        static ControlExtensions()
+        {
+            BlockScrollProperty.Changed.AddClassHandler<ComboBox>((x, e) =>
+            {
+                if (e.NewValue is bool block && block)
+                {
+                    x.AddHandler(Control.PointerWheelChangedEvent, (s, ev) =>
+                    {
+                        if (!x.IsDropDownOpen)
+                        {
+                            ev.Handled = true;
+                        }
+                    }, RoutingStrategies.Tunnel);
+                }
+            });
+        }
+
+        public static void SetBlockScroll(Control element, bool value) => element.SetValue(BlockScrollProperty, value);
+        public static bool GetBlockScroll(Control element) => element.GetValue(BlockScrollProperty);
+    }
+}
+</file>
+
+<file path="Adapters/Inbound/Services/ConfirmationService.cs">
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Layout;
+using Avalonia.Media;
+using System.Threading.Tasks;
+
+namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.Services;
+
+public class ConfirmationService : IConfirmationService
+{
+    public async Task<bool> ConfirmAsync(string message, string title = "Confirmación")
+    {
+        var ventana = ObtenerVentanaPrincipal();
+        if (ventana is null) return false;
+
+        var resultado = false;
+
+        var dialogo = new Window
+        {
+            Title = title,
+            Width = 400,
+            Height = 200,
+            CanResize = false,
+            WindowStartupLocation = WindowStartupLocation.CenterOwner,
+        };
+
+        var botonSi = new Button
+        {
+            Content = "Sí",
+            Width = 80,
+            Height = 36,
+            Background = SolidColorBrush.Parse("#FF9800"),
+            Foreground = Brushes.White
+        };
+
+        var botonNo = new Button
+        {
+            Content = "No",
+            Width = 80,
+            Height = 36
+        };
+
+        botonSi.Click += (_, _) => { resultado = true; dialogo.Close(); };
+        botonNo.Click += (_, _) => { resultado = false; dialogo.Close(); };
+
+        dialogo.Content = new Grid
+        {
+            RowDefinitions = new RowDefinitions("Auto,*,Auto"),
+            Children =
+            {
+                new Border
+                {
+                    [Grid.RowProperty] = 0,
+                    Background        = SolidColorBrush.Parse("#2C3E50"),
+                    Padding           = new Thickness(16, 10),
+                    Child             = new TextBlock
+                    {
+                        Text       = title,
+                        Foreground = Brushes.White,
+                        FontSize   = 16,
+                        FontWeight = FontWeight.SemiBold
+                    }
+                },
+                new TextBlock
+                {
+                    [Grid.RowProperty] = 1,
+                    Text               = message,
+                    TextWrapping       = TextWrapping.Wrap,
+                    Margin             = new Thickness(16),
+                    VerticalAlignment  = VerticalAlignment.Center
+                },
+                new Border
+                {
+                    [Grid.RowProperty] = 2,
+                    Padding            = new Thickness(16, 8),
+                    Child              = new StackPanel
+                    {
+                        Orientation         = Orientation.Horizontal,
+                        HorizontalAlignment = HorizontalAlignment.Right,
+                        Spacing             = 8,
+                        Children            = { botonSi, botonNo }
+                    }
+                }
+            }
+        };
+
+        await dialogo.ShowDialog(ventana);
+        return resultado;
+    }
+
+    private static Window? ObtenerVentanaPrincipal()
+    {
+        if (Avalonia.Application.Current?.ApplicationLifetime
+            is IClassicDesktopStyleApplicationLifetime desktop)
+            return desktop.MainWindow;
+        return null;
+    }
+}
+</file>
+
+<file path="Adapters/Inbound/Services/IConfirmationService.cs">
+using System.Threading.Tasks;
+
+namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.Services;
+
+public interface IConfirmationService
+{
+    Task<bool> ConfirmAsync(string message, string title = "Confirmación");
+}
+</file>
+
+<file path="Adapters/Inbound/Services/ILoadable.cs">
+namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.Services
+{
+    public interface ILoadable
+    {
+        void OnLoaded();
+    }
+}
+</file>
+
+<file path="Adapters/Inbound/Services/INavigationService.cs">
+namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.Services;
+
+public interface INavigationService
+{
+    void NavigateTo(object viewModel);
+    void NavigateToMenu();
+}
+</file>
+
+<file path="Adapters/Inbound/Services/INotificationService.cs">
+using System.Threading.Tasks;
+
+namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.Services;
+
+public interface INotificationService
+{
+    Task ShowSuccessAsync(string message);
+    Task ShowErrorAsync(string message);
+}
+</file>
+
+<file path="Adapters/Inbound/Services/IThemePreferenceService.cs">
+using System.Threading.Tasks;
+using Avalonia.Styling;
+
+namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.Services;
+
+public interface IThemePreferenceService
+{
+    Task<ThemeVariant> GetThemeAsync();
+    Task SaveThemeAsync(ThemeVariant theme);
+}
+</file>
+
+<file path="Adapters/Inbound/Services/NavigationService.cs">
+using System;
+
+namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.Services;
+
+public class NavigationService : INavigationService
+{
+    private Action<object>? _navigate;
+    private Action? _navigateToMenu;
+
+    public void Configure(Action<object> navigate, Action navigateToMenu)
+    {
+        _navigate = navigate;
+        _navigateToMenu = navigateToMenu;
+    }
+
+    public void NavigateTo(object viewModel) => _navigate?.Invoke(viewModel);
+    public void NavigateToMenu() => _navigateToMenu?.Invoke();
+}
+</file>
+
+<file path="Adapters/Inbound/Services/NotificationService.cs">
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Layout;
+using Avalonia.Media;
+using System.Threading.Tasks;
+
+namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.Services;
+
+public class NotificationService : INotificationService
+{
+    public Task ShowSuccessAsync(string message)
+        => MostrarDialogoAsync("Éxito", message, "#43A047");
+
+    public Task ShowErrorAsync(string message)
+        => MostrarDialogoAsync("Error", message, "#E53935");
+
+    private static async Task MostrarDialogoAsync(
+    string titulo, string mensaje, string colorHeader)
+    {
+        var ventana = ObtenerVentanaPrincipal();
+        if (ventana is null) return;
+
+        var botonAceptar = new Button
+        {
+            Content = "Aceptar",
+            Width = 90,
+            Height = 36,
+            HorizontalAlignment = HorizontalAlignment.Right
+        };
+
+        var botonCopiar = new Button
+        {
+            Content = "Copiar",
+            Width = 90,
+            Height = 36,
+            HorizontalAlignment = HorizontalAlignment.Right
+        };
+
+        var dialogo = new Window
+        {
+            Title = titulo,
+            Width = 400,
+            Height = 200,
+            CanResize = false,
+            WindowStartupLocation = WindowStartupLocation.CenterOwner,
+        };
+
+        botonAceptar.Click += (_, _) => dialogo.Close();
+        botonCopiar.Click += async (_, _) =>
+        {
+            var clipboard = ventana.Clipboard;
+            if (clipboard is not null)
+                await clipboard.SetTextAsync(mensaje);
+        };
+
+        dialogo.Content = new Grid
+        {
+            RowDefinitions = new RowDefinitions("Auto,*,Auto"),
+            Children =
+        {
+            new Border
+            {
+                [Grid.RowProperty] = 0,
+                Background        = SolidColorBrush.Parse(colorHeader),
+                Padding           = new Thickness(16, 10),
+                Child             = new TextBlock
+                {
+                    Text       = titulo,
+                    Foreground = Brushes.White,
+                    FontSize   = 16,
+                    FontWeight = FontWeight.SemiBold
+                }
+            },
+            new TextBlock
+            {
+                [Grid.RowProperty] = 1,
+                Text               = mensaje,
+                TextWrapping       = TextWrapping.Wrap,
+                Margin             = new Thickness(16),
+                VerticalAlignment  = VerticalAlignment.Center
+            },
+            new Border
+            {
+                [Grid.RowProperty] = 2,
+                Padding            = new Thickness(16, 8),
+                Child              = new StackPanel
+                {
+                    Orientation         = Orientation.Horizontal,
+                    HorizontalAlignment = HorizontalAlignment.Right,
+                    Spacing             = 8,
+                    Children            = { botonCopiar, botonAceptar }
+                }
+            }
+        }
+        };
+
+        await dialogo.ShowDialog(ventana);
+    }
+
+    private static Window? ObtenerVentanaPrincipal()
+    {
+        if (Avalonia.Application.Current?.ApplicationLifetime
+            is IClassicDesktopStyleApplicationLifetime desktop)
+            return desktop.MainWindow;
+        return null;
+    }
+}
+</file>
+
+<file path="Adapters/Inbound/Services/SessionContext.cs">
+using System;
+using TeejoshSystem.Application.Common.Dtos;
+
+namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.Services
+{
+    /// <summary>
+    /// Sesión activa en memoria. Singleton — una instancia en toda la app.
+    /// No persiste entre reinicios: login obligatorio en cada arranque.
+    /// Solo la UI lee y escribe este contexto.
+    /// </summary>
+    public class SesionContext
+    {
+        private SesionDto? _sesionActual;
+
+        public bool EstaAutenticado => _sesionActual is not null;
+        public SesionDto? SesionActual => _sesionActual;
+
+        public void IniciarSesion(SesionDto sesion)
+        {
+            ArgumentNullException.ThrowIfNull(sesion);
+            _sesionActual = sesion;
+        }
+
+        public void CerrarSesion() => _sesionActual = null;
+    }
+}
+</file>
+
+<file path="Adapters/Inbound/Services/SessionCurrentUserProvider.cs">
+using TeejoshSystem.Domain.Ports.Outbound;
+
+namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.Services
+{
+    public class SessionCurrentUserProvider : ICurrentUserProvider
+    {
+        private readonly SesionContext _sesionContext;
+
+        public SessionCurrentUserProvider(SesionContext sesionContext)
+        {
+            _sesionContext = sesionContext;
+        }
+
+        public string? UsuarioActual => _sesionContext.SesionActual?.NombreUsuario;
+    }
+}
+</file>
+
+<file path="Adapters/Inbound/Services/ThemePreferenceService.cs">
+using System;
+using System.IO;
+using System.Threading.Tasks;
+using Avalonia.Styling;
+
+namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.Services;
+
+public sealed class ThemePreferenceService : IThemePreferenceService
+{
+    private readonly string _folderPath;
+    private readonly string _filePath;
+
+    public ThemePreferenceService()
+    {
+        _folderPath = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "TeejoshSystem");
+        _filePath = Path.Combine(_folderPath, "theme-preference.txt");
+    }
+
+    public async Task<ThemeVariant> GetThemeAsync()
+    {
+        try
+        {
+            if (!File.Exists(_filePath))
+                return ThemeVariant.Light;
+
+            string content = await File.ReadAllTextAsync(_filePath);
+            return content.Trim() == "Dark" ? ThemeVariant.Dark : ThemeVariant.Light;
+        }
+        catch
+        {
+            return ThemeVariant.Light;
+        }
+    }
+
+    public async Task SaveThemeAsync(ThemeVariant theme)
+    {
+        try
+        {
+            if (!Directory.Exists(_folderPath))
+                Directory.CreateDirectory(_folderPath);
+
+            string content = theme == ThemeVariant.Dark ? "Dark" : "Light";
+            await File.WriteAllTextAsync(_filePath, content);
+        }
+        catch
+        {
+            // No interrumpir el flujo principal de la interfaz de usuario si no se puede guardar la preferencia. (O añadir log del suceso)
+        }
+    }
+}
+</file>
+
+<file path="Adapters/Inbound/ViewModels/Admin/AuditLogViewModel.cs">
+using System;
+using System.Collections.ObjectModel;
+using System.Threading.Tasks;
+
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using MediatR;
+
+using TeejoshSystem.Application.Ports.Inbound.Auditoria.Queries.ConsultarAuditLog;
+using TeejoshSystem.AvaloniaUI.Adapters.Inbound.Services;
+using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Common;
+
+namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Admin
+{
+    public partial class AuditLogViewModel : ViewModelBase, ILoadable
+    {
+        private readonly IMediator _mediator;
+        private readonly INavigationService _navigation;
+
+        [ObservableProperty]
+        private string? _filtroEntidad;
+
+        [ObservableProperty]
+        private string? _filtroUsuario;
+
+        public ObservableCollection<AuditLogDto> Entradas { get; } = new();
+
+        public AuditLogViewModel(IMediator mediator, INavigationService navigation)
+        {
+            _mediator = mediator;
+            _navigation = navigation;
+        }
+
+        public void OnLoaded()
+        {
+            _ = CargarAsync();
+        }
+
+        [RelayCommand]
+        private async Task CargarAsync()
+        {
+            if (IsBusy) return;
+
+            try
+            {
+                IsBusy = true;
+
+                var resultado = await _mediator.Send(new ConsultarAuditLogQuery(
+                    Entidad: string.IsNullOrWhiteSpace(FiltroEntidad) ? null : FiltroEntidad,
+                    Usuario: string.IsNullOrWhiteSpace(FiltroUsuario) ? null : FiltroUsuario));
+
+                Entradas.Clear();
+                foreach (var entrada in resultado)
+                    Entradas.Add(entrada);
+            }
+            finally
+            {
+                IsBusy = false;
+            }
+        }
+
+        [RelayCommand]
+        private void Volver() => _navigation.NavigateToMenu();
+    }
+}
+</file>
+
+<file path="Adapters/Inbound/ViewModels/Admin/CambiarPasswordViewModel.cs">
+using System.Threading.Tasks;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using MediatR;
+using TeejoshSystem.Application.Ports.Inbound.Auth.Commands.CambiarPassword;
+using TeejoshSystem.AvaloniaUI.Adapters.Inbound.Services;
+using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Common;
+
+namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Admin
+{
+    public partial class CambiarPasswordViewModel : ViewModelBase
+    {
+        private readonly IMediator _mediator;
+        private readonly INotificationService _notification;
+        private readonly INavigationService _navigation;
+        private readonly SesionContext _sesionContext;
+
+        private string _passwordActual = string.Empty;
+        private string _passwordNuevo = string.Empty;
+        private string _confirmarPassword = string.Empty;
+
+        [ObservableProperty]
+        private string _mensajeError = string.Empty;
+
+        public CambiarPasswordViewModel(
+            IMediator mediator,
+            INotificationService notification,
+            INavigationService navigation,
+            SesionContext sesionContext)
+        {
+            _mediator = mediator;
+            _notification = notification;
+            _navigation = navigation;
+            _sesionContext = sesionContext;
+        }
+
+        public void ActualizarPasswordActual(string password)
+        {
+            _passwordActual = password;
+            CambiarPasswordCommand.NotifyCanExecuteChanged();
+        }
+
+        public void ActualizarPasswordNuevo(string password)
+        {
+            _passwordNuevo = password;
+            CambiarPasswordCommand.NotifyCanExecuteChanged();
+        }
+
+        public void ActualizarConfirmarPassword(string password)
+        {
+            _confirmarPassword = password;
+            CambiarPasswordCommand.NotifyCanExecuteChanged();
+        }
+
+        private bool PuedeCambiarPassword()
+            => !string.IsNullOrWhiteSpace(_passwordActual)
+            && !string.IsNullOrWhiteSpace(_passwordNuevo)
+            && !string.IsNullOrWhiteSpace(_confirmarPassword)
+            && !IsBusy;
+
+        [RelayCommand(CanExecute = nameof(PuedeCambiarPassword))]
+        private async Task CambiarPasswordAsync()
+        {
+            MensajeError = string.Empty;
+
+            if (_passwordNuevo != _confirmarPassword)
+            {
+                MensajeError = "Las contraseñas nuevas no coinciden.";
+                return;
+            }
+
+            IsBusy = true;
+            try
+            {
+                var result = await _mediator.Send(new CambiarPasswordCommand(
+                    _sesionContext.SesionActual!.UsuarioId,
+                    _passwordActual,
+                    _passwordNuevo));
+
+                if (result.IsSuccess)
+                {
+                    await _notification.ShowSuccessAsync("Contraseña actualizada correctamente.");
+                    _navigation.NavigateToMenu();
+                }
+                else
+                {
+                    MensajeError = result.Error ?? "Error al cambiar la contraseña.";
+                }
+            }
+            finally { IsBusy = false; }
+        }
+
+        [RelayCommand]
+        private void Volver() => _navigation.NavigateToMenu();
+    }
+}
+</file>
+
+<file path="Adapters/Inbound/ViewModels/Admin/GestionarUsuariosViewModel.cs">
+using System;
+using System.Collections.ObjectModel;
+using System.Threading.Tasks;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using MediatR;
+using TeejoshSystem.Application.Common.Dtos;
+using TeejoshSystem.Application.Ports.Inbound.Auth.Commands.RegistrarUsuario;
+using TeejoshSystem.Application.Ports.Inbound.Auth.Queries.ListarUsuarios;
+using TeejoshSystem.AvaloniaUI.Adapters.Inbound.Services;
+using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Common;
+using TeejoshSystem.Domain.Enums;
+using TeejoshSystem.Application.Ports.Inbound.Auth.Commands.DesactivarUsuario;
+
+namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Admin
+{
+    public partial class GestionarUsuariosViewModel : ViewModelBase
+    {
+        private readonly IMediator _mediator;
+        private readonly INotificationService _notification;
+        private readonly IConfirmationService _confirmation;
+        private readonly INavigationService _navigation;
+
+        public ObservableCollection<UsuarioListaDto> Usuarios { get; } = new();
+
+        // Campos para crear usuario
+        [ObservableProperty]
+        [NotifyCanExecuteChangedFor(nameof(CrearUsuarioCommand))]
+        private string _nuevoUsuario = string.Empty;
+
+        private string _nuevaPassword = string.Empty;
+        private string _confirmarPassword = string.Empty;
+
+        [ObservableProperty]
+        private RolUsuario _rolSeleccionado = RolUsuario.Operador;
+
+        [ObservableProperty]
+        private string _mensajeError = string.Empty;
+
+        public RolUsuario[] Roles { get; } = (RolUsuario[])Enum.GetValues(typeof(RolUsuario));
+
+        public GestionarUsuariosViewModel(
+            IMediator mediator,
+            INotificationService notification,
+            IConfirmationService confirmation,
+            INavigationService navigation)
+        {
+            _mediator = mediator;
+            _notification = notification;
+            _confirmation = confirmation;
+            _navigation = navigation;
+
+            _ = CargarUsuariosAsync();
+        }
+
+        public void ActualizarNuevaPassword(string password)
+        {
+            _nuevaPassword = password;
+            CrearUsuarioCommand.NotifyCanExecuteChanged();
+        }
+
+        public void ActualizarConfirmarPassword(string password)
+        {
+            _confirmarPassword = password;
+            CrearUsuarioCommand.NotifyCanExecuteChanged();
+        }
+
+        [RelayCommand]
+        private async Task CargarUsuariosAsync()
+        {
+            if (IsBusy) return;
+            IsBusy = true;
+            try
+            {
+                var lista = await _mediator.Send(new ListarUsuariosQuery());
+                Usuarios.Clear();
+                foreach (var u in lista)
+                    Usuarios.Add(u);
+            }
+            finally { IsBusy = false; }
+        }
+
+        private bool PuedeCrearUsuario()
+            => !string.IsNullOrWhiteSpace(NuevoUsuario)
+            && !string.IsNullOrWhiteSpace(_nuevaPassword)
+            && !string.IsNullOrWhiteSpace(_confirmarPassword)
+            && !IsBusy;
+
+        [RelayCommand(CanExecute = nameof(PuedeCrearUsuario))]
+        private async Task CrearUsuarioAsync()
+        {
+            MensajeError = string.Empty;
+
+            if (_nuevaPassword != _confirmarPassword)
+            {
+                MensajeError = "Las contraseñas no coinciden.";
+                return;
+            }
+
+            IsBusy = true;
+            try
+            {
+                var result = await _mediator.Send(
+                    new RegistrarUsuarioCommand(NuevoUsuario, _nuevaPassword, RolSeleccionado));
+
+                if (result.IsSuccess)
+                {
+                    NuevoUsuario = string.Empty;
+                    await _notification.ShowSuccessAsync("Usuario creado correctamente.");
+                    await CargarUsuariosAsync();
+                }
+                else
+                {
+                    MensajeError = result.Error ?? "Error al crear el usuario.";
+                }
+            }
+            finally { IsBusy = false; }
+        }
+
+        [RelayCommand]
+        private async Task DesactivarUsuarioAsync(UsuarioListaDto usuario)
+        {
+            var confirmar = await _confirmation.ConfirmAsync(
+                $"¿Desactivar al usuario '{usuario.NombreUsuario}'?");
+            if (!confirmar) return;
+
+            IsBusy = true;
+            try
+            {
+                await _mediator.Send(new DesactivarUsuarioCommand(usuario.Id));
+                await _notification.ShowSuccessAsync("Usuario desactivado.");
+                await CargarUsuariosAsync();
+            }
+            finally { IsBusy = false; }
+        }
+
+        [RelayCommand]
+        private void Volver() => _navigation.NavigateToMenu();
+    }
+}
+</file>
+
+<file path="Adapters/Inbound/ViewModels/Auth/LoginViewModel.cs">
+using System;
+using System.Threading.Tasks;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using MediatR;
+using TeejoshSystem.Application.Ports.Inbound.Auth.Commands.AutenticarUsuario;
+using TeejoshSystem.AvaloniaUI.Adapters.Inbound.Services;
+using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Common;
+
+namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Auth
+{
+    public partial class LoginViewModel : ViewModelBase
+    {
+        private readonly IMediator _mediator;
+        private readonly SesionContext _sesionContext;
+
+        // Callback configurado desde App.axaml.cs.
+        // LoginViewModel no conoce NavigationService ni MainViewModel —
+        // el acoplamiento de navegación vive en el punto de composición.
+        public Action? OnLoginExitoso { get; set; }
+
+        [ObservableProperty]
+        [NotifyCanExecuteChangedFor(nameof(IniciarSesionCommand))]
+        private string _nombreUsuario = string.Empty;
+
+        // La contraseña NO es ObservableProperty.
+        // Un campo privado evita que el valor en texto plano sea serializado,
+        // logueado por herramientas de diagnóstico, o expuesto via reflection.
+        private string _password = string.Empty;
+
+        [ObservableProperty]
+        private string _mensajeError = string.Empty;
+
+        public LoginViewModel(IMediator mediator, SesionContext sesionContext)
+        {
+            _mediator = mediator;
+            _sesionContext = sesionContext;
+        }
+
+        /// <summary>
+        /// Llamado desde code-behind cuando cambia el TextBox de contraseña.
+        /// Avalonia no soporta binding directo a contraseñas.
+        /// </summary>
+        public void ActualizarPassword(string password)
+        {
+            _password = password;
+            IniciarSesionCommand.NotifyCanExecuteChanged();
+        }
+
+        private bool PuedeIniciarSesion()
+            => !string.IsNullOrWhiteSpace(NombreUsuario)
+            && !string.IsNullOrWhiteSpace(_password)
+            && !IsBusy;
+
+        [RelayCommand(CanExecute = nameof(PuedeIniciarSesion))]
+        private async Task IniciarSesionAsync()
+        {
+            IsBusy = true;
+            MensajeError = string.Empty;
+
+            try
+            {
+                var result = await _mediator.Send(
+                    new AutenticarUsuarioCommand(NombreUsuario, _password));
+
+                if (result.IsSuccess)
+                {
+                    _sesionContext.IniciarSesion(result.Value);
+                    OnLoginExitoso?.Invoke();
+                }
+                else
+                {
+                    MensajeError = result.Error ?? "Error desconocido.";
+                }
+            }
+            finally
+            {
+                IsBusy = false;
+                IniciarSesionCommand.NotifyCanExecuteChanged();
+            }
+        }
+    }
+}
+</file>
+
+<file path="Adapters/Inbound/ViewModels/Catalogos/SincronizarCatalogosViewModel.cs">
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using MediatR;
+using System;
+using System.Linq;
+using System.Threading.Tasks;
+
+using TeejoshSystem.Application.Ports.Inbound.Catalogos.Commands.SincronizarCatalogos;
+using TeejoshSystem.AvaloniaUI.Adapters.Inbound.Services;
+using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Common;
+using TeejoshSystem.Domain.Ports.Outbound;
+
+namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Catalogos
+{
+    public partial class SincronizarCatalogosViewModel : ViewModelBase
+    {
+        private readonly IMediator _mediator;
+        private readonly INotificationService _notification;
+        private readonly INavigationService _navigation;
+        private readonly IAppLogger _logger;                 // NUEVO
+
+        [ObservableProperty]
+        private string? _resultado;
+
+        [ObservableProperty]
+        private bool _hayErrores;
+
+        public SincronizarCatalogosViewModel(
+            IMediator mediator,
+            INotificationService notification,
+            INavigationService navigation,
+            IAppLogger logger)                               // NUEVO
+        {
+            _mediator = mediator;
+            _notification = notification;
+            _navigation = navigation;
+            _logger = logger;
+        }
+
+        [RelayCommand]
+        private async Task SincronizarAsync()
+        {
+            if (IsBusy) return;
+
+            try
+            {
+                IsBusy = true;
+                Resultado = null;
+                HayErrores = false;
+
+                var result = await _mediator.Send(new SincronizarCatalogosCommand());
+
+                var resumen = $"Expansiones nuevas: {result.TotalAgregadas}\n" +
+                            $"Expansiones actualizadas: {result.TotalActualizadas}";
+
+                if (result.Errores.Any())
+                {
+                    HayErrores = true;
+                    Resultado = resumen + "\n\nErrores:\n" +
+                                string.Join("\n", result.Errores);
+                }
+                else
+                {
+                    Resultado = resumen;
+                    await _notification.ShowSuccessAsync(
+                        "Catálogos sincronizados correctamente.");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.Error("Error inesperado en la sincronización de catálogos desde la UI.", ex);
+                await _notification.ShowErrorAsync($"Error: {ex.Message} | {ex.InnerException?.Message}");
+            }
+            finally
+            {
+                IsBusy = false;
+            }
+        }
+
+        [RelayCommand]
+        private void Volver() => _navigation.NavigateToMenu();
+    }
+}
+</file>
+
+<file path="Adapters/Inbound/ViewModels/Common/TipoProductoFiltroItem.cs">
+using TeejoshSystem.Domain.Enums;
+
+namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Common;
+
+public record TipoProductoFiltroItem(string Nombre, TipoProducto? Valor);
+</file>
+
+<file path="Adapters/Inbound/ViewModels/Common/ValidatableViewModel.cs">
+using System.Collections;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.ComponentModel;
+
+namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Common
+{
+    public abstract class ValidatableViewModel : ViewModelBase, INotifyDataErrorInfo
+    {
+        private readonly Dictionary<string, List<string>> _errors = new();
+
+        public bool HasErrors => _errors.Any();
+
+        public event EventHandler<DataErrorsChangedEventArgs>? ErrorsChanged;
+
+        public IEnumerable GetErrors(string? propertyName)
+        {
+            if (string.IsNullOrEmpty(propertyName))
+                return Enumerable.Empty<string>();
+
+            return _errors.TryGetValue(propertyName, out var errors)
+                ? errors
+                : Enumerable.Empty<string>();
+        }
+
+        protected void AddError(string propertyName, string error)
+        {
+            if (!_errors.ContainsKey(propertyName))
+                _errors[propertyName] = new List<string>();
+
+            if (!_errors[propertyName].Contains(error))
+            {
+                _errors[propertyName].Add(error);
+                OnErrorsChanged(propertyName);
+            }
+        }
+
+        protected void ClearErrors(string propertyName)
+        {
+            if (_errors.Remove(propertyName))
+                OnErrorsChanged(propertyName);
+        }
+
+        protected void OnErrorsChanged(string propertyName)
+        {
+            ErrorsChanged?.Invoke(
+                this,
+                new DataErrorsChangedEventArgs(propertyName));
+
+            OnPropertyChanged(nameof(HasErrors));
+        }
+    }
+}
+</file>
+
+<file path="Adapters/Inbound/ViewModels/Common/ViewModelBase.cs">
+using CommunityToolkit.Mvvm.ComponentModel;
+
+namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Common
+{
+    public abstract partial class ViewModelBase : ObservableObject
+    {
+        [ObservableProperty]
+        private bool isBusy;
+    }
+}
+</file>
+
+<file path="Adapters/Inbound/ViewModels/Menu/MenuPrincipalViewModel.cs">
+using CommunityToolkit.Mvvm.Input;
+using MediatR;
+using Microsoft.Extensions.DependencyInjection;
+using System;
+using TeejoshSystem.AvaloniaUI.Adapters.Inbound.Services;
+using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Admin;
+using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Auth;
+using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Common;
+using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Productos;
+using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Ventas;
+using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Catalogos;
+using TeejoshSystem.Domain.Enums;
+
+namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Menu
+{
+    public partial class MenuPrincipalViewModel : ViewModelBase
+    {
+        private readonly IServiceProvider _serviceProvider;
+        private readonly INavigationService _navigation;
+        private readonly SesionContext _sesionContext;
+        private readonly INotificationService _notification;
+        private readonly SincronizarCatalogosViewModel _sincronizarVm;
+        private readonly AuditLogViewModel _auditLogVm;
+
+        public MenuPrincipalViewModel(
+            IServiceProvider serviceProvider,
+            INavigationService navigation,
+            SesionContext sesionContext,
+            INotificationService notification,
+            SincronizarCatalogosViewModel sincronizarVm,
+            AuditLogViewModel auditLogVm)
+        {
+            _serviceProvider = serviceProvider;
+            _navigation = navigation;
+            _sesionContext = sesionContext;
+            _notification = notification;
+            _sincronizarVm = sincronizarVm;
+            _auditLogVm = auditLogVm;
+        }
+
+        public bool EsAdministrador
+            => _sesionContext.SesionActual?.Rol == RolUsuario.Administrador;
+
+        // resto de m�todos sin cambios
+        [RelayCommand]
+        private void VisualizarInventario()
+        {
+            var vm = new InventarioViewModel(
+                _serviceProvider.GetRequiredService<IMediator>(),
+                _navigation.NavigateToMenu);
+            _navigation.NavigateTo(vm);
+        }
+
+        [RelayCommand]
+        private void ModificarProducto()
+        {
+            var vm = _serviceProvider.GetRequiredService<GestionarProductosViewModel>();
+            _navigation.NavigateTo(vm);
+        }
+
+        [RelayCommand]
+        private void AnadirProducto()
+        {
+            var vm = _serviceProvider.GetRequiredService<CrearProductoViewModel>();
+            _navigation.NavigateTo(vm);
+        }
+
+        [RelayCommand]
+        private void RegistrarVenta()
+        {
+            var vm = new RegistrarVentaViewModel(
+                _serviceProvider.GetRequiredService<IMediator>(),
+                _serviceProvider.GetRequiredService<INotificationService>(),
+                _serviceProvider.GetRequiredService<IConfirmationService>(),
+                _navigation);
+            _navigation.NavigateTo(vm);
+        }
+
+        [RelayCommand]
+        private void VerHistorialVentas()
+        {
+            var vm = new HistorialVentasViewModel(
+                _serviceProvider.GetRequiredService<IMediator>(),
+                _serviceProvider.GetRequiredService<INotificationService>(),
+                _navigation);
+            _navigation.NavigateTo(vm);
+        }
+
+        [RelayCommand]
+        private void IrAGestionarUsuarios()
+        {
+            if (_sesionContext.SesionActual?.Rol != RolUsuario.Administrador)
+            {
+                _ = _notification.ShowErrorAsync("Acceso restringido a administradores.");
+                return;
+            }
+            _navigation.NavigateTo(_serviceProvider.GetRequiredService<GestionarUsuariosViewModel>());
+        }
+
+        [RelayCommand]
+        private void IrACambiarPassword()
+            => _navigation.NavigateTo(_serviceProvider.GetRequiredService<CambiarPasswordViewModel>());
+
+        [RelayCommand]
+        private void CerrarSesion()
+        {
+            _sesionContext.CerrarSesion();
+
+            var loginVm = _serviceProvider.GetRequiredService<LoginViewModel>();
+
+            loginVm.OnLoginExitoso = () =>
+                _navigation.NavigateTo(_serviceProvider.GetRequiredService<MenuPrincipalViewModel>());
+
+            _navigation.NavigateTo(loginVm);
+        }
+
+        [RelayCommand]
+        private void SincronizarCatalogos() =>
+            _navigation.NavigateTo(_sincronizarVm);
+
+        [RelayCommand]
+        private void VerAuditLog() => 
+            _navigation.NavigateTo(_auditLogVm);
+    }
+}
+</file>
+
+<file path="Adapters/Inbound/ViewModels/Productos/CrearProductoViewModel.cs">
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using MediatR;
+
+using System;
+using System.Collections.ObjectModel;
+using System.Threading.Tasks;
+
+using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Platform.Storage;
+
+using TeejoshSystem.Application.Common.Dtos;
+using TeejoshSystem.Application.Ports.Inbound.Catalogos.Queries.ObtenerCatalogos;
+using TeejoshSystem.Application.Ports.Inbound.Catalogos.Queries.ObtenerExpansionesYPacks;
+using TeejoshSystem.Application.Ports.Inbound.Catalogos.Queries.ObtenerImagenExpansion;
+using TeejoshSystem.Application.Ports.Inbound.Productos.Commands.CrearProducto;
+using TeejoshSystem.AvaloniaUI.Adapters.Inbound.Services;
+using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Common;
+using TeejoshSystem.Domain.Enums;
+using TeejoshSystem.Domain.Ports.Outbound;
+
+namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Productos;
+
+public partial class CrearProductoViewModel : ValidatableViewModel
+{
+    private readonly IMediator _mediator;
+    private readonly INotificationService _notification;
+    private readonly IConfirmationService _confirmation;
+    private readonly INavigationService _navigation;
+    private readonly IImageStorageService _imageStorage;
+
+    // Propiedades comunes
+    [ObservableProperty]
+    private string? _nombre;
+
+    [ObservableProperty]
+    private decimal _precio;
+
+    [ObservableProperty]
+    private int _unidades;
+
+    [ObservableProperty]
+    private TipoProductoFiltroItem? _tipoSeleccionado;
+
+    [ObservableProperty]
+    private bool _catalogosCargados;
+
+    [ObservableProperty]
+    private string? _imagePath;
+
+    [ObservableProperty]
+    private string? _imageNombre;
+
+    // Hot Wheels
+    [ObservableProperty]
+    private string? _hwModelo;
+
+    [ObservableProperty]
+    private int _hwAnio = DateTime.Now.Year;
+
+    [ObservableProperty]
+    private string? _hwSerie;
+
+    [ObservableProperty]
+    private CatalogoItemDto? _hwCategoriaSeleccionada;
+
+    public ObservableCollection<CatalogoItemDto> CategoriasHotWheels { get; } = new();
+
+    // Funko
+    [ObservableProperty]
+    private int _funkoNumeroBox;
+
+    [ObservableProperty]
+    private string? _funkoLicencia;
+
+    [ObservableProperty]
+    private CatalogoItemDto? _funkoSubtipoSeleccionado;
+
+    [ObservableProperty]
+    private CatalogoItemDto? _funkoCaracteristicaSeleccionada;
+
+    public ObservableCollection<CatalogoItemDto> SubtiposFunko { get; } = new();
+    public ObservableCollection<CatalogoItemDto> CaracteristicasFunko { get; } = new();
+
+    // TCG
+    [ObservableProperty]
+    private CatalogoItemDto? _tcgFranquiciaSeleccionada;
+
+    [ObservableProperty]
+    private CatalogoItemDto? _tcgExpansionSeleccionada;
+
+    [ObservableProperty]
+    private CatalogoItemDto? _tcgPackSeleccionado;
+
+    public ObservableCollection<CatalogoItemDto> FranquiciasTcg { get; } = new();
+    public ObservableCollection<CatalogoItemDto> TcgExpansionesDisponibles { get; } = new();
+    public ObservableCollection<CatalogoItemDto> TcgPacksDisponibles { get; } = new();
+
+    // Toy
+    [ObservableProperty]
+    private int _toyEdadMinima;
+
+    [ObservableProperty]
+    private int _toyJugadoresMin = 1;
+
+    [ObservableProperty]
+    private int _toyJugadoresMax = 1;
+
+    [ObservableProperty]
+    private bool _toyEsJuegoMesa;
+
+    // Varios
+    [ObservableProperty]
+    private string? _variosMarca;
+
+    [ObservableProperty]
+    private decimal _variosAlto;
+
+    [ObservableProperty]
+    private decimal _variosAncho;
+
+    [ObservableProperty]
+    private decimal? _variosLargo;
+
+    [ObservableProperty]
+    private string? _variosMaterial;
+
+    [ObservableProperty]
+    private bool _variosTieneIlustracion;
+
+    // Visibilidad de paneles
+    public bool MostrarHotWheels => TipoSeleccionado?.Valor == TipoProducto.HotWheels;
+    public bool MostrarFunko => TipoSeleccionado?.Valor == TipoProducto.Funko;
+    public bool MostrarTcg => TipoSeleccionado?.Valor == TipoProducto.Tcg;
+    public bool MostrarToy => TipoSeleccionado?.Valor == TipoProducto.Toy;
+    public bool MostrarVarios => TipoSeleccionado?.Valor == TipoProducto.Varios;
+
+    public ObservableCollection<TipoProductoFiltroItem> TiposDisponibles { get; } = new()
+    {
+        new TipoProductoFiltroItem("Hot Wheels", TipoProducto.HotWheels),
+        new TipoProductoFiltroItem("Funko", TipoProducto.Funko),
+        new TipoProductoFiltroItem("TCG", TipoProducto.Tcg),
+        new TipoProductoFiltroItem("Toy", TipoProducto.Toy),
+        new TipoProductoFiltroItem("Varios", TipoProducto.Varios)
+    };
+
+    public CrearProductoViewModel(
+        IMediator mediator,
+        INotificationService notification,
+        IConfirmationService confirmation,
+        INavigationService navigation,
+        IImageStorageService imageStorage)  // NUEVO
+    {
+        _mediator = mediator;
+        _notification = notification;
+        _confirmation = confirmation;
+        _navigation = navigation;
+        _imageStorage = imageStorage;  // NUEVO
+
+        TipoSeleccionado = TiposDisponibles[0];
+
+        ErrorsChanged += (_, _) => GuardarCommand.NotifyCanExecuteChanged();
+
+        PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(IsBusy) ||
+                e.PropertyName == nameof(CatalogosCargados))
+                GuardarCommand.NotifyCanExecuteChanged();
+        };
+
+        _ = CargarCatalogosAsync();
+    }
+
+    private async Task CargarCatalogosAsync()
+    {
+        try
+        {
+            IsBusy = true;
+            var catalogos = await _mediator.Send(new ObtenerCatalogosQuery());
+
+            foreach (var cat in catalogos.CategoriasHotWheels)
+                CategoriasHotWheels.Add(cat);
+            foreach (var sub in catalogos.SubtiposFunko)
+                SubtiposFunko.Add(sub);
+            foreach (var car in catalogos.CaracteristicasFunko)
+                CaracteristicasFunko.Add(car);
+            foreach (var fra in catalogos.FranquiciasTcg)
+                FranquiciasTcg.Add(fra);
+
+            CatalogosCargados = true;
+        }
+        catch (Exception ex)
+        {
+            await _notification.ShowErrorAsync("Error al cargar catálogos: " + ex.Message);
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    partial void OnTipoSeleccionadoChanged(TipoProductoFiltroItem? value)
+    {
+        OnPropertyChanged(nameof(MostrarHotWheels));
+        OnPropertyChanged(nameof(MostrarFunko));
+        OnPropertyChanged(nameof(MostrarTcg));
+        OnPropertyChanged(nameof(MostrarToy));
+        OnPropertyChanged(nameof(MostrarVarios));
+    }
+
+    partial void OnTcgFranquiciaSeleccionadaChanged(CatalogoItemDto? value)
+    {
+        if (value is null)
+        {
+            TcgExpansionesDisponibles.Clear();
+            TcgPacksDisponibles.Clear();
+            return;
+        }
+        _ = CargarExpansionesYPacksAsync(value.Id);
+    }
+
+    // NUEVO — al seleccionar expansión, asignar imagen automáticamente
+    partial void OnTcgExpansionSeleccionadaChanged(CatalogoItemDto? value)
+    {
+        if (value is null) return;
+        _ = AsignarImagenDesdeExpansionAsync(value.Id);
+    }
+
+    private async Task AsignarImagenDesdeExpansionAsync(int expansionId)
+    {
+        try
+        {
+            var imageUrl = await _mediator.Send(
+                new ObtenerImagenExpansionQuery(expansionId));
+
+            if (imageUrl is null) return;
+
+            // Resolver ruta absoluta si es nombre de archivo local
+            var fullPath = _imageStorage.GetFullPath(imageUrl);
+
+            if (fullPath is not null)
+            {
+                // Solo asignar automáticamente si el usuario no ha elegido una imagen ya
+                if (string.IsNullOrWhiteSpace(ImagePath) &&
+                    string.IsNullOrWhiteSpace(ImageNombre))
+                {
+                    ImagePath = fullPath;
+                    ImageNombre = System.IO.Path.GetFileName(fullPath);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine(
+                $"AsignarImagenDesdeExpansionAsync error: {ex.Message}");
+        }
+    }
+
+    private async Task CargarExpansionesYPacksAsync(int franquiciaId)
+    {
+        try
+        {
+            var result = await _mediator.Send(
+                new ObtenerExpansionesYPacksQuery(franquiciaId));
+
+            TcgExpansionesDisponibles.Clear();
+            foreach (var exp in result.Expansiones)
+                TcgExpansionesDisponibles.Add(exp);
+
+            TcgPacksDisponibles.Clear();
+            foreach (var pack in result.Packs)
+                TcgPacksDisponibles.Add(pack);
+        }
+        catch (Exception ex)
+        {
+            await _notification.ShowErrorAsync("Error al cargar expansiones: " + ex.Message);
+        }
+    }
+
+    [RelayCommand(CanExecute = nameof(CanGuardar))]
+    private async Task GuardarAsync()
+    {
+        if (IsBusy) return;
+
+        var confirmar = await _confirmation.ConfirmAsync("¿Desea crear el producto?");
+        if (!confirmar) return;
+
+        try
+        {
+            IsBusy = true;
+            var command = ConstruirCommand();
+            var result = await _mediator.Send(command);
+
+            if (result.IsSuccess)
+            {
+                await _notification.ShowSuccessAsync("Producto creado exitosamente.");
+                _navigation.NavigateToMenu();
+            }
+            else
+            {
+                await _notification.ShowErrorAsync(result.Error ?? "Error al crear producto.");
+            }
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    private CrearProductoCommand ConstruirCommand() => new()
+    {
+        Nombre = Nombre!,
+        Precio = Precio,
+        Unidades = Unidades,
+        Tipo = TipoSeleccionado!.Valor!.Value,
+        ImagePath = ImagePath,
+
+        HotWheels = MostrarHotWheels && HwCategoriaSeleccionada != null
+            ? new CrearHotWheelsDetalleDto(HwModelo!, HwAnio, HwSerie!, HwCategoriaSeleccionada.Id)
+            : null,
+
+        Funko = MostrarFunko && FunkoSubtipoSeleccionado != null
+            ? new CrearFunkoDetalleDto(
+                FunkoNumeroBox, FunkoLicencia!,
+                FunkoSubtipoSeleccionado.Id,
+                FunkoCaracteristicaSeleccionada?.Id)
+            : null,
+
+        Tcg = MostrarTcg && TcgPackSeleccionado != null && TcgExpansionSeleccionada != null
+            ? new CrearTcgDetalleDto(TcgPackSeleccionado.Id, TcgExpansionSeleccionada.Id)
+            : null,
+
+        Toy = MostrarToy
+            ? new CrearToyDetalleDto(
+                ToyEdadMinima, ToyJugadoresMin, ToyJugadoresMax, ToyEsJuegoMesa)
+            : null,
+
+        Varios = MostrarVarios
+            ? new CrearVariosDetalleDto(
+                VariosMarca!, VariosAlto, VariosAncho,
+                VariosLargo, VariosMaterial!, VariosTieneIlustracion)
+            : null
+    };
+
+    [RelayCommand]
+    private void Volver() => _navigation.NavigateToMenu();
+
+    private bool CanGuardar() => !HasErrors && !IsBusy && CatalogosCargados;
+
+    partial void OnNombreChanged(string? value)
+    {
+        ClearErrors(nameof(Nombre));
+        if (string.IsNullOrWhiteSpace(value))
+            AddError(nameof(Nombre), "El nombre es obligatorio.");
+        else if (value.Length > 50)
+            AddError(nameof(Nombre), "Máximo 50 caracteres.");
+    }
+
+    partial void OnPrecioChanged(decimal value)
+    {
+        ClearErrors(nameof(Precio));
+        if (value < 0)
+            AddError(nameof(Precio), "El precio no puede ser negativo.");
+    }
+
+    partial void OnUnidadesChanged(int value)
+    {
+        ClearErrors(nameof(Unidades));
+        if (value < 0)
+            AddError(nameof(Unidades), "Las unidades no pueden ser negativas.");
+    }
+
+    [RelayCommand]
+    private async Task SeleccionarImagenAsync()
+    {
+        var ventana = (Avalonia.Application.Current?.ApplicationLifetime
+            as IClassicDesktopStyleApplicationLifetime)?.MainWindow;
+
+        if (ventana is null) return;
+
+        var archivos = await ventana.StorageProvider.OpenFilePickerAsync(
+            new FilePickerOpenOptions
+            {
+                Title = "Seleccionar imagen del producto",
+                AllowMultiple = false,
+                FileTypeFilter = new[]
+                {
+                    new FilePickerFileType("Imágenes")
+                    {
+                        Patterns = new[] { "*.jpg", "*.jpeg", "*.png" }
+                    }
+                }
+            });
+
+        if (archivos.Count == 0) return;
+
+        ImagePath = archivos[0].Path.LocalPath;
+        ImageNombre = archivos[0].Name;
+    }
+
+    [RelayCommand]
+    private void QuitarImagen()
+    {
+        ImagePath = null;
+        ImageNombre = null;
+    }
+}
+</file>
+
+<file path="Adapters/Inbound/ViewModels/Productos/EditarProductoViewModel.cs">
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using MediatR;
+using System;
+using System.Threading.Tasks;
+
+using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Platform.Storage;
+
+using TeejoshSystem.Application.Ports.Inbound.Productos.Commands.ActualizarProducto;
+using TeejoshSystem.Application.Ports.Inbound.Productos.Queries.ObtenerProductosPorId;
+using TeejoshSystem.AvaloniaUI.Adapters.Inbound.Services;
+using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Common;
+using TeejoshSystem.Domain.Ports.Outbound;
+using TeejoshSystem.Domain.Enums;
+
+namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Productos;
+
+public partial class EditarProductoViewModel : ValidatableViewModel, ILoadable
+{
+    private readonly IMediator _mediator;
+    private readonly INotificationService _notification;
+    private readonly IConfirmationService _confirmation;
+    private readonly INavigationService _navigation;
+    private readonly IImageStorageService _imageStorage;
+    private readonly GestionarProductosViewModel _gestionarVm;
+    private readonly int _productoId;
+    private readonly TipoProducto _tipo;
+
+    [ObservableProperty]
+    private string? _nombre;
+
+    [ObservableProperty]
+    private decimal _precio;
+
+    [ObservableProperty]
+    private int _unidades;
+
+    [ObservableProperty]
+    private string? _imagePath;      // ruta temporal del archivo origen
+
+    [ObservableProperty]
+    private string? _imageNombre;    // nombre para mostrar en UI
+
+    [ObservableProperty]
+    private string? _imagePathActual; // ruta absoluta de la imagen ya guardada
+
+    public EditarProductoViewModel(
+        IMediator mediator,
+        INotificationService notification,
+        IConfirmationService confirmation,
+        INavigationService navigation,
+        IImageStorageService imageStorage,
+        GestionarProductosViewModel gestionarVm,
+        int productoId,
+        TipoProducto tipo)
+    {
+        _mediator = mediator;
+        _notification = notification;
+        _confirmation = confirmation;
+        _navigation = navigation;
+        _imageStorage = imageStorage;
+        _gestionarVm = gestionarVm;
+        _productoId = productoId;
+        _tipo = tipo;
+
+        ErrorsChanged += (_, _) => GuardarCommand.NotifyCanExecuteChanged();
+
+        PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(IsBusy))
+                GuardarCommand.NotifyCanExecuteChanged();
+        };
+    }
+
+    public void OnLoaded()
+    {
+        _ = CargarProductoAsync();
+    }
+
+    private async Task CargarProductoAsync()
+    {
+        try
+        {
+            IsBusy = true;
+
+            var result = await _mediator.Send(
+                new ObtenerProductosPorIdQuery(_productoId));
+
+            if (!result.IsSuccess)
+            {
+                await _notification.ShowErrorAsync(
+                    result.Error ?? "No se pudo cargar el producto.");
+                return;
+            }
+
+            var dto = result.Value;
+            Nombre = dto.Nombre;
+            Precio = dto.Precio;
+            Unidades = dto.Unidades;
+
+            // Cargar imagen actual si existe
+            ImagePathActual = _imageStorage.GetFullPath(dto.ImagePath);
+            if (ImagePathActual is not null)
+                ImageNombre = System.IO.Path.GetFileName(ImagePathActual);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine(ex);
+            await _notification.ShowErrorAsync("Error inesperado al cargar el producto.");
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    [RelayCommand]
+    private async Task SeleccionarImagenAsync()
+    {
+        var ventana = (Avalonia.Application.Current?.ApplicationLifetime
+            as IClassicDesktopStyleApplicationLifetime)?.MainWindow;
+
+        if (ventana is null) return;
+
+        var archivos = await ventana.StorageProvider.OpenFilePickerAsync(
+            new FilePickerOpenOptions
+            {
+                Title = "Seleccionar imagen del producto",
+                AllowMultiple = false,
+                FileTypeFilter = new[]
+                {
+                    new FilePickerFileType("Imágenes")
+                    {
+                        Patterns = new[] { "*.jpg", "*.jpeg", "*.png" }
+                    }
+                }
+            });
+
+        if (archivos.Count == 0) return;
+
+        ImagePath = archivos[0].Path.LocalPath;
+        ImageNombre = archivos[0].Name;
+        ImagePathActual = null; // nueva imagen reemplaza la actual
+    }
+
+    [RelayCommand]
+    private void QuitarImagen()
+    {
+        ImagePath = null;
+        ImageNombre = null;
+        ImagePathActual = null;
+    }
+
+    [RelayCommand]
+    private void Volver() => _navigation.NavigateTo(_gestionarVm);
+
+    [RelayCommand(CanExecute = nameof(CanGuardar))]
+    private async Task GuardarAsync()
+    {
+        if (IsBusy) return;
+
+        var confirmar = await _confirmation.ConfirmAsync(
+            "¿Desea guardar los cambios del producto?");
+        if (!confirmar) return;
+
+        try
+        {
+            IsBusy = true;
+
+            var result = await _mediator.Send(
+                new ActualizarProductoCommand(
+                    _productoId,
+                    Nombre!,
+                    Precio,
+                    Unidades,
+                    ImagePath));  // nueva imagen o null si no cambió
+
+            if (result.IsSuccess)
+            {
+                await _notification.ShowSuccessAsync("Producto actualizado correctamente.");
+                await _gestionarVm.BuscarAsync();
+                _navigation.NavigateTo(_gestionarVm);
+            }
+            else
+            {
+                await _notification.ShowErrorAsync(
+                    result.Error ?? "Ocurrió un error al guardar el producto.");
+            }
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    private bool CanGuardar() => !HasErrors && !IsBusy;
+
+    partial void OnNombreChanged(string? value)
+    {
+        ClearErrors(nameof(Nombre));
+        if (string.IsNullOrWhiteSpace(value))
+            AddError(nameof(Nombre), "El nombre es obligatorio.");
+        else if (value.Length > 50)
+            AddError(nameof(Nombre), "Máximo 50 caracteres.");
+    }
+
+    partial void OnPrecioChanged(decimal value)
+    {
+        ClearErrors(nameof(Precio));
+        if (value < 0)
+            AddError(nameof(Precio), "El precio no puede ser negativo.");
+    }
+
+    partial void OnUnidadesChanged(int value)
+    {
+        ClearErrors(nameof(Unidades));
+        if (value < 0)
+            AddError(nameof(Unidades), "Las unidades no pueden ser negativas.");
+    }
+}
+</file>
+
+<file path="Adapters/Inbound/ViewModels/Productos/GestionarProductosViewModel.cs">
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using MediatR;
+
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Threading.Tasks;
+
+using TeejoshSystem.Application.Ports.Inbound.Productos.Commands.EliminarProducto;
+using TeejoshSystem.Application.Ports.Inbound.Productos.Queries.BuscarProductos;
+using TeejoshSystem.AvaloniaUI.Adapters.Inbound.Services;
+using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Common;
+using TeejoshSystem.Domain.Enums;
+using TeejoshSystem.Domain.Ports.Outbound;
+
+namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Productos;
+
+public partial class GestionarProductosViewModel : ViewModelBase
+{
+    private readonly IMediator _mediator;
+    private readonly INotificationService _notification;
+    private readonly IConfirmationService _confirmation;
+    private readonly INavigationService _navigation;
+    private readonly IImageStorageService _imageStorage;
+
+
+    [ObservableProperty]
+    private string? _textoBusqueda;
+
+    [ObservableProperty]
+    private TipoProductoFiltroItem? _tipoFiltro;
+
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(EditarCommand))]
+    [NotifyCanExecuteChangedFor(nameof(EliminarCommand))]
+    private ProductoBusquedaDto? _productoSeleccionado;
+
+    public ObservableCollection<ProductoBusquedaDto> Productos { get; } = new();
+
+    public ObservableCollection<TipoProductoFiltroItem> TiposDisponibles { get; } = new()
+    {
+        new TipoProductoFiltroItem("Todos", null),
+        new TipoProductoFiltroItem("Hot Wheels", TipoProducto.HotWheels),
+        new TipoProductoFiltroItem("Funko", TipoProducto.Funko),
+        new TipoProductoFiltroItem("TCG", TipoProducto.Tcg),
+        new TipoProductoFiltroItem("Toy", TipoProducto.Toy),
+        new TipoProductoFiltroItem("Varios", TipoProducto.Varios)
+    };
+
+    public GestionarProductosViewModel(
+        IMediator mediator,
+        INotificationService notification,
+        IConfirmationService confirmation,
+        INavigationService navigation,
+        IImageStorageService imageStorage)
+    {
+        _mediator = mediator;
+        _notification = notification;
+        _confirmation = confirmation;
+        _navigation = navigation;
+        _imageStorage = imageStorage;
+
+        _ = BuscarAsync();
+    }
+
+    [RelayCommand]
+    public async Task BuscarAsync()
+    {
+        if (IsBusy) return;
+
+        try
+        {
+            IsBusy = true;
+            var resultados = await _mediator.Send(
+                new BuscarProductosQuery(TextoBusqueda, TipoFiltro?.Valor));
+
+            Productos.Clear();
+            foreach (var producto in resultados)
+                Productos.Add(producto);
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    [RelayCommand(CanExecute = nameof(HaySeleccion))]
+    private void Editar()
+    {
+        var editarVm = new EditarProductoViewModel(
+            _mediator,
+            _notification,
+            _confirmation,
+            _navigation,
+            _imageStorage,
+            this,               // ← GestionarProductosViewModel
+            ProductoSeleccionado!.Id,
+            ProductoSeleccionado!.Tipo);
+
+        _navigation.NavigateTo(editarVm);
+    }
+
+    [RelayCommand(CanExecute = nameof(HaySeleccion))]
+    private async Task EliminarAsync()
+    {
+        var confirmar = await _confirmation.ConfirmAsync(
+            $"¿Desea eliminar '{ProductoSeleccionado!.Nombre}'?");
+        if (!confirmar) return;
+
+        try
+        {
+            IsBusy = true;
+
+            var result = await _mediator.Send(
+                new EliminarProductoCommand(new List<int> { ProductoSeleccionado!.Id }));
+
+            if (result.IsSuccess)
+            {
+                await _notification.ShowSuccessAsync("Producto eliminado correctamente.");
+                ProductoSeleccionado = null;
+            }
+            else
+            {
+                await _notification.ShowErrorAsync(result.Error ?? "Error al eliminar.");
+            }
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+
+        await BuscarAsync();
+    }
+
+    [RelayCommand]
+    private void Volver() => _navigation.NavigateToMenu();
+
+    private bool HaySeleccion() => ProductoSeleccionado is not null;
+}
+</file>
+
+<file path="Adapters/Inbound/ViewModels/Productos/InventarioViewModel.cs">
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using MediatR;
+
+using System;
+using System.Collections.ObjectModel;
+using System.Threading.Tasks;
+
+using TeejoshSystem.Application.Ports.Inbound.Productos.Queries.BuscarProductos;
+using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Common;
+using TeejoshSystem.Domain.Enums;
+
+namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Productos;
+
+public partial class InventarioViewModel : ViewModelBase
+{
+    private readonly IMediator _mediator;
+    private readonly Action _volver;
+
+    /*
+    [ObservableProperty]
+    private ObservableCollection<ProductoBusquedaDto> _productos = new();
+    */
+
+    public ObservableCollection<ProductoBusquedaDto> Productos { get; } = new();
+
+    [ObservableProperty]
+    private string _busqueda = string.Empty;
+
+    [ObservableProperty]
+    private TipoProductoFiltroItem? _tipoFiltro;
+
+    public ObservableCollection<TipoProductoFiltroItem> TiposDisponibles { get; } = new()
+    {
+        new TipoProductoFiltroItem("Todos", null),
+        new TipoProductoFiltroItem("Hot Wheels", TipoProducto.HotWheels),
+        new TipoProductoFiltroItem("Funko", TipoProducto.Funko),
+        new TipoProductoFiltroItem("TCG", TipoProducto.Tcg),
+        new TipoProductoFiltroItem("Toy", TipoProducto.Toy),
+        new TipoProductoFiltroItem("Varios", TipoProducto.Varios)
+    };
+
+    public InventarioViewModel(IMediator mediator, Action volver)
+    {
+        _mediator = mediator;
+        _volver = volver;
+        _tipoFiltro = TiposDisponibles[0]; // "Todos" por defecto
+
+        _ = CargarProductosAsync();
+    }
+
+    public async Task CargarProductosAsync()
+    {
+        IsBusy = true;
+
+        var resultado = await _mediator.Send(new BuscarProductosQuery(
+            string.IsNullOrWhiteSpace(Busqueda) ? null : Busqueda,
+            TipoFiltro?.Valor
+        ));
+
+        await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
+        {
+            Productos.Clear();
+            foreach (var item in resultado)
+                Productos.Add(item);
+
+            IsBusy = false;
+        });
+    }
+
+    [RelayCommand]
+    private async Task Cargar() => await CargarProductosAsync();
+
+    [RelayCommand]
+    private void Volver() => _volver();
+}
+</file>
+
+<file path="Adapters/Inbound/ViewModels/Shell/MainViewModel.cs">
+using CommunityToolkit.Mvvm.ComponentModel;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using Avalonia.Styling;
+using TeejoshSystem.AvaloniaUI.Adapters.Inbound.Services;
+
+using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Common;
+
+namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Shell
+{
+    public partial class MainViewModel : ViewModelBase
+    {
+        private readonly IThemePreferenceService _themeService;
+
+        [ObservableProperty]
+        private object? _currentView;
+
+        [ObservableProperty]
+        private ThemeVariant _themeVariant = ThemeVariant.Default;
+
+        [ObservableProperty]
+        private ThemeOption? _selectedThemeOption;
+
+        public List<ThemeOption> ThemeOptions { get; } = new()
+        {
+            new ThemeOption("Claro", ThemeVariant.Light),
+            new ThemeOption("Oscuro", ThemeVariant.Dark)
+        };
+
+        public MainViewModel(IThemePreferenceService themeService)
+        {
+            _themeService = themeService;
+        }
+
+        public async Task InitializeAsync()
+        {
+            var theme = await _themeService.GetThemeAsync();
+            ThemeVariant = theme;
+
+            foreach (var option in ThemeOptions)
+            {
+                if (option.Value == theme)
+                {
+                    SelectedThemeOption = option;
+                    OnPropertyChanged(nameof(SelectedThemeOption));
+                    break;
+                }
+            }
+        }
+
+        partial void OnSelectedThemeOptionChanged(ThemeOption? value)
+        {
+            if (value != null && value.Value != ThemeVariant)
+            {
+                ThemeVariant = value.Value;
+                _ = _themeService.SaveThemeAsync(value.Value);
+            }
+        }
+    }
+
+    public record ThemeOption(string Name, ThemeVariant Value);
+}
+</file>
+
+<file path="Adapters/Inbound/ViewModels/Ventas/HistorialVentasViewModel.cs">
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using MediatR;
+using System;
+using System.Threading.Tasks;
+using System.Collections.ObjectModel;
+using TeejoshSystem.Application.Common.Dtos;
+using TeejoshSystem.Application.Ports.Inbound.Ventas.Queries.ObtenerVentas;
+using TeejoshSystem.AvaloniaUI.Adapters.Inbound.Services;
+using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Common;
+
+namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Ventas;
+
+public partial class HistorialVentasViewModel : ViewModelBase
+{
+    private readonly IMediator _mediator;
+    private readonly INotificationService _notification;
+    private readonly INavigationService _navigation;
+
+    [ObservableProperty]
+    private DateTime? _fechaDesde;
+
+    [ObservableProperty]
+    private DateTime? _fechaHasta;
+
+    [ObservableProperty]
+    private VentaDto? _ventaSeleccionada;
+
+    public ObservableCollection<VentaDto> Ventas { get; } = new();
+
+    public HistorialVentasViewModel(
+        IMediator mediator,
+        INotificationService notification,
+        INavigationService navigation)
+    {
+        _mediator = mediator;
+        _notification = notification;
+        _navigation = navigation;
+
+        _ = BuscarAsync();
+    }
+
+    [RelayCommand]
+    public async Task BuscarAsync()
+    {
+        if (IsBusy) return;
+        try
+        {
+            IsBusy = true;
+            var ventas = await _mediator.Send(
+                new ObtenerVentasQuery(FechaDesde, FechaHasta));
+
+            Ventas.Clear();
+            foreach (var v in ventas)
+                Ventas.Add(v);
+        }
+        catch (Exception ex)
+        {
+            await _notification.ShowErrorAsync("Error al cargar historial: " + ex.Message);
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    [RelayCommand]
+    private void LimpiarFiltros()
+    {
+        FechaDesde = null;
+        FechaHasta = null;
+        _ = BuscarAsync();
+    }
+
+    [RelayCommand]
+    private void Volver() => _navigation.NavigateToMenu();
+}
+</file>
+
+<file path="Adapters/Inbound/ViewModels/Ventas/RegistrarVentaViewModel.cs">
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using MediatR;
+using System;
+using System.Collections.ObjectModel;
+using System.Linq;
+using System.Threading.Tasks;
+using TeejoshSystem.Application.Common.Dtos;
+using TeejoshSystem.Application.Ports.Inbound.Productos.Queries.BuscarProductos;
+using TeejoshSystem.Application.Ports.Inbound.Ventas.Commands.RegistrarVenta;
+using TeejoshSystem.AvaloniaUI.Adapters.Inbound.Services;
+using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Common;
+
+namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Ventas;
+
+public partial class RegistrarVentaViewModel : ViewModelBase
+{
+    private readonly IMediator _mediator;
+    private readonly INotificationService _notification;
+    private readonly IConfirmationService _confirmation;
+    private readonly INavigationService _navigation;
+
+    // --- Búsqueda de productos ---
+    [ObservableProperty]
+    private string? _textoBusqueda;
+
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(AgregarItemCommand))]
+    private ProductoBusquedaDto? _productoSeleccionado;
+
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(AgregarItemCommand))]
+    private int _cantidadSeleccionada = 1;
+
+    public ObservableCollection<ProductoBusquedaDto> ProductosDisponibles { get; } = new();
+
+    // --- Carrito de venta ---
+    public ObservableCollection<ItemVentaVm> ItemsVenta { get; } = new();
+
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(ConfirmarVentaCommand))]
+    private decimal _totalVenta;
+
+    public RegistrarVentaViewModel(
+        IMediator mediator,
+        INotificationService notification,
+        IConfirmationService confirmation,
+        INavigationService navigation)
+    {
+        _mediator = mediator;
+        _notification = notification;
+        _confirmation = confirmation;
+        _navigation = navigation;
+
+        _ = BuscarProductosAsync();
+    }
+
+    [RelayCommand]
+    public async Task BuscarProductosAsync()
+    {
+        if (IsBusy) return;
+        try
+        {
+            IsBusy = true;
+            var resultados = await _mediator.Send(
+                new BuscarProductosQuery(TextoBusqueda, null));
+
+            ProductosDisponibles.Clear();
+            foreach (var p in resultados)
+                ProductosDisponibles.Add(p);
+        }
+        catch (Exception ex)
+        {
+            await _notification.ShowErrorAsync("Error al buscar productos: " + ex.Message);
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    [RelayCommand(CanExecute = nameof(CanAgregarItem))]
+    private void AgregarItem()
+    {
+        var producto = ProductoSeleccionado!;
+
+        // Si ya existe en el carrito, sumar cantidad
+        var existente = ItemsVenta.FirstOrDefault(i => i.ProductoId == producto.Id);
+        if (existente is not null)
+        {
+            var nuevaCantidad = existente.Cantidad + CantidadSeleccionada;
+            if (nuevaCantidad > producto.Unidades)
+            {
+                _ = _notification.ShowErrorAsync(
+                    $"Stock insuficiente. Disponible: {producto.Unidades}.");
+                return;
+            }
+            existente.Cantidad = nuevaCantidad;
+        }
+        else
+        {
+            if (CantidadSeleccionada > producto.Unidades)
+            {
+                _ = _notification.ShowErrorAsync(
+                    $"Stock insuficiente. Disponible: {producto.Unidades}.");
+                return;
+            }
+
+            ItemsVenta.Add(new ItemVentaVm
+            {
+                ProductoId = producto.Id,
+                Nombre = producto.Nombre,
+                PrecioUnitario = producto.Precio,
+                Cantidad = CantidadSeleccionada,
+                StockDisponible = producto.Unidades
+            });
+        }
+
+        RecalcularTotal();
+        CantidadSeleccionada = 1;
+        ConfirmarVentaCommand.NotifyCanExecuteChanged();
+    }
+
+    [RelayCommand]
+    private void QuitarItem(ItemVentaVm item)
+    {
+        ItemsVenta.Remove(item);
+        RecalcularTotal();
+        ConfirmarVentaCommand.NotifyCanExecuteChanged();
+    }
+
+    [RelayCommand(CanExecute = nameof(CanConfirmarVenta))]
+    private async Task ConfirmarVentaAsync()
+    {
+        var confirmar = await _confirmation.ConfirmAsync(
+            $"¿Confirmar venta por {TotalVenta:C}?");
+        if (!confirmar) return;
+
+        try
+        {
+            IsBusy = true;
+
+            var command = new RegistrarVentaCommand(
+                ItemsVenta.Select(i => new RegistrarVentaItemCommand(
+                    i.ProductoId, i.Cantidad)).ToList());
+
+            var result = await _mediator.Send(command);
+
+            if (result.IsSuccess)
+            {
+                await _notification.ShowSuccessAsync(
+                    $"Venta #{result.Value} registrada correctamente.");
+
+                ItemsVenta.Clear();
+                TotalVenta = 0;
+                CantidadSeleccionada = 1;
+                ProductoSeleccionado = null;
+                TextoBusqueda = null;
+
+                await BuscarProductosAsync();
+
+                ConfirmarVentaCommand.NotifyCanExecuteChanged();
+            }
+            else
+            {
+                await _notification.ShowErrorAsync(
+                    result.Error ?? "Error al registrar la venta.");
+            }
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    [RelayCommand]
+    private void Volver() => _navigation.NavigateToMenu();
+
+    private void RecalcularTotal()
+    {
+        TotalVenta = ItemsVenta.Sum(i => i.Subtotal);
+    }
+
+    private bool CanAgregarItem() =>
+        ProductoSeleccionado is not null && CantidadSeleccionada > 0;
+
+    private bool CanConfirmarVenta() =>
+        ItemsVenta.Count > 0 && !IsBusy;
+}
+
+// ViewModel auxiliar para items del carrito
+public partial class ItemVentaVm : ObservableObject
+{
+    public int ProductoId { get; set; }
+    public string Nombre { get; set; } = null!;
+    public decimal PrecioUnitario { get; set; }
+    public int StockDisponible { get; set; }
+
+    [ObservableProperty]
+    private int _cantidad;
+
+    public decimal Subtotal => PrecioUnitario * Cantidad;
+}
+</file>
+
+<file path="Adapters/Inbound/Views/Admin/AuditLogView.axaml">
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="TeejoshSystem.AvaloniaUI.Adapters.Inbound.Views.Admin.AuditLogView"
+             x:CompileBindings="False">
+
+    <Grid RowDefinitions="Auto,*,Auto">
+
+        <Border Grid.Row="0" Background="#FF9800" Padding="24,16">
+            <TextBlock Text="Historial de Cambios"
+                       FontSize="20" FontWeight="SemiBold"
+                       Foreground="White" VerticalAlignment="Center"/>
+        </Border>
+
+        <Border Grid.Row="1" Margin="16" Background="White" CornerRadius="4">
+            <Grid RowDefinitions="Auto,*">
+
+                <StackPanel Grid.Row="0" Margin="24,24,24,16">
+                    <Grid ColumnDefinitions="*,16,*,16,Auto">
+                        <TextBox Grid.Column="0"
+                                 Text="{Binding FiltroEntidad}"
+                                 Watermark="Entidad (ej. Producto)"/>
+                        <TextBox Grid.Column="2"
+                                 Text="{Binding FiltroUsuario}"
+                                 Watermark="Usuario"/>
+                        <Button Grid.Column="4"
+                                Command="{Binding CargarCommand}"
+                                Content="Buscar"
+                                Background="#FF9800"
+                                Foreground="White"
+                                Height="40" Padding="24,0"/>
+                    </Grid>
+                </StackPanel>
+
+                <DataGrid Grid.Row="1"
+                          ItemsSource="{Binding Entradas}"
+                          IsReadOnly="True"
+                          AutoGenerateColumns="False"
+                          Margin="24,0,24,24">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Fecha"
+                                            Binding="{Binding Timestamp}"
+                                            Width="160"/>
+                        <DataGridTextColumn Header="Usuario"
+                                            Binding="{Binding Usuario}"
+                                            Width="120"/>
+                        <DataGridTextColumn Header="Entidad"
+                                            Binding="{Binding Entidad}"
+                                            Width="120"/>
+                        <DataGridTextColumn Header="ID"
+                                            Binding="{Binding EntidadId}"
+                                            Width="80"/>
+                        <DataGridTextColumn Header="Acción"
+                                            Binding="{Binding Accion}"
+                                            Width="100"/>
+                        <DataGridTextColumn Header="Cambios"
+                                            Binding="{Binding Cambios}"
+                                            Width="2*"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Grid>
+        </Border>
+
+        <Border Grid.Row="2" Margin="16,0,16,16" Background="White" Padding="16">
+            <Button Command="{Binding VolverCommand}"
+                    Content="Volver"
+                    Height="40" Padding="24,0"
+                    HorizontalAlignment="Right"/>
+        </Border>
+    </Grid>
+</UserControl>
+</file>
+
+<file path="Adapters/Inbound/Views/Admin/AuditLogView.axaml.cs">
+using Avalonia.Controls;
+
+namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.Views.Admin
+{
+    public partial class AuditLogView : UserControl
+    {
+        public AuditLogView()
+        {
+            InitializeComponent();
+        }
+    }
+}
+</file>
+
+<file path="Adapters/Inbound/Views/Admin/CambiarPasswordView.axaml">
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Admin"
+             x:Class="TeejoshSystem.AvaloniaUI.Adapters.Inbound.Views.Admin.CambiarPasswordView"
+             x:DataType="vm:CambiarPasswordViewModel">
+
+	<Grid HorizontalAlignment="Center"
+          VerticalAlignment="Center"
+          Width="300">
+
+		<StackPanel Spacing="12">
+
+			<TextBlock Text="Cambiar contraseña"
+                       FontSize="20"
+                       FontWeight="Bold"
+                       Margin="0,0,0,8"/>
+
+			<StackPanel Spacing="4">
+				<TextBlock Text="Contraseña actual"/>
+				<TextBox x:Name="PasswordActualBox"
+                         PasswordChar="●"
+                         IsEnabled="{Binding !IsBusy}"/>
+			</StackPanel>
+
+			<StackPanel Spacing="4">
+				<TextBlock Text="Contraseña nueva"/>
+				<TextBox x:Name="PasswordNuevoBox"
+                         PasswordChar="●"
+                         IsEnabled="{Binding !IsBusy}"/>
+			</StackPanel>
+
+			<StackPanel Spacing="4">
+				<TextBlock Text="Confirmar contraseña nueva"/>
+				<TextBox x:Name="ConfirmarPasswordBox"
+                         PasswordChar="●"
+                         IsEnabled="{Binding !IsBusy}"/>
+			</StackPanel>
+
+			<TextBlock Text="{Binding MensajeError}"
+                       Foreground="Red"
+                       TextWrapping="Wrap"
+                       IsVisible="{Binding MensajeError,
+                                   Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+
+			<Button Content="Cambiar contraseña"
+                    Command="{Binding CambiarPasswordCommand}"
+                    HorizontalAlignment="Stretch"
+                    HorizontalContentAlignment="Center"/>
+
+			<Button Content="Volver"
+                    Command="{Binding VolverCommand}"
+                    HorizontalAlignment="Stretch"
+                    HorizontalContentAlignment="Center"/>
+
+			<ProgressBar IsIndeterminate="True"
+                         IsVisible="{Binding IsBusy}"
+                         Height="4"/>
+
+		</StackPanel>
+	</Grid>
+</UserControl>
+</file>
+
+<file path="Adapters/Inbound/Views/Admin/CambiarPasswordView.axaml.cs">
+using Avalonia.Controls;
+using Avalonia.Interactivity;
+using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Admin;
+
+namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.Views.Admin
+{
+    public partial class CambiarPasswordView : UserControl
+    {
+        public CambiarPasswordView()
+        {
+            InitializeComponent();
+        }
+
+        protected override void OnLoaded(RoutedEventArgs e)
+        {
+            base.OnLoaded(e);
+
+            if (DataContext is CambiarPasswordViewModel vm)
+            {
+                PasswordActualBox.TextChanged += (_, _) =>
+                    vm.ActualizarPasswordActual(PasswordActualBox.Text ?? string.Empty);
+
+                PasswordNuevoBox.TextChanged += (_, _) =>
+                    vm.ActualizarPasswordNuevo(PasswordNuevoBox.Text ?? string.Empty);
+
+                ConfirmarPasswordBox.TextChanged += (_, _) =>
+                    vm.ActualizarConfirmarPassword(ConfirmarPasswordBox.Text ?? string.Empty);
+            }
+        }
+    }
+}
+</file>
+
+<file path="Adapters/Inbound/Views/Admin/GestionarUsuariosView.axaml">
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Admin"
+             x:Class="TeejoshSystem.AvaloniaUI.Adapters.Inbound.Views.Admin.GestionarUsuariosView"
+             x:DataType="vm:GestionarUsuariosViewModel">
+
+	<Grid RowDefinitions="Auto,*,Auto" Margin="24">
+
+		<!-- Encabezado -->
+		<TextBlock Grid.Row="0"
+                   Text="Gestión de usuarios"
+                   FontSize="20"
+                   FontWeight="Bold"
+                   Margin="0,0,0,16"/>
+
+		<Grid Grid.Row="1" ColumnDefinitions="*,Auto" ColumnSpacing="24">
+
+			<!-- Lista de usuarios -->
+			<DataGrid Grid.Column="0"
+                      ItemsSource="{Binding Usuarios}"
+                      IsReadOnly="True"
+                      AutoGenerateColumns="False">
+				<DataGrid.Columns>
+					<DataGridTextColumn Header="Usuario" Binding="{Binding NombreUsuario}" Width="*"/>
+					<DataGridTextColumn Header="Rol" Binding="{Binding Rol}" Width="120"/>
+					<DataGridCheckBoxColumn Header="Activo" Binding="{Binding Activo}" Width="80"/>
+					<DataGridTemplateColumn Header="Acciones" Width="120">
+						<DataGridTemplateColumn.CellTemplate>
+							<DataTemplate>
+								<Button Content="Desactivar"
+                                        Command="{Binding $parent[UserControl].((vm:GestionarUsuariosViewModel)DataContext).DesactivarUsuarioCommand}"
+                                        CommandParameter="{Binding}"
+                                        IsEnabled="{Binding Activo}"/>
+							</DataTemplate>
+						</DataGridTemplateColumn.CellTemplate>
+					</DataGridTemplateColumn>
+				</DataGrid.Columns>
+			</DataGrid>
+
+			<!-- Formulario nuevo usuario -->
+			<StackPanel Grid.Column="1" Spacing="8" Width="220">
+
+				<TextBlock Text="Nuevo usuario"
+                           FontWeight="SemiBold"
+                           Margin="0,0,0,4"/>
+
+				<TextBox Text="{Binding NuevoUsuario}"
+                         Watermark="Nombre de usuario"
+                         IsEnabled="{Binding !IsBusy}"/>
+
+				<TextBox x:Name="NuevaPasswordBox"
+                         PasswordChar="●"
+                         Watermark="Contraseña"
+                         IsEnabled="{Binding !IsBusy}"/>
+
+				<TextBox x:Name="ConfirmarPasswordBox"
+                         PasswordChar="●"
+                         Watermark="Confirmar contraseña"
+                         IsEnabled="{Binding !IsBusy}"/>
+
+				<ComboBox ItemsSource="{Binding Roles}"
+                          SelectedItem="{Binding RolSeleccionado}"
+                          HorizontalAlignment="Stretch"/>
+
+				<TextBlock Text="{Binding MensajeError}"
+                           Foreground="Red"
+                           TextWrapping="Wrap"
+                           IsVisible="{Binding MensajeError,
+                                       Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+
+				<Button Content="Crear usuario"
+                        Command="{Binding CrearUsuarioCommand}"
+                        HorizontalAlignment="Stretch"
+                        HorizontalContentAlignment="Center"/>
+
+				<ProgressBar IsIndeterminate="True"
+                             IsVisible="{Binding IsBusy}"
+                             Height="4"/>
+			</StackPanel>
+		</Grid>
+
+		<!-- Botón volver -->
+		<Button Grid.Row="2"
+                Content="Volver"
+                Command="{Binding VolverCommand}"
+                Margin="0,16,0,0"/>
+	</Grid>
+</UserControl>
+</file>
+
+<file path="Adapters/Inbound/Views/Admin/GestionarUsuariosView.axaml.cs">
+using Avalonia.Controls;
+using Avalonia.Interactivity;
+using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Admin;
+
+namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.Views.Admin
+{
+    public partial class GestionarUsuariosView : UserControl
+    {
+        public GestionarUsuariosView()
+        {
+            InitializeComponent();
+        }
+
+        protected override void OnLoaded(RoutedEventArgs e)
+        {
+            base.OnLoaded(e);
+
+            if (DataContext is GestionarUsuariosViewModel vm)
+            {
+                NuevaPasswordBox.TextChanged += (_, _) =>
+                    vm.ActualizarNuevaPassword(NuevaPasswordBox.Text ?? string.Empty);
+
+                ConfirmarPasswordBox.TextChanged += (_, _) =>
+                    vm.ActualizarConfirmarPassword(ConfirmarPasswordBox.Text ?? string.Empty);
+            }
+        }
+    }
+}
+</file>
+
+<file path="Adapters/Inbound/Views/Auth/LoginView.axaml">
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Auth"
+             x:Class="TeejoshSystem.AvaloniaUI.Adapters.Inbound.Views.Auth.LoginView"
+             x:DataType="vm:LoginViewModel">
+
+    <Grid HorizontalAlignment="Center"
+          VerticalAlignment="Center"
+          Width="300">
+
+        <StackPanel Spacing="16">
+
+            <TextBlock Text="TeejoshSystem"
+                       FontSize="22"
+                       FontWeight="Bold"
+                       HorizontalAlignment="Center"
+                       Margin="0,0,0,8"/>
+
+            <StackPanel Spacing="4">
+                <TextBlock Text="Usuario"/>
+                <TextBox Text="{Binding NombreUsuario}"
+                         Watermark="Nombre de usuario"
+                         IsEnabled="{Binding !IsBusy}"/>
+            </StackPanel>
+
+            <StackPanel Spacing="4">
+                <TextBlock Text="Contraseña"/>
+                <!--
+                    Avalonia no tiene PasswordBox nativo.
+                    PasswordChar enmascara la entrada visualmente.
+                    El valor se envía al ViewModel via TextChanged en code-behind.
+                -->
+                <TextBox x:Name="PasswordBox"
+                         PasswordChar="●"
+                         Watermark="Contraseña"
+                         IsEnabled="{Binding !IsBusy}"/>
+            </StackPanel>
+
+            <TextBlock Text="{Binding MensajeError}"
+                       Foreground="Red"
+                       TextWrapping="Wrap"
+                       IsVisible="{Binding MensajeError,
+                                   Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+
+            <Button Content="Iniciar sesión"
+                    Command="{Binding IniciarSesionCommand}"
+                    HorizontalAlignment="Stretch"
+                    HorizontalContentAlignment="Center"
+                    IsDefault="True"/>
+
+            <ProgressBar IsIndeterminate="True"
+                         IsVisible="{Binding IsBusy}"
+                         Height="4"/>
+
+        </StackPanel>
+    </Grid>
+</UserControl>
+</file>
+
+<file path="Adapters/Inbound/Views/Auth/LoginView.axaml.cs">
+using Avalonia.Controls;
+using Avalonia.Interactivity;
+using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Auth;
+
+namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.Views.Auth
+{
+    public partial class LoginView : UserControl
+    {
+        public LoginView()
+        {
+            InitializeComponent();
+        }
+
+        protected override void OnLoaded(RoutedEventArgs e)
+        {
+            base.OnLoaded(e);
+
+            // Conectar el TextBox de contraseña al ViewModel.
+            // Debe hacerse en OnLoaded — en el constructor, DataContext aún no está asignado.
+            if (DataContext is LoginViewModel vm)
+            {
+                PasswordBox.TextChanged += (_, _) =>
+                    vm.ActualizarPassword(PasswordBox.Text ?? string.Empty);
+            }
+        }
+    }
+}
+</file>
+
+<file path="Adapters/Inbound/Views/Catalogos/SincronizarCatalogosView.axaml">
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="TeejoshSystem.AvaloniaUI.Adapters.Inbound.Views.Catalogos.SincronizarCatalogosView"
+             x:CompileBindings="False">
+
+    <Grid RowDefinitions="Auto,*,Auto">
+
+        <Border Grid.Row="0" Background="#FF9800" Padding="24,16">
+            <TextBlock Text="Sincronizar Catálogos"
+                       FontSize="20" FontWeight="SemiBold"
+                       Foreground="White" VerticalAlignment="Center"/>
+        </Border>
+
+        <Border Grid.Row="1" Margin="16" Background="{DynamicResource TeejoshSurfaceBrush}" CornerRadius="4">
+            <StackPanel Margin="24" Spacing="16">
+
+                <TextBlock Text="Sincronización de catálogos TCG"
+                           FontSize="16" FontWeight="SemiBold"/>
+
+                <TextBlock TextWrapping="Wrap" Foreground="#666666">
+                    Conecta con TCGdex (Pokémon), Scryfall (Magic) y YGOProDeck (Yu-Gi-Oh!)
+                    para actualizar las expansiones disponibles.
+                    One Piece y Bluey se gestionan manualmente.
+                </TextBlock>
+
+                <!-- Resultado -->
+                <Border Background="#F5F5F5" CornerRadius="4" Padding="16"
+                        IsVisible="{Binding Resultado,
+                            Converter={x:Static ObjectConverters.IsNotNull}}">
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="Resultado:" FontWeight="SemiBold"/>
+                        <TextBlock Text="{Binding Resultado}"
+                                   TextWrapping="Wrap"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Loading -->
+                <StackPanel Orientation="Horizontal" Spacing="12"
+                            IsVisible="{Binding IsBusy}">
+                    <ProgressBar IsIndeterminate="True" Width="24" Height="24"/>
+                    <TextBlock Text="Sincronizando expansiones..."
+                               VerticalAlignment="Center"/>
+                </StackPanel>
+
+            </StackPanel>
+        </Border>
+
+        <Border Grid.Row="2" Margin="16,0,16,16" Background="{DynamicResource TeejoshSurfaceBrush}" Padding="16">
+            <Grid ColumnDefinitions="*,Auto,8,Auto">
+                <Button Grid.Column="1"
+                        Command="{Binding SincronizarCommand}"
+                        Content="Sincronizar ahora"
+                        Background="#FF9800"
+                        Foreground="White"
+                        Height="40" Padding="24,0"
+                        IsEnabled="{Binding IsBusy,
+                            Converter={x:Static BoolConverters.Not}}"/>
+
+                <Button Grid.Column="3"
+                        Command="{Binding VolverCommand}"
+                        Content="Volver"
+                        Height="40" Padding="24,0"/>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>
+</file>
+
+<file path="Adapters/Inbound/Views/Catalogos/SincronizarCatalogosView.axaml.cs">
+using Avalonia.Controls;
+
+namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.Views.Catalogos
+{
+    public partial class SincronizarCatalogosView : UserControl
+    {
+        public SincronizarCatalogosView()
+        {
+            InitializeComponent();
+        }
+    }
+}
+</file>
+
+<file path="Adapters/Inbound/Views/Menu/MenuPrincipalView.axaml">
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Menu"
+             x:Class="TeejoshSystem.AvaloniaUI.Adapters.Inbound.Views.Menu.MenuPrincipalView"
+             x:DataType="vm:MenuPrincipalViewModel">
+
+	<StackPanel Margin="20" Spacing="15">
+
+		<TextBlock Text="Menú Principal"
+                   FontSize="24"
+                   FontWeight="Bold"
+                   HorizontalAlignment="Center"/>
+
+		<!-- Opciones disponibles para todos los usuarios -->
+		<Button Content="Ver Inventario"
+                Command="{Binding VisualizarInventarioCommand}"
+                Width="200" HorizontalAlignment="Center" Margin="0,10"/>
+
+		<Button Content="Gestionar Productos"
+                Command="{Binding ModificarProductoCommand}"
+                Width="200" HorizontalAlignment="Center"/>
+
+		<Button Content="Añadir Producto"
+                Command="{Binding AnadirProductoCommand}"
+                Width="200" HorizontalAlignment="Center"/>
+
+		<Button Content="Registrar Venta"
+                Command="{Binding RegistrarVentaCommand}"
+                Width="200" HorizontalAlignment="Center"/>
+
+		<Button Content="Historial de Ventas"
+                Command="{Binding VerHistorialVentasCommand}"
+                Width="200" HorizontalAlignment="Center"/>
+
+		<Button Content="Cambiar Contraseña"
+                Command="{Binding IrACambiarPasswordCommand}"
+                Width="200" HorizontalAlignment="Center"/>
+
+		<!-- Separador visual — solo visible para administrador -->
+		<Separator IsVisible="{Binding EsAdministrador}"
+                   Margin="0,8"/>
+
+		<TextBlock Text="Administración"
+                   FontSize="13"
+                   Foreground="Gray"
+                   HorizontalAlignment="Center"
+                   IsVisible="{Binding EsAdministrador}"/>
+
+		<!-- Opciones exclusivas de administrador -->
+		<Button Content="Gestionar Usuarios"
+                Command="{Binding IrAGestionarUsuariosCommand}"
+                Width="200" HorizontalAlignment="Center"
+                IsVisible="{Binding EsAdministrador}"/>
+
+                <Separator Margin="0,8"/>
+
+                <Button Content="Sincronizar catálogos"
+                        Command="{Binding SincronizarCatalogosCommand}"
+                        Width="200" HorizontalAlignment="Center"
+                        IsVisible="{Binding EsAdministrador}"/>
+
+		<Separator Margin="0,8"/>
+
+                <Button Content="📋 Historial de cambios"
+                        Command="{Binding VerAuditLogCommand}"
+                        Width="200" HorizontalAlignment="Center"
+                        IsVisible="{Binding EsAdministrador}"/>
+
+                <Separator Margin="0,8"/>
+
+		<Button Content="Cerrar sesión"
+				Command="{Binding CerrarSesionCommand}"
+				Width="200" HorizontalAlignment="Center"
+				Foreground="Red"/>
+
+	</StackPanel>
+</UserControl>
+</file>
+
+<file path="Adapters/Inbound/Views/Menu/MenuPrincipalView.axaml.cs">
+using Avalonia.Controls;
+
+namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.Views.Menu;
+
+public partial class MenuPrincipalView : UserControl
+{
+    public MenuPrincipalView()
+    {
+        InitializeComponent();
+    }
+}
+</file>
+
+<file path="Adapters/Inbound/Views/Productos/CrearProductoView.axaml">
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Productos"
+             x:Class="TeejoshSystem.AvaloniaUI.Adapters.Inbound.Views.Productos.CrearProductoView"
+             x:CompileBindings="False">
+
+	<Grid RowDefinitions="Auto,*,Auto">
+
+		<!-- Header -->
+		<Border Grid.Row="0" Background="#FF9800" Padding="24,16">
+			<TextBlock Text="Crear Producto"
+                       FontSize="20" FontWeight="SemiBold"
+                       Foreground="White" VerticalAlignment="Center"/>
+		</Border>
+
+		<!-- Formulario -->
+		<ScrollViewer Grid.Row="1" Margin="16">
+			<Border Background="{DynamicResource TeejoshSurfaceBrush}" CornerRadius="4">
+				<StackPanel Margin="24" Spacing="16">
+
+					<!-- Datos comunes -->
+					<TextBlock Text="Datos Generales"
+                               FontSize="16" FontWeight="SemiBold"/>
+
+					<StackPanel Spacing="4">
+						<TextBlock Text="Tipo de producto"/>
+						<ComboBox ItemsSource="{Binding TiposDisponibles}"
+                                  SelectedItem="{Binding TipoSeleccionado}"
+                                  DisplayMemberBinding="{Binding Nombre}"
+                                  HorizontalAlignment="Stretch"/>
+					</StackPanel>
+
+					<StackPanel Spacing="4">
+						<TextBlock Text="Nombre"/>
+						<TextBox Text="{Binding Nombre}"
+                                 Watermark="Nombre del producto"/>
+					</StackPanel>
+
+					<Grid ColumnDefinitions="*,16,*">
+						<StackPanel Grid.Column="0" Spacing="4">
+							<TextBlock Text="Precio"/>
+							<NumericUpDown Value="{Binding Precio}"
+                                           Minimum="0"
+                                           FormatString="F2"
+                                           Increment="0.5"/>
+						</StackPanel>
+
+						<StackPanel Grid.Column="2" Spacing="4">
+							<TextBlock Text="Unidades"/>
+							<NumericUpDown Value="{Binding Unidades}"
+                                           Minimum="0"
+                                           Increment="1"
+                                           FormatString="F0"/>
+						</StackPanel>
+					</Grid>
+
+					<Border Background="{DynamicResource TeejoshSurfaceBrush}" CornerRadius="4" Padding="12" Margin="0,8,0,0">
+						<StackPanel Spacing="8">
+							<TextBlock Text="Imagen del producto" FontWeight="SemiBold" FontSize="13"/>
+
+							<!-- Sin imagen seleccionada -->
+							<Button Command="{Binding SeleccionarImagenCommand}"
+									IsVisible="{Binding ImageNombre, Converter={x:Static ObjectConverters.IsNull}}"
+									Content="📁 Seleccionar imagen"
+									HorizontalAlignment="Left"/>
+
+							<!-- Con imagen seleccionada -->
+							<StackPanel Orientation="Horizontal" Spacing="8"
+										IsVisible="{Binding ImageNombre, Converter={x:Static ObjectConverters.IsNotNull}}">
+								<TextBlock Text="✓" Foreground="Green" VerticalAlignment="Center"/>
+								<TextBlock Text="{Binding ImageNombre}" VerticalAlignment="Center"/>
+								<Button Content="Quitar"
+										Command="{Binding QuitarImagenCommand}"
+										Background="Transparent"
+										Foreground="#E53935"/>
+							</StackPanel>
+						</StackPanel>
+					</Border>
+
+					<!-- Panel Hot Wheels -->
+					<StackPanel Spacing="16"
+                                IsVisible="{Binding MostrarHotWheels}">
+						<TextBlock Text="Detalles Hot Wheels"
+                                   FontSize="16" FontWeight="SemiBold"/>
+
+						<StackPanel Spacing="4">
+							<TextBlock Text="Modelo"/>
+							<TextBox Text="{Binding HwModelo}"
+                                     Watermark="Ej: Ford Mustang"/>
+						</StackPanel>
+
+						<Grid ColumnDefinitions="*,16,*">
+							<StackPanel Grid.Column="0" Spacing="4">
+								<TextBlock Text="Año"/>
+								<NumericUpDown Value="{Binding HwAnio}"
+                                               Minimum="1967"
+                                               Increment="1"
+                                               FormatString="F0"/>
+							</StackPanel>
+
+							<StackPanel Grid.Column="2" Spacing="4">
+								<TextBlock Text="Serie"/>
+								<TextBox Text="{Binding HwSerie}"
+                                         Watermark="Ej: HW Race Team"/>
+							</StackPanel>
+						</Grid>
+
+						<StackPanel Spacing="4">
+							<TextBlock Text="Categoría"/>
+							<ComboBox ItemsSource="{Binding CategoriasHotWheels}"
+                                      SelectedItem="{Binding HwCategoriaSeleccionada}"
+                                      DisplayMemberBinding="{Binding Nombre}"
+                                      HorizontalAlignment="Stretch"/>
+						</StackPanel>
+					</StackPanel>
+
+					<!-- Panel Funko -->
+					<StackPanel Spacing="16"
+                                IsVisible="{Binding MostrarFunko}">
+						<TextBlock Text="Detalles Funko"
+                                   FontSize="16" FontWeight="SemiBold"/>
+
+						<Grid ColumnDefinitions="*,16,*">
+							<StackPanel Grid.Column="0" Spacing="4">
+								<TextBlock Text="Número de caja"/>
+								<NumericUpDown Value="{Binding FunkoNumeroBox}"
+                                               Minimum="0"
+                                               Increment="1"
+                                               FormatString="F0"/>
+							</StackPanel>
+
+							<StackPanel Grid.Column="2" Spacing="4">
+								<TextBlock Text="Licencia"/>
+								<TextBox Text="{Binding FunkoLicencia}"
+                                         Watermark="Ej: Marvel"/>
+							</StackPanel>
+						</Grid>
+
+						<StackPanel Spacing="4">
+							<TextBlock Text="Subtipo"/>
+							<ComboBox ItemsSource="{Binding SubtiposFunko}"
+                                      SelectedItem="{Binding FunkoSubtipoSeleccionado}"
+                                      DisplayMemberBinding="{Binding Nombre}"
+                                      HorizontalAlignment="Stretch"/>
+						</StackPanel>
+
+						<StackPanel Spacing="4">
+							<TextBlock Text="Característica especial (opcional)"/>
+							<ComboBox ItemsSource="{Binding CaracteristicasFunko}"
+                                      SelectedItem="{Binding FunkoCaracteristicaSeleccionada}"
+                                      DisplayMemberBinding="{Binding Nombre}"
+                                      HorizontalAlignment="Stretch"/>
+						</StackPanel>
+					</StackPanel>
+
+					<!-- Panel TCG -->
+					<StackPanel Spacing="16"
+                                IsVisible="{Binding MostrarTcg}">
+						<TextBlock Text="Detalles TCG"
+                                   FontSize="16" FontWeight="SemiBold"/>
+
+						<StackPanel Spacing="4">
+							<TextBlock Text="Franquicia"/>
+							<ComboBox ItemsSource="{Binding FranquiciasTcg}"
+                                      SelectedItem="{Binding TcgFranquiciaSeleccionada}"
+                                      DisplayMemberBinding="{Binding Nombre}"
+                                      HorizontalAlignment="Stretch"/>
+						</StackPanel>
+
+						<Grid ColumnDefinitions="*,16,*">
+							<StackPanel Grid.Column="0" Spacing="4">
+								<TextBlock Text="Expansión"/>
+								<ComboBox ItemsSource="{Binding TcgExpansionesDisponibles}"
+                                          SelectedItem="{Binding TcgExpansionSeleccionada}"
+                                          DisplayMemberBinding="{Binding Nombre}"
+                                          HorizontalAlignment="Stretch"/>
+							</StackPanel>
+
+							<StackPanel Grid.Column="2" Spacing="4">
+								<TextBlock Text="Pack"/>
+								<ComboBox ItemsSource="{Binding TcgPacksDisponibles}"
+                                          SelectedItem="{Binding TcgPackSeleccionado}"
+                                          DisplayMemberBinding="{Binding Nombre}"
+                                          HorizontalAlignment="Stretch"/>
+							</StackPanel>
+						</Grid>
+					</StackPanel>
+
+					<!-- Panel Toy -->
+					<StackPanel Spacing="16"
+                                IsVisible="{Binding MostrarToy}">
+						<TextBlock Text="Detalles Toy"
+                                   FontSize="16" FontWeight="SemiBold"/>
+
+						<Grid ColumnDefinitions="*,16,*,16,*">
+							<StackPanel Grid.Column="0" Spacing="4">
+								<TextBlock Text="Edad mínima"/>
+								<NumericUpDown Value="{Binding ToyEdadMinima}"
+                                               Minimum="0"
+                                               Increment="1"
+                                               FormatString="F0"/>
+							</StackPanel>
+
+							<StackPanel Grid.Column="2" Spacing="4">
+								<TextBlock Text="Jugadores mín."/>
+								<NumericUpDown Value="{Binding ToyJugadoresMin}"
+                                               Minimum="1"
+                                               Increment="1"
+                                               FormatString="F0"/>
+							</StackPanel>
+
+							<StackPanel Grid.Column="4" Spacing="4">
+								<TextBlock Text="Jugadores máx."/>
+								<NumericUpDown Value="{Binding ToyJugadoresMax}"
+                                               Minimum="1"
+                                               Increment="1"
+                                               FormatString="F0"/>
+							</StackPanel>
+						</Grid>
+
+						<CheckBox Content="Es juego de mesa"
+                                  IsChecked="{Binding ToyEsJuegoMesa}"/>
+					</StackPanel>
+
+					<!-- Panel Varios -->
+					<StackPanel Spacing="16"
+                                IsVisible="{Binding MostrarVarios}">
+						<TextBlock Text="Detalles Varios"
+                                   FontSize="16" FontWeight="SemiBold"/>
+
+						<Grid ColumnDefinitions="*,16,*">
+							<StackPanel Grid.Column="0" Spacing="4">
+								<TextBlock Text="Marca"/>
+								<TextBox Text="{Binding VariosMarca}"
+                                         Watermark="Ej: LEGO"/>
+							</StackPanel>
+
+							<StackPanel Grid.Column="2" Spacing="4">
+								<TextBlock Text="Material"/>
+								<TextBox Text="{Binding VariosMaterial}"
+                                         Watermark="Ej: Plástico"/>
+							</StackPanel>
+						</Grid>
+
+						<Grid ColumnDefinitions="*,16,*,16,*">
+							<StackPanel Grid.Column="0" Spacing="4">
+								<TextBlock Text="Alto (cm)"/>
+								<NumericUpDown Value="{Binding VariosAlto}"
+                                               Minimum="0"
+                                               FormatString="F2"
+                                               Increment="0.5"/>
+							</StackPanel>
+
+							<StackPanel Grid.Column="2" Spacing="4">
+								<TextBlock Text="Ancho (cm)"/>
+								<NumericUpDown Value="{Binding VariosAncho}"
+                                               Minimum="0"
+                                               FormatString="F2"
+                                               Increment="0.5"/>
+							</StackPanel>
+
+							<StackPanel Grid.Column="4" Spacing="4">
+								<TextBlock Text="Largo (cm) - opcional"/>
+								<NumericUpDown Value="{Binding VariosLargo}"
+                                               Minimum="0"
+                                               FormatString="F2"
+                                               Increment="0.5"/>
+							</StackPanel>
+						</Grid>
+
+						<CheckBox Content="Tiene ilustración"
+                                  IsChecked="{Binding VariosTieneIlustracion}"/>
+					</StackPanel>
+
+				</StackPanel>
+			</Border>
+		</ScrollViewer>
+
+		<!-- Footer -->
+		<Border Grid.Row="2" 
+            Margin="16,0,16,16" 
+            Background="{DynamicResource TeejoshSurfaceBrush}"
+            Padding="16">
+			<Grid ColumnDefinitions="*,Auto,8,Auto">
+				<Button Grid.Column="1"
+                        Command="{Binding GuardarCommand}"
+                        Content="Crear Producto"
+                        Background="#FF9800"
+                        Foreground="White"
+                        Height="40" Padding="24,0"/>
+
+				<Button Grid.Column="3"
+                        Command="{Binding VolverCommand}"
+                        Content="Cancelar"
+                        Height="40" Padding="24,0"/>
+			</Grid>
+		</Border>
+
+		<!-- Loading Overlay -->
+		<Border Grid.RowSpan="3"
+                Background="#CC000000"
+                IsVisible="{Binding IsBusy}">
+			<StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+				<ProgressBar IsIndeterminate="True"
+                             Width="64" Height="64"
+                             Margin="0,0,0,16"/>
+				<TextBlock Text="Guardando..."
+                           FontSize="16" Foreground="White"
+                           HorizontalAlignment="Center"/>
+			</StackPanel>
+		</Border>
+	</Grid>
+</UserControl>
+</file>
+
+<file path="Adapters/Inbound/Views/Productos/CrearProductoView.axaml.cs">
+using Avalonia.Controls;
+
+namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.Views.Productos;
+
+public partial class CrearProductoView : UserControl
+{
+    public CrearProductoView()
+    {
+        InitializeComponent();
+    }
+}
+</file>
+
+<file path="Adapters/Inbound/Views/Productos/EditarProductoView.axaml">
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Productos"
+             x:Class="TeejoshSystem.AvaloniaUI.Adapters.Inbound.Views.Productos.EditarProductoView"
+             x:CompileBindings="False">
+
+    <Grid RowDefinitions="Auto,*,Auto">
+
+        <!-- Header -->
+        <Border Grid.Row="0" Background="#FF9800" Padding="24,16">
+            <TextBlock Text="Editar Producto"
+                       FontSize="20" FontWeight="SemiBold"
+                       Foreground="White" VerticalAlignment="Center"/>
+        </Border>
+
+        <!-- Formulario -->
+        <Border Grid.Row="1" Margin="16" Background="{DynamicResource TeejoshSurfaceBrush}" CornerRadius="4">
+            <StackPanel Margin="24" Spacing="16">
+                <TextBlock Text="Datos del Producto"
+                           FontSize="16" FontWeight="SemiBold"/>
+
+                <StackPanel Spacing="4">
+                    <TextBlock Text="Nombre"/>
+                    <TextBox Text="{Binding Nombre}"
+                             Watermark="Nombre del producto"/>
+                </StackPanel>
+
+                <StackPanel Spacing="4">
+                    <TextBlock Text="Precio"/>
+                    <NumericUpDown Value="{Binding Precio}"
+                                   Minimum="0"
+                                   FormatString="F2"
+                                   Increment="0.5"/>
+                </StackPanel>
+
+                <StackPanel Spacing="4">
+                    <TextBlock Text="Unidades en stock"/>
+                    <NumericUpDown Value="{Binding Unidades}"
+                                   Minimum="0"
+                                   Increment="1"
+                                   FormatString="F0"/>
+                </StackPanel>
+
+                <!-- Selector de imagen -->
+                <Border Background="{DynamicResource TeejoshSurfaceBrush}" CornerRadius="4" Padding="12">
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="Imagen del producto" FontWeight="SemiBold" FontSize="13"/>
+
+                        <!-- Sin imagen seleccionada -->
+                        <Button Command="{Binding SeleccionarImagenCommand}"
+                                IsVisible="{Binding ImageNombre, Converter={x:Static ObjectConverters.IsNull}}"
+                                Content="📁 Seleccionar imagen"
+                                HorizontalAlignment="Left"/>
+
+                        <!-- Con imagen seleccionada -->
+                        <StackPanel Orientation="Horizontal" Spacing="8"
+                                    IsVisible="{Binding ImageNombre, Converter={x:Static ObjectConverters.IsNotNull}}">
+                            <TextBlock Text="✓" Foreground="Green" VerticalAlignment="Center"/>
+                            <TextBlock Text="{Binding ImageNombre}" VerticalAlignment="Center"/>
+                            <Button Content="Quitar"
+                                    Command="{Binding QuitarImagenCommand}"
+                                    Background="Transparent"
+                                    Foreground="#E53935"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+            </StackPanel>
+        </Border>
+
+        <!-- Footer -->
+		<Border Grid.Row="2" 
+            Margin="16,0,16,16" 
+            Background="{DynamicResource TeejoshSurfaceBrush}"
+            Padding="16">
+            <Grid ColumnDefinitions="*,Auto,8,Auto">
+                <Button Grid.Column="1"
+                        Command="{Binding GuardarCommand}"
+                        Content="Guardar"
+                        Background="#FF9800"
+                        Foreground="White"
+                        Height="40" Padding="24,0"/>
+
+                <Button Grid.Column="3"
+                        Command="{Binding VolverCommand}"
+                        Content="Cancelar"
+                        Height="40" Padding="24,0"/>
+            </Grid>
+        </Border>
+
+        <!-- Loading Overlay -->
+        <Border Grid.RowSpan="3"
+                Background="#CC000000"
+                IsVisible="{Binding IsBusy}">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                <ProgressBar IsIndeterminate="True"
+                             Width="64" Height="64"
+                             Margin="0,0,0,16"/>
+                <TextBlock Text="Guardando..."
+                           FontSize="16" Foreground="White"
+                           HorizontalAlignment="Center"/>
+            </StackPanel>
+        </Border>
+    </Grid>
+</UserControl>
+</file>
+
+<file path="Adapters/Inbound/Views/Productos/EditarProductoView.axaml.cs">
+using Avalonia.Controls;
+
+using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Productos;
+
+namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.Views.Productos;
+public partial class EditarProductoView : UserControl
+{
+    public EditarProductoView()
+    {
+        InitializeComponent();
+
+        // Se dispara cuando la vista termina de inicializarse
+        // y el DataContext ya está asignado
+        DataContextChanged += (_, _) =>
+        {
+            if (DataContext is EditarProductoViewModel vm)
+                vm.OnLoaded();
+        };
+    }
+}
+</file>
+
+<file path="Adapters/Inbound/Views/Productos/GestionarProductosView.axaml">
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Productos"
+             x:Class="TeejoshSystem.AvaloniaUI.Adapters.Inbound.Views.Productos.GestionarProductosView"
+             x:DataType="vm:GestionarProductosViewModel"
+			 x:CompileBindings="False">
+
+	<Grid RowDefinitions="Auto,*,Auto">
+
+		<!-- Header -->
+		<Border Grid.Row="0" Background="#FF9800" Padding="24,16">
+			<TextBlock Text="Gestionar Productos"
+                       FontSize="20" FontWeight="SemiBold"
+                       Foreground="White" VerticalAlignment="Center"/>
+		</Border>
+
+		<!-- Contenido -->
+		<Border Grid.Row="1" Margin="16" Background="{DynamicResource TeejoshSurfaceBrush}" CornerRadius="4">
+			<Grid RowDefinitions="Auto,*">
+
+				<!-- Filtros -->
+				<StackPanel Grid.Row="0" Margin="24,24,24,16">
+					<TextBlock Text="Búsqueda y Filtros"
+                               FontSize="16" FontWeight="SemiBold"
+                               Margin="0,0,0,16"/>
+					<Grid ColumnDefinitions="*,16,200,16,Auto">
+						<TextBox Grid.Column="0"
+                                 Text="{Binding TextoBusqueda}"
+                                 Watermark="Buscar por nombre..."/>
+
+						<ComboBox Grid.Column="2"
+                                  ItemsSource="{Binding TiposDisponibles}"
+                                  SelectedItem="{Binding TipoFiltro}"
+                                  DisplayMemberBinding="{Binding Nombre}"
+                                  PlaceholderText="Tipo de producto"/>
+
+						<Button Grid.Column="4"
+                                Command="{Binding BuscarCommand}"
+                                Background="#FF9800"
+                                Foreground="White"
+                                Content="Buscar"
+                                Height="40"
+                                Padding="24,0"/>
+					</Grid>
+				</StackPanel>
+
+				<!-- DataGrid -->
+				<DataGrid Grid.Row="1"
+                          ItemsSource="{Binding Productos}"
+                          SelectedItem="{Binding ProductoSeleccionado}"
+                          SelectionMode="Single"
+                          AutoGenerateColumns="False"
+                          IsReadOnly="True"
+                          Margin="24,0,24,24">
+					<DataGrid.Columns>
+						<DataGridTextColumn Header="ID"
+                                            Binding="{Binding Id}"
+                                            Width="60"/>
+						<DataGridTextColumn Header="Nombre"
+                                            Binding="{Binding Nombre}"
+                                            Width="2*"/>
+						<DataGridTextColumn Header="Precio"
+                                            Binding="{Binding Precio, StringFormat=\{0:C\}}"
+                                            Width="100"/>
+						<DataGridTextColumn Header="Stock"
+                                            Binding="{Binding Unidades}"
+                                            Width="80"/>
+						<DataGridTextColumn Header="Tipo"
+                                            Binding="{Binding Tipo}"
+                                            Width="120"/>
+						<DataGridTextColumn Header="Detalle"
+                                            Binding="{Binding DetalleResumen}"
+                                            Width="2*"/>
+					</DataGrid.Columns>
+				</DataGrid>
+			</Grid>
+		</Border>
+
+		<!-- Footer -->
+		<Border Grid.Row="2" Margin="16,0,16,16" Background="{DynamicResource TeejoshSurfaceBrush}" Padding="16">
+			<Grid ColumnDefinitions="*,Auto,8,Auto,8,Auto">
+				<TextBlock VerticalAlignment="Center">
+					<Run Text="Total: "/>
+					<Run Text="{Binding Productos.Count, Mode=OneWay}"
+                         FontWeight="Bold" Foreground="#FF9800"/>
+					<Run Text=" productos"/>
+				</TextBlock>
+
+				<Button Grid.Column="1"
+                        Command="{Binding EditarCommand}"
+                        Content="Editar"
+                        Height="40" Padding="24,0"/>
+
+				<Button Grid.Column="3"
+                        Command="{Binding EliminarCommand}"
+                        Content="Eliminar"
+                        Background="#E53935"
+                        Foreground="White"
+                        Height="40" Padding="24,0"/>
+
+				<Button Grid.Column="5"
+                        Command="{Binding VolverCommand}"
+                        Content="Volver"
+                        Height="40" Padding="24,0"/>
+			</Grid>
+		</Border>
+
+		<!-- Loading Overlay -->
+		<Border Grid.RowSpan="3"
+                Background="#CC000000"
+                IsVisible="{Binding IsBusy}">
+			<StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+				<ProgressBar IsIndeterminate="True"
+                             Width="64" Height="64"
+                             Margin="0,0,0,16"/>
+				<TextBlock Text="Cargando..."
+                           FontSize="16" Foreground="White"
+                           HorizontalAlignment="Center"/>
+			</StackPanel>
+		</Border>
+	</Grid>
+</UserControl>
+</file>
+
+<file path="Adapters/Inbound/Views/Productos/GestionarProductosView.axaml.cs">
+using Avalonia.Controls;
+
+namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.Views.Productos;
+
+public partial class GestionarProductosView : UserControl
+{
+    public GestionarProductosView()
+    {
+        InitializeComponent();
+    }
+}
+</file>
+
+<file path="Adapters/Inbound/Views/Productos/InventarioView.axaml">
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Productos"
+             xmlns:converters="clr-namespace:TeejoshSystem.AvaloniaUI.Adapters.Inbound.Converters"
+             xmlns:busqueda="clr-namespace:TeejoshSystem.Application.Ports.Inbound.Productos.Queries.BuscarProductos;assembly=TeejoshSystem.Application"
+             x:Class="TeejoshSystem.AvaloniaUI.Adapters.Inbound.Views.Productos.InventarioView"
+             x:CompileBindings="False">
+
+    <!-- NUEVO: Resources con el converter -->
+    <UserControl.Resources>
+        <converters:PathToImageConverter x:Key="PathToImage"/>
+    </UserControl.Resources>
+
+    <Grid RowDefinitions="Auto,*,Auto">
+
+        <!-- Header -->
+        <Border Grid.Row="0"
+                Background="#FF9800"
+                Padding="24,16">
+            <TextBlock Text="Inventario"
+                       FontSize="20"
+                       FontWeight="SemiBold"
+                       Foreground="White"
+                       VerticalAlignment="Center"/>
+        </Border>
+
+        <!-- Contenido -->
+        <Border Grid.Row="1"
+                Margin="16"
+                Background="{DynamicResource TeejoshSurfaceBrush}"
+                CornerRadius="4">
+            <Grid RowDefinitions="Auto,*">
+
+                <!-- Filtros -->
+                <StackPanel Grid.Row="0" Margin="24,24,24,16">
+                    <TextBlock Text="Búsqueda y Filtros"
+                               FontSize="16"
+                               FontWeight="SemiBold"
+                               Margin="0,0,0,16"/>
+                    <Grid ColumnDefinitions="*,16,200,16,Auto">
+                        <TextBox Grid.Column="0"
+                                 Text="{Binding Busqueda}"
+                                 Watermark="Buscar por nombre..."/>
+
+                        <ComboBox Grid.Column="2"
+                                  ItemsSource="{Binding TiposDisponibles}"
+                                  SelectedItem="{Binding TipoFiltro}"
+                                  DisplayMemberBinding="{Binding Nombre}"
+                                  PlaceholderText="Tipo de producto"/>
+
+                        <Button Grid.Column="4"
+                                Command="{Binding CargarCommand}"
+                                Background="#FF9800"
+                                Foreground="White"
+                                Content="Buscar"
+                                Height="40"
+                                Padding="24,0"/>
+                    </Grid>
+                </StackPanel>
+
+                <!-- DataGrid -->
+                <!-- CAMBIO: AutoGenerateColumns="False" para controlar columnas manualmente -->
+                <DataGrid Grid.Row="1"
+                          ItemsSource="{Binding Productos}"
+                          SelectionMode="Single"
+                          AutoGenerateColumns="False"
+                          IsReadOnly="True"
+                          Margin="24,0,24,24">
+                    <DataGrid.Columns>
+
+                        <!-- NUEVA columna de imagen -->
+                        <DataGridTemplateColumn Header="Imagen" Width="70" IsReadOnly="True">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Panel Width="50" Height="50" Margin="4">
+                                        <!-- Imagen real si existe -->
+                                        <Image Source="{Binding ImagePath, Converter={StaticResource PathToImage}}"
+                                               Width="50" Height="50"
+                                               Stretch="UniformToFill"
+                                               IsVisible="{Binding ImagePath, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+                                        <!-- Placeholder si no existe -->
+                                        <Border Background="#E0E0E0" CornerRadius="4"
+                                                Width="50" Height="50"
+                                                IsVisible="{Binding ImagePath, Converter={x:Static ObjectConverters.IsNull}}">
+                                            <TextBlock Text="🖼" FontSize="20"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center"/>
+                                        </Border>
+                                    </Panel>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+                        <!-- Columnas originales — sin cambios -->
+                        <DataGridTextColumn Header="ID"
+                                            Binding="{Binding Id}"
+                                            Width="60"/>
+                        <DataGridTextColumn Header="Nombre"
+                                            Binding="{Binding Nombre}"
+                                            Width="2*"/>
+                        <DataGridTextColumn Header="Precio"
+                                            Binding="{Binding Precio, StringFormat=\{0:C\}}"
+                                            Width="100"/>
+                        <DataGridTextColumn Header="Stock"
+                                            Binding="{Binding Unidades}"
+                                            Width="80"/>
+                        <DataGridTextColumn Header="Tipo"
+                                            Binding="{Binding Tipo}"
+                                            Width="120"/>
+                        <DataGridTextColumn Header="Detalle"
+                                            Binding="{Binding DetalleResumen}"
+                                            Width="2*"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Grid>
+        </Border>
+
+        <!-- Footer -->
+        <Border Grid.Row="2"
+                Margin="16,0,16,16"
+                Background="{DynamicResource TeejoshSurfaceBrush}"
+                Padding="16">
+            <Grid ColumnDefinitions="*,Auto">
+                <TextBlock VerticalAlignment="Center">
+                    <Run Text="Total de productos: "/>
+                    <Run Text="{Binding Productos.Count, Mode=OneWay}"
+                         FontWeight="Bold"
+                         Foreground="#FF9800"/>
+                </TextBlock>
+
+                <Button Grid.Column="1"
+                        Command="{Binding VolverCommand}"
+                        Content="Volver"
+                        Height="40"
+                        Padding="24,0"/>
+            </Grid>
+        </Border>
+
+        <!-- Loading Overlay -->
+        <Border Grid.RowSpan="3"
+                Background="#CC000000"
+                IsVisible="{Binding IsBusy}">
+            <StackPanel HorizontalAlignment="Center"
+                        VerticalAlignment="Center">
+                <ProgressBar IsIndeterminate="True"
+                             Width="64"
+                             Height="64"
+                             Margin="0,0,0,16"/>
+                <TextBlock Text="Cargando inventario..."
+                           FontSize="16"
+                           Foreground="White"
+                           HorizontalAlignment="Center"/>
+            </StackPanel>
+        </Border>
+
+    </Grid>
+</UserControl>
+</file>
+
+<file path="Adapters/Inbound/Views/Productos/InventarioView.axaml.cs">
+using Avalonia.Controls;
+
+namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.Views.Productos;
+
+public partial class InventarioView : UserControl
+{
+    public InventarioView()
+    {
+        InitializeComponent();
+    }
+}
+</file>
+
+<file path="Adapters/Inbound/Views/Ventas/HistorialVentasView.axaml">
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Ventas"
+             x:Class="TeejoshSystem.AvaloniaUI.Adapters.Inbound.Views.Ventas.HistorialVentasView"
+             x:DataType="vm:HistorialVentasViewModel"
+             x:CompileBindings="False">
+
+	<Grid RowDefinitions="Auto,*,Auto">
+
+		<!-- Header -->
+		<Border Grid.Row="0" Background="#1565C0" Padding="24,16">
+			<TextBlock Text="Historial de Ventas"
+                       FontSize="20" FontWeight="SemiBold"
+                       Foreground="White" VerticalAlignment="Center"/>
+		</Border>
+
+		<!-- Contenido -->
+		<Border Grid.Row="1" Margin="16" Background="{DynamicResource TeejoshSurfaceBrush}" CornerRadius="4">
+			<Grid RowDefinitions="Auto,*,Auto">
+
+				<!-- Filtros de fecha -->
+				<StackPanel Grid.Row="0" Margin="24,24,24,16" Spacing="12">
+					<TextBlock Text="Filtrar por fecha"
+                               FontSize="16" FontWeight="SemiBold"/>
+					<Grid ColumnDefinitions="Auto,8,*,16,Auto,8,*,16,Auto,8,Auto">
+						<TextBlock Grid.Column="0" Text="Desde:"
+                                   VerticalAlignment="Center"/>
+						<CalendarDatePicker Grid.Column="2"
+											SelectedDate="{Binding FechaDesde}"/>
+
+						<TextBlock Grid.Column="4" Text="Hasta:"
+                                   VerticalAlignment="Center"/>
+						<CalendarDatePicker Grid.Column="6"
+											SelectedDate="{Binding FechaHasta}"/>
+
+						<Button Grid.Column="8"
+                                Command="{Binding BuscarCommand}"
+                                Content="Filtrar"
+                                Background="#1565C0"
+                                Foreground="White"
+                                Height="40" Padding="16,0"/>
+						<Button Grid.Column="10"
+                                Command="{Binding LimpiarFiltrosCommand}"
+                                Content="Limpiar"
+                                Height="40" Padding="16,0"/>
+					</Grid>
+				</StackPanel>
+
+				<!-- Lista de ventas -->
+				<DataGrid Grid.Row="1"
+                          ItemsSource="{Binding Ventas}"
+                          SelectedItem="{Binding VentaSeleccionada}"
+                          SelectionMode="Single"
+                          AutoGenerateColumns="False"
+                          IsReadOnly="True"
+                          Margin="24,0,24,0">
+					<DataGrid.Columns>
+						<DataGridTextColumn Header="ID"
+                                            Binding="{Binding Id}"
+                                            Width="60"/>
+						<DataGridTextColumn Header="Fecha"
+                                            Binding="{Binding Fecha, StringFormat=\{0:dd/MM/yyyy HH:mm\}}"
+                                            Width="160"/>
+						<DataGridTextColumn Header="Productos"
+                                            Binding="{Binding Detalles.Count}"
+                                            Width="90"/>
+						<DataGridTextColumn Header="Total"
+                                            Binding="{Binding Total, StringFormat=\{0:C\}}"
+                                            Width="120"/>
+					</DataGrid.Columns>
+				</DataGrid>
+
+				<!-- Detalle de venta seleccionada -->
+				<Border Grid.Row="2"
+                        Margin="24,12,24,24"
+                        IsVisible="{Binding VentaSeleccionada, Converter={x:Static ObjectConverters.IsNotNull}}">
+					<StackPanel Spacing="8">
+						<TextBlock Text="Detalle de la venta seleccionada"
+                                   FontWeight="SemiBold"/>
+						<DataGrid ItemsSource="{Binding VentaSeleccionada.Detalles}"
+                                  AutoGenerateColumns="False"
+                                  IsReadOnly="True"
+                                  MaxHeight="180">
+							<DataGrid.Columns>
+								<DataGridTextColumn Header="Producto"
+                                                    Binding="{Binding NombreProducto}"
+                                                    Width="2*"/>
+								<DataGridTextColumn Header="Cant."
+                                                    Binding="{Binding Cantidad}"
+                                                    Width="60"/>
+								<DataGridTextColumn Header="P.Unit."
+                                                    Binding="{Binding PrecioUnitario, StringFormat=\{0:C\}}"
+                                                    Width="100"/>
+								<DataGridTextColumn Header="Subtotal"
+                                                    Binding="{Binding Subtotal, StringFormat=\{0:C\}}"
+                                                    Width="100"/>
+							</DataGrid.Columns>
+						</DataGrid>
+					</StackPanel>
+				</Border>
+			</Grid>
+		</Border>
+
+		<!-- Footer -->
+		<Border Grid.Row="2" Margin="16,0,16,16" Background="{DynamicResource TeejoshSurfaceBrush}" Padding="16">
+			<Grid ColumnDefinitions="*,Auto">
+				<TextBlock VerticalAlignment="Center">
+					<Run Text="Total ventas: "/>
+					<Run Text="{Binding Ventas.Count, Mode=OneWay}"
+                         FontWeight="Bold" Foreground="#1565C0"/>
+				</TextBlock>
+				<Button Grid.Column="1"
+                        Command="{Binding VolverCommand}"
+                        Content="Volver"
+                        Height="40" Padding="24,0"/>
+			</Grid>
+		</Border>
+
+		<!-- Loading Overlay -->
+		<Border Grid.RowSpan="3"
+                Background="#CC000000"
+                IsVisible="{Binding IsBusy}">
+			<StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+				<ProgressBar IsIndeterminate="True"
+                             Width="64" Height="64"
+                             Margin="0,0,0,16"/>
+				<TextBlock Text="Cargando historial..."
+                           FontSize="16" Foreground="White"
+                           HorizontalAlignment="Center"/>
+			</StackPanel>
+		</Border>
+	</Grid>
+</UserControl>
+</file>
+
+<file path="Adapters/Inbound/Views/Ventas/HistorialVentasView.axaml.cs">
+using Avalonia.Controls;
+
+namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.Views.Ventas;
+
+public partial class HistorialVentasView : UserControl
+{
+    public HistorialVentasView()
+    {
+        InitializeComponent();
+    }
+}
+</file>
+
+<file path="Adapters/Inbound/Views/Ventas/RegistrarVentaView.axaml">
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Ventas"
+             x:Class="TeejoshSystem.AvaloniaUI.Adapters.Inbound.Views.Ventas.RegistrarVentaView"
+             x:DataType="vm:RegistrarVentaViewModel"
+             x:CompileBindings="False">
+
+    <Grid RowDefinitions="Auto,*,Auto">
+
+        <!-- Header -->
+        <Border Grid.Row="0" Background="#43A047" Padding="24,16">
+            <TextBlock Text="Registrar Venta"
+                       FontSize="20" FontWeight="SemiBold"
+                       Foreground="White" VerticalAlignment="Center"/>
+        </Border>
+
+        <!-- Contenido -->
+        <Grid Grid.Row="1" ColumnDefinitions="*,16,*" Margin="16">
+
+            <!-- Panel izquierdo - búsqueda de productos -->
+            <Border Grid.Column="0" Background="{DynamicResource TeejoshSurfaceBrush}" CornerRadius="4">
+                <Grid RowDefinitions="Auto,*">
+
+                    <StackPanel Grid.Row="0" Margin="24,24,24,16" Spacing="12">
+                        <TextBlock Text="Productos disponibles"
+                                   FontSize="16" FontWeight="SemiBold"/>
+                        <Grid ColumnDefinitions="*,8,Auto">
+                            <TextBox Grid.Column="0"
+                                     Text="{Binding TextoBusqueda}"
+                                     Watermark="Buscar producto..."/>
+                            <Button Grid.Column="2"
+                                    Command="{Binding BuscarProductosCommand}"
+                                    Content="Buscar"
+                                    Background="#43A047"
+                                    Foreground="White"
+                                    Height="40" Padding="16,0"/>
+                        </Grid>
+                    </StackPanel>
+
+                    <DataGrid Grid.Row="1"
+                              ItemsSource="{Binding ProductosDisponibles}"
+                              SelectedItem="{Binding ProductoSeleccionado}"
+                              SelectionMode="Single"
+                              AutoGenerateColumns="False"
+                              IsReadOnly="True"
+                              Margin="24,0,24,16">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Nombre"
+                                                Binding="{Binding Nombre}"
+                                                Width="2*"/>
+                            <DataGridTextColumn Header="Precio"
+                                                Binding="{Binding Precio, StringFormat=\{0:C\}}"
+                                                Width="90"/>
+                            <DataGridTextColumn Header="Stock"
+                                                Binding="{Binding Unidades}"
+                                                Width="60"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </Border>
+
+            <!-- Panel derecho - carrito -->
+            <Border Grid.Column="2" Background="{DynamicResource TeejoshSurfaceBrush}" CornerRadius="4">
+                <Grid RowDefinitions="Auto,*,Auto">
+
+                    <StackPanel Grid.Row="0" Margin="24,24,24,16" Spacing="12">
+                        <TextBlock Text="Carrito de venta"
+                                   FontSize="16" FontWeight="SemiBold"/>
+
+                        <!-- Selector de cantidad + agregar -->
+                        <Grid ColumnDefinitions="Auto,8,*,8,Auto">
+                            <TextBlock Grid.Column="0"
+                                       Text="Cantidad:"
+                                       VerticalAlignment="Center"/>
+                            <NumericUpDown Grid.Column="2"
+                                          Value="{Binding CantidadSeleccionada}"
+                                          Minimum="1"
+                                          Increment="1"
+                                          FormatString="F0"/>
+                            <Button Grid.Column="4"
+                                    Command="{Binding AgregarItemCommand}"
+                                    Content="Agregar"
+                                    Background="#43A047"
+                                    Foreground="White"
+                                    Height="40" Padding="16,0"/>
+                        </Grid>
+                    </StackPanel>
+
+                    <!-- Items en el carrito -->
+                    <DataGrid Grid.Row="1"
+                              ItemsSource="{Binding ItemsVenta}"
+                              AutoGenerateColumns="False"
+                              IsReadOnly="True"
+                              Margin="24,0,24,16">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Producto"
+                                                Binding="{Binding Nombre}"
+                                                Width="2*"/>
+                            <DataGridTextColumn Header="Cant."
+                                                Binding="{Binding Cantidad}"
+                                                Width="50"/>
+                            <DataGridTextColumn Header="P.Unit."
+                                                Binding="{Binding PrecioUnitario, StringFormat=\{0:C\}}"
+                                                Width="80"/>
+                            <DataGridTextColumn Header="Subtotal"
+                                                Binding="{Binding Subtotal, StringFormat=\{0:C\}}"
+                                                Width="80"/>
+                            <DataGridTemplateColumn Width="40">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Button Content="✕"
+                                                Command="{Binding $parent[UserControl].DataContext.QuitarItemCommand}"
+                                                CommandParameter="{Binding}"
+                                                Background="Transparent"
+                                                Foreground="#E53935"
+                                                Padding="4"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <!-- Total -->
+                    <Border Grid.Row="2" Margin="24,0,24,24"
+                            BorderBrush="#E0E0E0" BorderThickness="0,1,0,0"
+                            Padding="0,12,0,0">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Grid.Column="0"
+                                       Text="Total:"
+                                       FontSize="18" FontWeight="SemiBold"
+                                       VerticalAlignment="Center"/>
+                            <TextBlock Grid.Column="1"
+                                       Text="{Binding TotalVenta, StringFormat=\{0:C\}}"
+                                       FontSize="18" FontWeight="Bold"
+                                       Foreground="#43A047"
+                                       VerticalAlignment="Center"/>
+                        </Grid>
+                    </Border>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <!-- Footer -->
+        <Border Grid.Row="2" Margin="16,0,16,16" Background="{DynamicResource TeejoshSurfaceBrush}" Padding="16">
+            <Grid ColumnDefinitions="*,Auto,8,Auto">
+                <Button Grid.Column="1"
+                        Command="{Binding ConfirmarVentaCommand}"
+                        Content="Confirmar Venta"
+                        Background="#43A047"
+                        Foreground="White"
+                        Height="40" Padding="24,0"/>
+                <Button Grid.Column="3"
+                        Command="{Binding VolverCommand}"
+                        Content="Cancelar"
+                        Height="40" Padding="24,0"/>
+            </Grid>
+        </Border>
+
+        <!-- Loading Overlay -->
+        <Border Grid.RowSpan="3"
+                Background="#CC000000"
+                IsVisible="{Binding IsBusy}">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                <ProgressBar IsIndeterminate="True"
+                             Width="64" Height="64"
+                             Margin="0,0,0,16"/>
+                <TextBlock Text="Procesando venta..."
+                           FontSize="16" Foreground="White"
+                           HorizontalAlignment="Center"/>
+            </StackPanel>
+        </Border>
+    </Grid>
+</UserControl>
+</file>
+
+<file path="Adapters/Inbound/Views/Ventas/RegistrarVentaView.axaml.cs">
+using Avalonia.Controls;
+
+namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.Views.Ventas;
+
+public partial class RegistrarVentaView : UserControl
+{
+    public RegistrarVentaView()
+    {
+        InitializeComponent();
+    }
+}
+</file>
+
+<file path="App.axaml">
+<!-- dotnet ef migrations add InitialCreate __project TeejoshSystem.Infrastructure __startup-project TeejoshSystem.AvaloniaUI __output-dir Adapters/Outbound/Persistence/Migrations -->
+<!-- dotnet ef database update __project TeejoshSystem.Infrastructure __startup-project TeejoshSystem.AvaloniaUI -->
+
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vmMenu="clr-namespace:TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Menu"
+             xmlns:vmProductos="clr-namespace:TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Productos"
+             xmlns:viewsMenu="clr-namespace:TeejoshSystem.AvaloniaUI.Adapters.Inbound.Views.Menu"
+             xmlns:viewsProductos="clr-namespace:TeejoshSystem.AvaloniaUI.Adapters.Inbound.Views.Productos"
+             xmlns:vmVentas="clr-namespace:TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Ventas"
+             xmlns:viewsVentas="clr-namespace:TeejoshSystem.AvaloniaUI.Adapters.Inbound.Views.Ventas"
+             xmlns:vmAuth="clr-namespace:TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Auth"
+             xmlns:viewsAuth="clr-namespace:TeejoshSystem.AvaloniaUI.Adapters.Inbound.Views.Auth"
+             xmlns:vmAdmin="clr-namespace:TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Admin"
+             xmlns:viewsAdmin="clr-namespace:TeejoshSystem.AvaloniaUI.Adapters.Inbound.Views.Admin"
+             xmlns:vmCatalogos="clr-namespace:TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Catalogos"
+             xmlns:viewsCatalogos="clr-namespace:TeejoshSystem.AvaloniaUI.Adapters.Inbound.Views.Catalogos"
+             xmlns:helpers="clr-namespace:TeejoshSystem.AvaloniaUI.Adapters.Inbound.Helpers"
+             x:Class="TeejoshSystem.AvaloniaUI.App">
+
+    <Application.RequestedThemeVariant>Light</Application.RequestedThemeVariant>
+
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.ThemeDictionaries>
+                <ResourceDictionary x:Key="Light">
+                    <SolidColorBrush x:Key="TeejoshSurfaceBrush">White</SolidColorBrush>
+                </ResourceDictionary>
+                <ResourceDictionary x:Key="Dark">
+                    <SolidColorBrush x:Key="TeejoshSurfaceBrush">Black</SolidColorBrush>
+                </ResourceDictionary>
+            </ResourceDictionary.ThemeDictionaries>
+        </ResourceDictionary>
+    </Application.Resources>
+
+    <Application.Styles>
+        <FluentTheme />
+        <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml"/>
+
+        <Style Selector="ComboBox">
+            <Setter Property="helpers:ControlExtensions.BlockScroll" Value="True" />
+        </Style>
+    </Application.Styles>
+
+    <Application.DataTemplates>
+        <DataTemplate DataType="{x:Type vmAuth:LoginViewModel}">
+            <viewsAuth:LoginView/>
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type vmMenu:MenuPrincipalViewModel}">
+            <viewsMenu:MenuPrincipalView />
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type vmAdmin:GestionarUsuariosViewModel}">
+            <viewsAdmin:GestionarUsuariosView/>
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type vmAdmin:CambiarPasswordViewModel}">
+            <viewsAdmin:CambiarPasswordView/>
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type vmAdmin:AuditLogViewModel}">
+            <viewsAdmin:AuditLogView/>
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type vmProductos:InventarioViewModel}">
+            <viewsProductos:InventarioView />
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type vmProductos:GestionarProductosViewModel}">
+            <viewsProductos:GestionarProductosView />
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type vmProductos:CrearProductoViewModel}">
+            <viewsProductos:CrearProductoView />
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type vmProductos:EditarProductoViewModel}">
+            <viewsProductos:EditarProductoView />
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type vmVentas:RegistrarVentaViewModel}">
+            <viewsVentas:RegistrarVentaView />
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type vmVentas:HistorialVentasViewModel}">
+            <viewsVentas:HistorialVentasView />
+        </DataTemplate>
+        
+        <DataTemplate DataType="{x:Type vmCatalogos:SincronizarCatalogosViewModel}">
+            <viewsCatalogos:SincronizarCatalogosView/>
+        </DataTemplate>
+    </Application.DataTemplates>
+</Application>
+</file>
+
+<file path="App.axaml.cs">
+using Avalonia;
+using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Markup.Xaml;
+using Avalonia.Threading;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;          // NUEVO
+using Serilog;                               // NUEVO
+using System;
+using System.ComponentModel;
+using System.Threading.Tasks;
+using TeejoshSystem.Domain.Ports.Outbound;
+using TeejoshSystem.AvaloniaUI.Adapters.Inbound.Services;
+using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Admin;
+using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Auth;
+using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Menu;
+using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Productos;
+using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Shell;
+using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Catalogos;
+using TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence;
+using TeejoshSystem.Infrastructure.DependencyInjection;
+
+namespace TeejoshSystem.AvaloniaUI;
+
+public partial class App : Avalonia.Application
+{
+    private IHost? _host;
+
+    public override void Initialize()
+    {
+        AvaloniaXamlLoader.Load(this);
+    }
+
+    public override void OnFrameworkInitializationCompleted()
+    {
+        var environment = Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") ?? "Development";
+
+        var configuration = new ConfigurationBuilder()
+            .SetBasePath(AppContext.BaseDirectory)
+            .AddJsonFile("appsettings.json", optional: true)
+            .AddJsonFile($"appsettings.{environment}.json", optional: true)
+            .AddEnvironmentVariables()
+            .Build();
+
+        // ── DEBUG TEMPORAL ─────────────────────────────────────
+        var dbProvider = configuration["Database:Provider"] ?? "(no encontrado)";
+        var dbCs = configuration["Database:ConnectionString"] ?? "(no encontrado)";
+        Console.WriteLine($"[STARTUP] Provider  : {dbProvider}");
+        Console.WriteLine($"[STARTUP] ConnString: {dbCs[..Math.Min(50, dbCs.Length)]}...");
+        // ───────────────────────────────────────────────────────
+
+        // NUEVO — Serilog lee su configuración completa desde appsettings.json
+        Log.Logger = new LoggerConfiguration()
+            .ReadFrom.Configuration(configuration)
+            .CreateLogger();
+
+        _host = Host.CreateDefaultBuilder()
+            .UseSerilog()                    // NUEVO — reemplaza el logging por defecto del host
+            .ConfigureServices((_, services) =>
+            {
+                // Infrastructure (incluye registro de IAppLogger → AppLogger)
+                services.AddInfrastructure(configuration);
+
+                // Application (MediatR)
+                services.AddMediatR(cfg =>
+                    cfg.RegisterServicesFromAssembly(
+                        typeof(TeejoshSystem.Application.Common.Result).Assembly));
+
+                // UI Services
+                services.AddSingleton<INotificationService, NotificationService>();
+                services.AddSingleton<IConfirmationService, ConfirmationService>();
+                services.AddSingleton<IThemePreferenceService, ThemePreferenceService>();
+                services.AddSingleton<NavigationService>();
+                services.AddSingleton<INavigationService>(sp =>
+                    sp.GetRequiredService<NavigationService>());
+
+                // ViewModels
+                services.AddSingleton<MainViewModel>();
+                services.AddSingleton<MenuPrincipalViewModel>();
+                services.AddTransient<GestionarProductosViewModel>();
+                services.AddTransient<CrearProductoViewModel>();
+                services.AddTransient<SincronizarCatalogosViewModel>();
+                services.AddTransient<AuditLogViewModel>();
+
+                // Auth
+                services.AddSingleton<SesionContext>();
+                services.AddSingleton<ICurrentUserProvider, SessionCurrentUserProvider>();
+                services.AddTransient<LoginViewModel>();
+                services.AddTransient<GestionarUsuariosViewModel>();
+                services.AddTransient<CambiarPasswordViewModel>();
+            })
+            .Build();
+
+        // Aplicar migraciones pendientes
+        using (var scope = _host.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<InventarioDbContext>();
+            db.Database.Migrate();
+            DatabaseSeeder.SeedUsuarioAdmin(db);
+        }
+
+        // Configurar navegación
+        var navService = _host.Services.GetRequiredService<NavigationService>();
+        var mainVm = _host.Services.GetRequiredService<MainViewModel>();
+
+        mainVm.PropertyChanged += (object? sender, PropertyChangedEventArgs e) =>
+        {
+            if (e.PropertyName == nameof(MainViewModel.ThemeVariant))
+            {
+                Dispatcher.UIThread.Post(() => RequestedThemeVariant = mainVm.ThemeVariant);
+            }
+        };
+
+        _ = Task.Run(async () =>
+        {
+            await mainVm.InitializeAsync();
+            Dispatcher.UIThread.Post(() => RequestedThemeVariant = mainVm.ThemeVariant);
+        });
+
+        navService.Configure(
+            vm => mainVm.CurrentView = vm,
+            () => mainVm.CurrentView = _host.Services.GetRequiredService<MenuPrincipalViewModel>()
+        );
+
+        // Navegación inicial con verificación de sesión
+        var sesionContext = _host.Services.GetRequiredService<SesionContext>();
+        var loginVm = _host.Services.GetRequiredService<LoginViewModel>();
+
+        loginVm.OnLoginExitoso = () =>
+            mainVm.CurrentView = _host.Services.GetRequiredService<MenuPrincipalViewModel>();
+
+        mainVm.CurrentView = sesionContext.EstaAutenticado
+            ? _host.Services.GetRequiredService<MenuPrincipalViewModel>()
+            : (object)loginVm;
+
+        if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+        {
+            var mainWindow = new MainWindow();
+            mainWindow.DataContext = mainVm;
+            desktop.MainWindow = mainWindow;
+            desktop.Exit += (_, _) =>
+            {
+                _host.Dispose();
+                Log.CloseAndFlush();         // NUEVO — cierra Serilog limpiamente al salir
+            };
+        }
+
+        base.OnFrameworkInitializationCompleted();
+    }
+}
+</file>
+
+<file path="app.manifest">
+<?xml version="1.0" encoding="utf-8"?>
+<assembly manifestVersion="1.0" xmlns="urn:schemas-microsoft-com:asm.v1">
+  <!-- This manifest is used on Windows only.
+       Don't remove it as it might cause problems with window transparency and embedded controls.
+       For more details visit https://learn.microsoft.com/en-us/windows/win32/sbscs/application-manifests -->
+  <assemblyIdentity version="1.0.0.0" name="TeejoshSystem.AvaloniaUI.Desktop"/>
+
+  <compatibility xmlns="urn:schemas-microsoft-com:compatibility.v1">
+    <application>
+      <!-- A list of the Windows versions that this application has been tested on
+           and is designed to work with. Uncomment the appropriate elements
+           and Windows will automatically select the most compatible environment. -->
+
+      <!-- Windows 10 -->
+      <supportedOS Id="{8e0f7a12-bfb3-4fe8-b9a5-48fd50a15a9a}" />
+    </application>
+  </compatibility>
+</assembly>
+</file>
+
+<file path="appsettings.json">
+{
+  "Database": {
+    "Provider": "sqlite",
+    "ConnectionString": "Data Source={LocalAppData}/TeejoshSystem/inventario.db"
+  },
+
+  "Serilog": {
+    "Using": [ "Serilog.Sinks.Console", "Serilog.Sinks.File" ],
+    "MinimumLevel": {
+      "Default": "Debug",
+      "Override": {
+        "Microsoft": "Warning",
+        "Microsoft.EntityFrameworkCore": "Warning",
+        "System": "Warning"
+      }
+    },
+    "WriteTo": [
+      {
+        "Name": "Console",
+        "Args": {
+          "outputTemplate": "[{Timestamp:HH:mm:ss} {Level:u3}] {SourceContext} — {Message:lj}{NewLine}{Exception}"
+        }
+      },
+      {
+        "Name": "File",
+        "Args": {
+          "path": "logs/teejosh-.log",
+          "rollingInterval": "Day",
+          "retainedFileCountLimit": 30,
+          "outputTemplate": "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {SourceContext} — {Message:lj}{NewLine}{Exception}"
+        }
+      }
+    ],
+    "Enrich": [ "FromLogContext", "WithMachineName", "WithThreadId" ]
+  }
+}
+</file>
+
+<file path="appsettings.Production.json">
+{
+  "Database": {
+    "Provider": "postgresql",
+    "ConnectionString": "Host=db.wembmejrmztqhvvsownj.supabase.co;Port=5432;Database=postgres;Username=postgres;Password=Teejosh2026;SSL Mode=Require;Trust Server Certificate=true"
+  },
+
+  "Serilog": {
+    "MinimumLevel": {
+      "Default": "Information",
+      "Override": {
+        "Microsoft": "Warning",
+        "Microsoft.EntityFrameworkCore": "Warning",
+        "System": "Warning"
+      }
+    },
+    "WriteTo": [
+      {
+        "Name": "File",
+        "Args": {
+          "path": "/var/log/teejosh/teejosh-.log",
+          "rollingInterval": "Day",
+          "retainedFileCountLimit": 90,
+          "outputTemplate": "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {SourceContext} — {Message:lj}{NewLine}{Exception}"
+        }
+      }
+    ]
+  }
+}
+</file>
+
+<file path="MainWindow.axaml">
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="TeejoshSystem.AvaloniaUI.MainWindow"
+        Title="TeejoshSystem - Inventario"
+        Width="1024"
+        Height="768"
+        WindowStartupLocation="CenterScreen"
+		x:CompileBindings="False">
+
+	<Grid RowDefinitions="Auto,*">
+        
+        <!-- Barra de título -->
+        <Border Grid.Row="0" Background="#2C3E50" Height="50">
+            <Grid ColumnDefinitions="*,Auto">
+                <TextBlock Text="TeejoshSystem - Gestion de Inventario"
+                           Foreground="White"
+                           FontSize="16"
+                           VerticalAlignment="Center"
+                           Margin="20,0"/>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="0,0,20,0" Spacing="10">
+                    <TextBlock Text="Tema:" Foreground="White" VerticalAlignment="Center"/>
+                    <ComboBox ItemsSource="{Binding ThemeOptions}"
+                              SelectedItem="{Binding SelectedThemeOption}"
+                              VerticalAlignment="Center"
+                              Width="120">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Name}"/>
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+                </StackPanel>
+            </Grid>
+        </Border>
+        
+        <!-- Contenido dinámico -->
+		<ContentControl Grid.Row="1"
+						Content="{Binding CurrentView}" />
+    </Grid>
+</Window>
+</file>
+
+<file path="MainWindow.axaml.cs">
+using Avalonia.Controls;
+
+namespace TeejoshSystem.AvaloniaUI;
+
+public partial class MainWindow : Window
+{
+    public MainWindow()
+    {
+        InitializeComponent();
+    }
+}
+</file>
+
+<file path="Program.cs">
+using Avalonia;
+using Serilog;
+using System;
+
+namespace TeejoshSystem.AvaloniaUI;
+
+class Program
+{
+    [STAThread]
+    public static void Main(string[] args)
+    {
+        // Bootstrap logger mínimo para capturar errores ANTES de que Avalonia arranque.
+        // Se reemplaza por la config completa de appsettings.json dentro de App.axaml.cs.
+        Log.Logger = new LoggerConfiguration()
+            .WriteTo.Console()
+            .CreateBootstrapLogger();
+
+        try
+        {
+            BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
+        }
+        catch (Exception ex)
+        {
+            Log.Fatal(ex, "La aplicación terminó inesperadamente.");
+        }
+        finally
+        {
+            Log.CloseAndFlush();
+        }
+    }
+
+    // Avalonia configuration, don't remove; also used by visual designer.
+    public static AppBuilder BuildAvaloniaApp()
+        => AppBuilder.Configure<App>()
+            .UsePlatformDetect()
+            .WithInterFont()
+            .LogToTrace();
+}
+</file>
+
+<file path="TeejoshSystem.AvaloniaUI.csproj">
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <AvaloniaUseCompiledBindingsByDefault>false</AvaloniaUseCompiledBindingsByDefault>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="11.3.12" />
+    <PackageReference Include="Avalonia.Controls.DataGrid" Version="11.3.12" />
+    <PackageReference Include="Avalonia.Desktop" Version="11.3.12" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.12" />
+    <PackageReference Include="Avalonia.Fonts.Inter" Version="11.3.12" />
+    <!--Condition below is needed to remove Avalonia.Diagnostics package from build output in Release configuration.-->
+    <PackageReference Include="Avalonia.Diagnostics" Version="11.3.12">
+      <IncludeAssets Condition="'$(Configuration)' != 'Debug'">None</IncludeAssets>
+      <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.2" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.0">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="8.0.0" />
+    <PackageReference Include="Serilog.Extensions.Hosting" Version="8.0.0" />
+    <PackageReference Include="Serilog.Settings.Configuration" Version="10.0.0" />
+    <PackageReference Include="Serilog.Sinks.Console" Version="6.1.1" />
+    <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TeejoshSystem.Application\TeejoshSystem.Application.csproj" />
+    <ProjectReference Include="..\TeejoshSystem.Infrastructure\TeejoshSystem.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Adapters\Inbound\Views\Productos\GestionarProductosView.axaml.cs">
+      <DependentUpon>GestionarProductosView.axaml</DependentUpon>
+    </Compile>
+    <Compile Update="Adapters\Inbound\Views\Productos\EditarProductoView.axaml.cs">
+      <DependentUpon>EditarProductoView.axaml</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="appsettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="appsettings.Development.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+</Project>
+</file>
+
+<file path="TeejoshSystem.AvaloniaUI.csproj.lscache">
+version=1
+
+# This file caches language service data to improve the performance of C# Dev Kit.
+# It is not intended for manual editing. It can safely be deleted and will be
+# regenerated automatically. For more information, see https://aka.ms/lscache
+#
+# To control where cache files are stored, use the following VS Code setting:
+#   "dotnet.projectsystem.cacheInProjectFolder": true
+
+[project]
+language=C#
+primary
+lastDtbSucceeded
+
+[properties]
+AssemblyName=TeejoshSystem.AvaloniaUI
+CommandLineArgsForDesignTimeEvaluation=-langversion:12.0 -define:TRACE
+CompilerGeneratedFilesOutputPath=
+MaxSupportedLangVersion=12.0
+ProjectAssetsFile=<PATH>obj/project.assets.json
+RootNamespace=TeejoshSystem.AvaloniaUI
+RunAnalyzers=
+RunAnalyzersDuringLiveAnalysis=
+SolutionPath=<PATH>../TeejoshSystem.sln
+TargetFrameworkIdentifier=.NETCoreApp
+TargetPath=<PATH>bin/Debug/net8.0/TeejoshSystem.AvaloniaUI.dll
+TargetRefPath=<PATH>obj/Debug/net8.0/ref/TeejoshSystem.AvaloniaUI.dll
+TemporaryDependencyNodeTargetIdentifier=net8.0
+
+[commandLineArguments]
+/noconfig
+/unsafe-
+/checked-
+/nowarn:1701,1702,1701,1702
+/fullpaths
+/nostdlib+
+/errorreport:prompt
+/warn:8
+/define:TRACE;DEBUG;NET;NET8_0;NETCOREAPP;NET5_0_OR_GREATER;NET6_0_OR_GREATER;NET7_0_OR_GREATER;NET8_0_OR_GREATER;NETCOREAPP1_0_OR_GREATER;NETCOREAPP1_1_OR_GREATER;NETCOREAPP2_0_OR_GREATER;NETCOREAPP2_1_OR_GREATER;NETCOREAPP2_2_OR_GREATER;NETCOREAPP3_0_OR_GREATER;NETCOREAPP3_1_OR_GREATER
+/highentropyva+
+/nullable:enable
+/debug+
+/debug:portable
+/filealign:512
+/optimize-
+/out:obj\Debug\net8.0\TeejoshSystem.AvaloniaUI.dll
+/refout:obj\Debug\net8.0\refint\TeejoshSystem.AvaloniaUI.dll
+/target:winexe
+/warnaserror-
+/utf8output
+/win32manifest:app.manifest
+/deterministic+
+/langversion:12.0
+/warnaserror+:NU1605,SYSLIB0011
+
+[sourceFiles]
+Adapters/Inbound/
+ Converters/PathToImageConverter.cs
+ Services/
+  ConfirmationService.cs
+  IConfirmationService.cs
+  ILoadable.cs
+  INavigationService.cs
+  INotificationService.cs
+  NavigationService.cs
+  NotificationService.cs
+  SessionContext.cs
+ ViewModels/Admin/
+  CambiarPasswordViewModel.cs
+  GestionarUsuariosViewModel.cs
+ ViewModels/
+  Auth/LoginViewModel.cs
+  Catalogos/SincronizarCatalogosViewModel.cs
+  Common/
+   TipoProductoFiltroItem.cs
+   ValidatableViewModel.cs
+   ViewModelBase.cs
+  Menu/MenuPrincipalViewModel.cs
+  Productos/
+   CrearProductoViewModel.cs
+   EditarProductoViewModel.cs
+   GestionarProductosViewModel.cs
+   InventarioViewModel.cs
+  Shell/MainViewModel.cs
+  Ventas/
+   HistorialVentasViewModel.cs
+   RegistrarVentaViewModel.cs
+ Views/Admin/
+  CambiarPasswordView.axaml.cs
+  GestionarUsuariosView.axaml.cs
+ Views/
+  Auth/LoginView.axaml.cs
+  Catalogos/SincronizarCatalogosView.axaml.cs
+  Menu/MenuPrincipalView.axaml.cs
+  Productos/
+   CrearProductoView.axaml.cs
+   EditarProductoView.axaml.cs
+   GestionarProductosView.axaml.cs
+   InventarioView.axaml.cs
+  Ventas/
+   HistorialVentasView.axaml.cs
+   RegistrarVentaView.axaml.cs
+App.axaml.cs
+MainWindow.axaml.cs
+obj/Debug/net8.0/
+ .NETCoreApp,Version=v8.0.AssemblyAttributes.cs
+ TeejoshSystem.AvaloniaUI.AssemblyInfo.cs
+Program.cs
+
+[metadataReferences]
+../
+ TeejoshSystem.Application/obj/Debug/net8.0/ref/TeejoshSystem.Application.dll
+ TeejoshSystem.Domain/obj/Debug/net8.0/ref/TeejoshSystem.Domain.dll
+ TeejoshSystem.Infrastructure/obj/Debug/net8.0/ref/TeejoshSystem.Infrastructure.dll
+<DOTNET>/packs/Microsoft.NETCore.App.Ref/8.0.27/ref/net8.0/
+ Microsoft.CSharp.dll
+ Microsoft.VisualBasic.Core.dll
+ Microsoft.VisualBasic.dll
+ Microsoft.Win32.Primitives.dll
+ Microsoft.Win32.Registry.dll
+ mscorlib.dll
+ netstandard.dll
+ System.AppContext.dll
+ System.Buffers.dll
+ System.Collections.Concurrent.dll
+ System.Collections.dll
+ System.Collections.Immutable.dll
+ System.Collections.NonGeneric.dll
+ System.Collections.Specialized.dll
+ System.ComponentModel.Annotations.dll
+ System.ComponentModel.DataAnnotations.dll
+ System.ComponentModel.dll
+ System.ComponentModel.EventBasedAsync.dll
+ System.ComponentModel.Primitives.dll
+ System.ComponentModel.TypeConverter.dll
+ System.Configuration.dll
+ System.Console.dll
+ System.Core.dll
+ System.Data.Common.dll
+ System.Data.DataSetExtensions.dll
+ System.Data.dll
+ System.Diagnostics.Contracts.dll
+ System.Diagnostics.Debug.dll
+ System.Diagnostics.DiagnosticSource.dll
+ System.Diagnostics.FileVersionInfo.dll
+ System.Diagnostics.Process.dll
+ System.Diagnostics.StackTrace.dll
+ System.Diagnostics.TextWriterTraceListener.dll
+ System.Diagnostics.Tools.dll
+ System.Diagnostics.TraceSource.dll
+ System.Diagnostics.Tracing.dll
+ System.dll
+ System.Drawing.dll
+ System.Drawing.Primitives.dll
+ System.Dynamic.Runtime.dll
+ System.Formats.Asn1.dll
+ System.Formats.Tar.dll
+ System.Globalization.Calendars.dll
+ System.Globalization.dll
+ System.Globalization.Extensions.dll
+ System.IO.Compression.Brotli.dll
+ System.IO.Compression.dll
+ System.IO.Compression.FileSystem.dll
+ System.IO.Compression.ZipFile.dll
+ System.IO.dll
+ System.IO.FileSystem.AccessControl.dll
+ System.IO.FileSystem.dll
+ System.IO.FileSystem.DriveInfo.dll
+ System.IO.FileSystem.Primitives.dll
+ System.IO.FileSystem.Watcher.dll
+ System.IO.IsolatedStorage.dll
+ System.IO.MemoryMappedFiles.dll
+ System.IO.Pipes.AccessControl.dll
+ System.IO.Pipes.dll
+ System.IO.UnmanagedMemoryStream.dll
+ System.Linq.dll
+ System.Linq.Expressions.dll
+ System.Linq.Parallel.dll
+ System.Linq.Queryable.dll
+ System.Memory.dll
+ System.Net.dll
+ System.Net.Http.dll
+ System.Net.Http.Json.dll
+ System.Net.HttpListener.dll
+ System.Net.Mail.dll
+ System.Net.NameResolution.dll
+ System.Net.NetworkInformation.dll
+ System.Net.Ping.dll
+ System.Net.Primitives.dll
+ System.Net.Quic.dll
+ System.Net.Requests.dll
+ System.Net.Security.dll
+ System.Net.ServicePoint.dll
+ System.Net.Sockets.dll
+ System.Net.WebClient.dll
+ System.Net.WebHeaderCollection.dll
+ System.Net.WebProxy.dll
+ System.Net.WebSockets.Client.dll
+ System.Net.WebSockets.dll
+ System.Numerics.dll
+ System.Numerics.Vectors.dll
+ System.ObjectModel.dll
+ System.Reflection.DispatchProxy.dll
+ System.Reflection.dll
+ System.Reflection.Emit.dll
+ System.Reflection.Emit.ILGeneration.dll
+ System.Reflection.Emit.Lightweight.dll
+ System.Reflection.Extensions.dll
+ System.Reflection.Metadata.dll
+ System.Reflection.Primitives.dll
+ System.Reflection.TypeExtensions.dll
+ System.Resources.Reader.dll
+ System.Resources.ResourceManager.dll
+ System.Resources.Writer.dll
+ System.Runtime.CompilerServices.Unsafe.dll
+ System.Runtime.CompilerServices.VisualC.dll
+ System.Runtime.dll
+ System.Runtime.Extensions.dll
+ System.Runtime.Handles.dll
+ System.Runtime.InteropServices.dll
+ System.Runtime.InteropServices.JavaScript.dll
+ System.Runtime.InteropServices.RuntimeInformation.dll
+ System.Runtime.Intrinsics.dll
+ System.Runtime.Loader.dll
+ System.Runtime.Numerics.dll
+ System.Runtime.Serialization.dll
+ System.Runtime.Serialization.Formatters.dll
+ System.Runtime.Serialization.Json.dll
+ System.Runtime.Serialization.Primitives.dll
+ System.Runtime.Serialization.Xml.dll
+ System.Security.AccessControl.dll
+ System.Security.Claims.dll
+ System.Security.Cryptography.Algorithms.dll
+ System.Security.Cryptography.Cng.dll
+ System.Security.Cryptography.Csp.dll
+ System.Security.Cryptography.dll
+ System.Security.Cryptography.Encoding.dll
+ System.Security.Cryptography.OpenSsl.dll
+ System.Security.Cryptography.Primitives.dll
+ System.Security.Cryptography.X509Certificates.dll
+ System.Security.dll
+ System.Security.Principal.dll
+ System.Security.Principal.Windows.dll
+ System.Security.SecureString.dll
+ System.ServiceModel.Web.dll
+ System.ServiceProcess.dll
+ System.Text.Encoding.CodePages.dll
+ System.Text.Encoding.dll
+ System.Text.Encoding.Extensions.dll
+ System.Text.Encodings.Web.dll
+ System.Text.Json.dll
+ System.Text.RegularExpressions.dll
+ System.Threading.Channels.dll
+ System.Threading.dll
+ System.Threading.Overlapped.dll
+ System.Threading.Tasks.Dataflow.dll
+ System.Threading.Tasks.dll
+ System.Threading.Tasks.Extensions.dll
+ System.Threading.Tasks.Parallel.dll
+ System.Threading.Thread.dll
+ System.Threading.ThreadPool.dll
+ System.Threading.Timer.dll
+ System.Transactions.dll
+ System.Transactions.Local.dll
+ System.ValueTuple.dll
+ System.Web.dll
+ System.Web.HttpUtility.dll
+ System.Windows.dll
+ System.Xml.dll
+ System.Xml.Linq.dll
+ System.Xml.ReaderWriter.dll
+ System.Xml.Serialization.dll
+ System.Xml.XDocument.dll
+ System.Xml.XmlDocument.dll
+ System.Xml.XmlSerializer.dll
+ System.Xml.XPath.dll
+ System.Xml.XPath.XDocument.dll
+ WindowsBase.dll
+<NUGET>/
+ avalonia.controls.colorpicker/11.3.12/lib/net8.0/Avalonia.Controls.ColorPicker.dll
+ avalonia.controls.datagrid/11.3.12/lib/net8.0/Avalonia.Controls.DataGrid.dll
+ avalonia.desktop/11.3.12/lib/net8.0/Avalonia.Desktop.dll
+ avalonia.diagnostics/11.3.12/lib/net8.0/Avalonia.Diagnostics.dll
+ avalonia.fonts.inter/11.3.12/lib/net8.0/Avalonia.Fonts.Inter.dll
+ avalonia.freedesktop/11.3.12/lib/net8.0/Avalonia.FreeDesktop.dll
+ avalonia.native/11.3.12/lib/net8.0/Avalonia.Native.dll
+ avalonia.remote.protocol/11.3.12/lib/net8.0/Avalonia.Remote.Protocol.dll
+ avalonia.skia/11.3.12/lib/net8.0/Avalonia.Skia.dll
+ avalonia.themes.fluent/11.3.12/lib/net8.0/Avalonia.Themes.Fluent.dll
+ avalonia.themes.simple/11.3.12/lib/net8.0/Avalonia.Themes.Simple.dll
+ avalonia.win32/11.3.12/lib/net8.0/
+  Avalonia.Win32.Automation.dll
+  Avalonia.Win32.dll
+ avalonia.x11/11.3.12/lib/net8.0/Avalonia.X11.dll
+ avalonia/11.3.12/ref/net8.0/
+  Avalonia.Base.dll
+  Avalonia.Controls.dll
+  Avalonia.DesignerSupport.dll
+  Avalonia.Dialogs.dll
+  Avalonia.dll
+  Avalonia.Markup.dll
+  Avalonia.Markup.Xaml.dll
+  Avalonia.Metal.dll
+  Avalonia.MicroCom.dll
+  Avalonia.OpenGL.dll
+  Avalonia.Vulkan.dll
+ bcrypt.net-next/4.0.3/lib/net6.0/BCrypt.Net-Next.dll
+ communitytoolkit.mvvm/8.2.2/lib/net6.0/CommunityToolkit.Mvvm.dll
+ excss/4.1.4/lib/net6.0/ExCSS.dll
+ fizzler/1.2.1/lib/netstandard2.0/Fizzler.dll
+ fluentvalidation/11.9.0/lib/net8.0/FluentValidation.dll
+ harfbuzzsharp/8.3.1.1/lib/net8.0/HarfBuzzSharp.dll
+ mediatr.contracts/2.0.1/lib/netstandard2.0/MediatR.Contracts.dll
+ mediatr/12.2.0/lib/net6.0/MediatR.dll
+ microcom.runtime/0.11.0/lib/net5.0/MicroCom.Runtime.dll
+ microsoft.data.sqlite.core/8.0.0/lib/net8.0/Microsoft.Data.Sqlite.dll
+ microsoft.entityframeworkcore.abstractions/8.0.0/lib/net8.0/Microsoft.EntityFrameworkCore.Abstractions.dll
+ microsoft.entityframeworkcore.relational/8.0.0/lib/net8.0/Microsoft.EntityFrameworkCore.Relational.dll
+ microsoft.entityframeworkcore.sqlite.core/8.0.0/lib/net8.0/Microsoft.EntityFrameworkCore.Sqlite.dll
+ microsoft.entityframeworkcore/8.0.0/lib/net8.0/Microsoft.EntityFrameworkCore.dll
+ microsoft.extensions.caching.abstractions/8.0.0/lib/net8.0/Microsoft.Extensions.Caching.Abstractions.dll
+ microsoft.extensions.caching.memory/8.0.0/lib/net8.0/Microsoft.Extensions.Caching.Memory.dll
+ microsoft.extensions.configuration.abstractions/8.0.0/lib/net8.0/Microsoft.Extensions.Configuration.Abstractions.dll
+ microsoft.extensions.configuration.binder/8.0.0/lib/net8.0/Microsoft.Extensions.Configuration.Binder.dll
+ microsoft.extensions.configuration.commandline/8.0.0/lib/net8.0/Microsoft.Extensions.Configuration.CommandLine.dll
+ microsoft.extensions.configuration.environmentvariables/8.0.0/lib/net8.0/Microsoft.Extensions.Configuration.EnvironmentVariables.dll
+ microsoft.extensions.configuration.fileextensions/8.0.0/lib/net8.0/Microsoft.Extensions.Configuration.FileExtensions.dll
+ microsoft.extensions.configuration.json/8.0.0/lib/net8.0/Microsoft.Extensions.Configuration.Json.dll
+ microsoft.extensions.configuration.usersecrets/8.0.0/lib/net8.0/Microsoft.Extensions.Configuration.UserSecrets.dll
+ microsoft.extensions.configuration/8.0.0/lib/net8.0/Microsoft.Extensions.Configuration.dll
+ microsoft.extensions.dependencyinjection.abstractions/8.0.0/lib/net8.0/Microsoft.Extensions.DependencyInjection.Abstractions.dll
+ microsoft.extensions.dependencyinjection/8.0.0/lib/net8.0/Microsoft.Extensions.DependencyInjection.dll
+ microsoft.extensions.dependencymodel/8.0.0/lib/net8.0/Microsoft.Extensions.DependencyModel.dll
+ microsoft.extensions.diagnostics.abstractions/8.0.0/lib/net8.0/Microsoft.Extensions.Diagnostics.Abstractions.dll
+ microsoft.extensions.diagnostics/8.0.0/lib/net8.0/Microsoft.Extensions.Diagnostics.dll
+ microsoft.extensions.fileproviders.abstractions/8.0.0/lib/net8.0/Microsoft.Extensions.FileProviders.Abstractions.dll
+ microsoft.extensions.fileproviders.physical/8.0.0/lib/net8.0/Microsoft.Extensions.FileProviders.Physical.dll
+ microsoft.extensions.filesystemglobbing/8.0.0/lib/net8.0/Microsoft.Extensions.FileSystemGlobbing.dll
+ microsoft.extensions.hosting.abstractions/8.0.0/lib/net8.0/Microsoft.Extensions.Hosting.Abstractions.dll
+ microsoft.extensions.hosting/8.0.0/lib/net8.0/Microsoft.Extensions.Hosting.dll
+ microsoft.extensions.http/8.0.0/lib/net8.0/Microsoft.Extensions.Http.dll
+ microsoft.extensions.logging.abstractions/8.0.0/lib/net8.0/Microsoft.Extensions.Logging.Abstractions.dll
+ microsoft.extensions.logging.configuration/8.0.0/lib/net8.0/Microsoft.Extensions.Logging.Configuration.dll
+ microsoft.extensions.logging.console/8.0.0/lib/net8.0/Microsoft.Extensions.Logging.Console.dll
+ microsoft.extensions.logging.debug/8.0.0/lib/net8.0/Microsoft.Extensions.Logging.Debug.dll
+ microsoft.extensions.logging.eventlog/8.0.0/lib/net8.0/Microsoft.Extensions.Logging.EventLog.dll
+ microsoft.extensions.logging.eventsource/8.0.0/lib/net8.0/Microsoft.Extensions.Logging.EventSource.dll
+ microsoft.extensions.logging/8.0.0/lib/net8.0/Microsoft.Extensions.Logging.dll
+ microsoft.extensions.options.configurationextensions/8.0.0/lib/net8.0/Microsoft.Extensions.Options.ConfigurationExtensions.dll
+ microsoft.extensions.options/8.0.0/lib/net8.0/Microsoft.Extensions.Options.dll
+ microsoft.extensions.primitives/8.0.0/lib/net8.0/Microsoft.Extensions.Primitives.dll
+ npgsql.entityframeworkcore.postgresql/8.0.0/lib/net8.0/Npgsql.EntityFrameworkCore.PostgreSQL.dll
+ npgsql/8.0.0/lib/net8.0/Npgsql.dll
+ shimskiasharp/1.0.0/lib/net6.0/ShimSkiaSharp.dll
+ skiasharp.harfbuzz/2.88.3/lib/net6.0/SkiaSharp.HarfBuzz.dll
+ skiasharp/2.88.9/lib/net6.0/SkiaSharp.dll
+ sqlitepclraw.bundle_e_sqlite3/2.1.6/lib/netstandard2.0/SQLitePCLRaw.batteries_v2.dll
+ sqlitepclraw.core/2.1.6/lib/netstandard2.0/SQLitePCLRaw.core.dll
+ sqlitepclraw.provider.e_sqlite3/2.1.6/lib/net6.0/SQLitePCLRaw.provider.e_sqlite3.dll
+ svg.custom/1.0.0/lib/net6.0/Svg.Custom.dll
+ svg.model/1.0.0/lib/net6.0/Svg.Model.dll
+ svg.skia/1.0.0/lib/net6.0/Svg.Skia.dll
+ system.diagnostics.eventlog/8.0.0/lib/net8.0/System.Diagnostics.EventLog.dll
+ system.io.pipelines/8.0.0/lib/net8.0/System.IO.Pipelines.dll
+ tmds.dbus.protocol/0.21.2/lib/net8.0/Tmds.DBus.Protocol.dll
+
+[analyzerReferences]
+<DOTNET>/packs/Microsoft.NETCore.App.Ref/8.0.27/analyzers/dotnet/cs/
+ Microsoft.Interop.ComInterfaceGenerator.dll
+ Microsoft.Interop.JavaScript.JSImportGenerator.dll
+ Microsoft.Interop.LibraryImportGenerator.dll
+ Microsoft.Interop.SourceGeneration.dll
+ System.Text.Json.SourceGeneration.dll
+ System.Text.RegularExpressions.Generator.dll
+<DOTNET>/sdk/8.0.421/Sdks/Microsoft.NET.Sdk/analyzers/
+ Microsoft.CodeAnalysis.CSharp.NetAnalyzers.dll
+ Microsoft.CodeAnalysis.NetAnalyzers.dll
+<NUGET>/avalonia/11.3.12/analyzers/dotnet/cs/
+ Avalonia.Analyzers.dll
+ Avalonia.Generators.dll
+<NUGET>/communitytoolkit.mvvm/8.2.2/analyzers/dotnet/roslyn4.3/cs/
+ CommunityToolkit.Mvvm.CodeFixers.dll
+ CommunityToolkit.Mvvm.SourceGenerators.dll
+<NUGET>/microsoft.codeanalysis.analyzers/3.3.3/analyzers/dotnet/cs/
+ Microsoft.CodeAnalysis.Analyzers.dll
+ Microsoft.CodeAnalysis.CSharp.Analyzers.dll
+<NUGET>/
+ microsoft.entityframeworkcore.analyzers/8.0.0/analyzers/dotnet/cs/Microsoft.EntityFrameworkCore.Analyzers.dll
+ microsoft.extensions.logging.abstractions/8.0.0/analyzers/dotnet/roslyn4.4/cs/Microsoft.Extensions.Logging.Generators.dll
+ microsoft.extensions.options/8.0.0/analyzers/dotnet/roslyn4.4/cs/Microsoft.Extensions.Options.SourceGeneration.dll
+
+[analyzerConfigFiles]
+<DOTNET>/sdk/8.0.421/Sdks/Microsoft.NET.Sdk/analyzers/build/config/analysislevel_8_default.globalconfig
+obj/Debug/net8.0/TeejoshSystem.AvaloniaUI.GeneratedMSBuildEditorConfig.editorconfig
+
+[additionalFiles]
+Adapters/Inbound/Views/Admin/
+ CambiarPasswordView.axaml
+ GestionarUsuariosView.axaml
+Adapters/Inbound/Views/
+ Auth/LoginView.axaml
+ Catalogos/SincronizarCatalogosView.axaml
+ Menu/MenuPrincipalView.axaml
+ Productos/
+  CrearProductoView.axaml
+  EditarProductoView.axaml
+  GestionarProductosView.axaml
+  InventarioView.axaml
+ Ventas/
+  HistorialVentasView.axaml
+  RegistrarVentaView.axaml
+App.axaml
+MainWindow.axaml
+</file>
+
+</files>

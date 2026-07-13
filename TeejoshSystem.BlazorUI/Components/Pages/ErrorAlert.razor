@@ -1,0 +1,27 @@
+@* ──────────────────────────────────────────────────────────────────────────
+   Reemplaza el <div class="alert alert-danger">@_error</div> repetido en
+   cada página. No cambia CÓMO se detectan los errores (eso sigue siendo
+   responsabilidad de cada página: Result.Failure o catch de excepción) —
+   solo unifica cómo se muestran.
+   ────────────────────────────────────────────────────────────────────────── *@
+@if (!string.IsNullOrWhiteSpace(Mensaje))
+{
+    <div class="alert alert-danger d-flex justify-content-between align-items-start" role="alert">
+        <span>@Mensaje</span>
+        @if (Dismissible)
+        {
+            <button type="button" class="btn-close" aria-label="Cerrar" @onclick="() => OnDismiss.InvokeAsync()"></button>
+        }
+    </div>
+}
+
+@code {
+    [Parameter]
+    public string? Mensaje { get; set; }
+
+    [Parameter]
+    public bool Dismissible { get; set; }
+
+    [Parameter]
+    public EventCallback OnDismiss { get; set; }
+}

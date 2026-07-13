@@ -51,6 +51,7 @@ public partial class App : Avalonia.Application
         Console.WriteLine($"[STARTUP] ConnString: {dbCs[..Math.Min(50, dbCs.Length)]}...");
         // ───────────────────────────────────────────────────────
 
+        // NUEVO — Serilog lee su configuración completa desde appsettings.json
         Log.Logger = new LoggerConfiguration()
             .ReadFrom.Configuration(configuration)
             .CreateLogger();

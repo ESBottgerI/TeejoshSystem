@@ -4,6 +4,7 @@
 @using MediatR
 @using TeejoshSystem.Application.Ports.Inbound.Productos.Queries.ObtenerProductos
 @using TeejoshSystem.Application.Ports.Inbound.Productos.Commands.EliminarProducto
+@using TeejoshSystem.BlazorUI.Services
 @inject IMediator Mediator
 @inject NavigationManager Navigation
 
@@ -21,14 +22,11 @@
 
 @if (_cargando)
 {
-    <p><em>Cargando productos...</em></p>
-}
-else if (_error is not null)
-{
-    <div class="alert alert-danger">@_error</div>
+    <LoadingIndicator Mensaje="Cargando productos..." />
 }
 else
 {
+    <ErrorAlert Mensaje="@_error" Dismissible="true" OnDismiss="() => _error = null" />
     <table class="table table-striped">
         <thead>
             <tr>
@@ -117,27 +115,16 @@ else
     {
         _mostrarConfirmacion = false;
         _mensajeExito = null;
-        _error = null;
 
-        try
-        {
-            // EliminarProductoCommand acepta una lista (borrado en lote);
-            // aquí se usa con un solo elemento para el caso de un botón por fila.
-            var resultado = await Mediator.Send(new EliminarProductoCommand(new List<int> { _idAEliminar }));
+        // EliminarProductoCommand acepta una lista (borrado en lote); aquí
+        // se usa con un solo elemento para el caso de un botón por fila.
+        _error = await OperacionUiHelper.EjecutarAsync(
+            () => Mediator.Send(new EliminarProductoCommand(new List<int> { _idAEliminar })));
 
-            if (resultado.IsSuccess)
-            {
-                _mensajeExito = "Producto eliminado correctamente.";
-                await CargarAsync();
-            }
-            else
-            {
-                _error = resultado.Error;
-            }
-        }
-        catch (Exception ex)
+        if (_error is null)
         {
-            _error = $"Error inesperado al eliminar: {ex.Message}";
+            _mensajeExito = "Producto eliminado correctamente.";
+            await CargarAsync();
         }
     }
 }

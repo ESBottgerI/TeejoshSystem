@@ -30,7 +30,7 @@ else
        Cambiar eso requeriría un Command nuevo en Application, coordinado
        con el equipo de backend; está fuera del alcance de BlazorUI. *@
     <div class="alert alert-secondary">
-        <strong>@TipoProductoDisplay.ToDisplayName(_productoOriginal.Tipo)</strong> — @_productoOriginal.DetalleResumen
+        <strong>@TipoProductoDisplay.ToDisplayName(_productoOriginal.Tipo)</strong> — @ResumenDetalle(_productoOriginal.Detalle)
         <br />
         <small>El tipo y el detalle específico no son editables desde aquí.</small>
     </div>
@@ -86,6 +86,20 @@ else
     private bool _cargando = true;
     private bool _guardando;
     private string? _error;
+
+    // ProductoDetalladoDto no trae un campo de resumen en texto (a
+    // diferencia de ProductoDto/ProductoBusquedaDto, que sí lo traen
+    // calculado desde el backend) — se arma acá, solo para este aviso
+    // informativo de "no editable".
+    private static string ResumenDetalle(DetalleBaseDto? detalle) => detalle switch
+    {
+        FunkoDetalleDto f => $"Box {f.NumeroBox} — {f.Licencia} — {f.SubtipoNombre}",
+        HotWheelsDetalleDto hw => $"{hw.Modelo} ({hw.Anio}) — {hw.Serie}",
+        TcgDetalleDto tcg => $"{tcg.FranquiciaNombre} — {tcg.ExpansionNombre} — {tcg.PackNombre}",
+        ToyDetalleDto toy => $"Edad mín. {toy.EdadMinima} — {toy.JugadoresMinimo}-{toy.JugadoresMaximo} jugadores",
+        VariosDetalleDto v => $"{v.Marca} — {v.Material}",
+        _ => "Sin detalle"
+    };
 
     protected override async Task OnInitializedAsync()
     {

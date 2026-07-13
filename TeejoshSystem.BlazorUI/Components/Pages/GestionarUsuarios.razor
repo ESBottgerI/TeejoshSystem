@@ -1,5 +1,192 @@
 @page "/admin/usuarios"
+@attribute [Authorize(Roles = AuthorizationConstants.Administrador)]
+@rendermode InteractiveServer
+@using MediatR
+@using TeejoshSystem.Application.Common.Dtos
+@using TeejoshSystem.Application.Ports.Inbound.Auth.Queries.ListarUsuarios
+@using TeejoshSystem.Application.Ports.Inbound.Auth.Commands.RegistrarUsuario
+@using TeejoshSystem.Application.Ports.Inbound.Auth.Commands.DesactivarUsuario
+@using TeejoshSystem.Domain.Enums
+@inject IMediator Mediator
 
 <PageTitle>Gestionar Usuarios</PageTitle>
 
-<PaginaEnConstruccion Titulo="Gestionar Usuarios" />
+<h3>Gestionar Usuarios</h3>
+
+@if (_mensajeExito is not null)
+{
+    <div class="alert alert-success">@_mensajeExito</div>
+}
+
+@if (_cargando)
+{
+    <p><em>Cargando usuarios...</em></p>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Usuario</th>
+                <th>Rol</th>
+                <th>Estado</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var usuario in _usuarios)
+            {
+                <tr>
+                    <td>@usuario.NombreUsuario</td>
+                    <td>@usuario.Rol</td>
+                    <td>
+                        @if (usuario.Activo)
+                        {
+                            <span class="badge bg-success">Activo</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary">Desactivado</span>
+                        }
+                    </td>
+                    <td>
+                        @if (usuario.Activo)
+                        {
+                            <button class="btn btn-sm btn-outline-danger"
+                                    @onclick="() => PedirConfirmacionDesactivar(usuario)">
+                                Desactivar
+                            </button>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@* No existe un Command "ReactivarUsuario" en Application hoy — una vez
+   desactivado, no hay forma de revertirlo desde ninguna UI (ni Blazor ni
+   Avalonia). Si el equipo lo necesita, hay que pedirlo como Command nuevo. *@
+<div class="alert alert-secondary">
+    <small>Nota: desactivar un usuario es una acción que hoy no se puede revertir desde la aplicación.</small>
+</div>
+
+<hr class="my-4" />
+
+<h5>Registrar nuevo usuario</h5>
+
+<EditForm Model="this" OnValidSubmit="RegistrarAsync">
+    <div class="row g-3 align-items-end" style="max-width:700px;">
+        <div class="col-md-4">
+            <label class="form-label">Usuario</label>
+            <input class="form-control" @bind="_nuevoNombreUsuario" />
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Contraseña</label>
+            <input class="form-control" type="password" @bind="_nuevoPassword" />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Rol</label>
+            <select class="form-select" @bind="_nuevoRol">
+                @foreach (var rol in Enum.GetValues<RolUsuario>())
+                {
+                    <option value="@rol">@rol</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-1">
+            <button class="btn btn-primary" type="submit" disabled="@_registrando">Crear</button>
+        </div>
+    </div>
+
+    @if (_errorRegistro is not null)
+    {
+        <div class="alert alert-danger mt-3">@_errorRegistro</div>
+    }
+</EditForm>
+
+<ConfirmDialog Visible="_mostrarConfirmacion"
+               Titulo="Desactivar usuario"
+               Mensaje="@_mensajeConfirmacion"
+               OnConfirm="DesactivarConfirmadoAsync"
+               OnCancel="() => _mostrarConfirmacion = false" />
+
+@code {
+    private List<UsuarioListaDto> _usuarios = new();
+    private bool _cargando = true;
+    private string? _mensajeExito;
+
+    private string _nuevoNombreUsuario = string.Empty;
+    private string _nuevoPassword = string.Empty;
+    private RolUsuario _nuevoRol = RolUsuario.Operador;
+    private bool _registrando;
+    private string? _errorRegistro;
+
+    private bool _mostrarConfirmacion;
+    private string _mensajeConfirmacion = string.Empty;
+    private int _idADesactivar;
+
+    protected override async Task OnInitializedAsync() => await CargarAsync();
+
+    private async Task CargarAsync()
+    {
+        _cargando = true;
+        var usuarios = await Mediator.Send(new ListarUsuariosQuery());
+        _usuarios = usuarios.ToList();
+        _cargando = false;
+    }
+
+    private async Task RegistrarAsync()
+    {
+        _errorRegistro = null;
+        _registrando = true;
+        _mensajeExito = null;
+
+        try
+        {
+            var resultado = await Mediator.Send(
+                new RegistrarUsuarioCommand(_nuevoNombreUsuario, _nuevoPassword, _nuevoRol));
+
+            if (resultado.IsSuccess)
+            {
+                _mensajeExito = $"Usuario \"{_nuevoNombreUsuario}\" creado correctamente.";
+                _nuevoNombreUsuario = string.Empty;
+                _nuevoPassword = string.Empty;
+                _nuevoRol = RolUsuario.Operador;
+                await CargarAsync();
+            }
+            else
+            {
+                _errorRegistro = resultado.Error;
+            }
+        }
+        catch (Exception ex)
+        {
+            _errorRegistro = $"Error inesperado: {ex.Message}";
+        }
+        finally
+        {
+            _registrando = false;
+        }
+    }
+
+    private void PedirConfirmacionDesactivar(UsuarioListaDto usuario)
+    {
+        _idADesactivar = usuario.Id;
+        _mensajeConfirmacion = $"¿Desactivar a \"{usuario.NombreUsuario}\"? No se puede revertir desde la aplicación.";
+        _mostrarConfirmacion = true;
+    }
+
+    private async Task DesactivarConfirmadoAsync()
+    {
+        _mostrarConfirmacion = false;
+        _mensajeExito = null;
+
+        var resultado = await Mediator.Send(new DesactivarUsuarioCommand(_idADesactivar));
+        if (resultado.IsSuccess)
+        {
+            _mensajeExito = "Usuario desactivado.";
+            await CargarAsync();
+        }
+    }
+}

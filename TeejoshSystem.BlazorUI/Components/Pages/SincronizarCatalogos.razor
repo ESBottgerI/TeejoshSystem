@@ -1,5 +1,69 @@
 @page "/admin/sincronizar-catalogos"
+@attribute [Authorize(Roles = AuthorizationConstants.Administrador)]
+@rendermode InteractiveServer
+@using MediatR
+@using TeejoshSystem.Application.Ports.Inbound.Catalogos.Commands.SincronizarCatalogos
+@inject IMediator Mediator
 
 <PageTitle>Sincronizar catálogos</PageTitle>
 
-<PaginaEnConstruccion Titulo="Sincronizar catálogos" />
+<h3>Sincronizar catálogos</h3>
+<p class="text-muted">
+    Trae actualizaciones de catálogos externos (franquicias, expansiones, packs, etc.)
+    hacia la base de datos local.
+</p>
+
+<button class="btn btn-primary" disabled="@_sincronizando" @onclick="SincronizarAsync">
+    @(_sincronizando ? "Sincronizando..." : "Sincronizar ahora")
+</button>
+
+@if (_resultado is not null)
+{
+    <div class="alert alert-info mt-3">
+        <strong>Agregadas:</strong> @_resultado.TotalAgregadas —
+        <strong>Actualizadas:</strong> @_resultado.TotalActualizadas
+
+        @if (_resultado.Errores.Count > 0)
+        {
+            <hr />
+            <strong>Errores (@_resultado.Errores.Count):</strong>
+            <ul class="mb-0">
+                @foreach (var error in _resultado.Errores)
+                {
+                    <li>@error</li>
+                }
+            </ul>
+        }
+    </div>
+}
+
+@if (_error is not null)
+{
+    <div class="alert alert-danger mt-3">@_error</div>
+}
+
+@code {
+    private bool _sincronizando;
+    private SincronizarCatalogosResult? _resultado;
+    private string? _error;
+
+    private async Task SincronizarAsync()
+    {
+        _sincronizando = true;
+        _resultado = null;
+        _error = null;
+
+        try
+        {
+            _resultado = await Mediator.Send(new SincronizarCatalogosCommand());
+        }
+        catch (Exception ex)
+        {
+            _error = $"Error inesperado al sincronizar: {ex.Message}";
+        }
+        finally
+        {
+            _sincronizando = false;
+        }
+    }
+}

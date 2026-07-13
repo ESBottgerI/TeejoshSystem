@@ -36,11 +36,11 @@
 
 @if (_cargando)
 {
-    <p><em>Cargando inventario...</em></p>
+    <LoadingIndicator Mensaje="Cargando inventario..." />
 }
 else if (_error is not null)
 {
-    <div class="alert alert-danger">@_error</div>
+    <ErrorAlert Mensaje="@_error" />
 }
 else if (_productos.Count == 0)
 {

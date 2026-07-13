@@ -150,7 +150,16 @@ public partial class RegistrarVentaViewModel : ViewModelBase
             {
                 await _notification.ShowSuccessAsync(
                     $"Venta #{result.Value} registrada correctamente.");
-                _navigation.NavigateToMenu();
+
+                ItemsVenta.Clear();
+                TotalVenta = 0;
+                CantidadSeleccionada = 1;
+                ProductoSeleccionado = null;
+                TextoBusqueda = null;
+
+                await BuscarProductosAsync();
+
+                ConfirmarVentaCommand.NotifyCanExecuteChanged();
             }
             else
             {

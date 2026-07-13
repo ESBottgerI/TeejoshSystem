@@ -11,6 +11,7 @@ using Serilog;
 using System;
 using System.ComponentModel;
 using System.Threading.Tasks;
+using TeejoshSystem.Domain.Ports.Outbound;
 using TeejoshSystem.AvaloniaUI.Adapters.Inbound.Services;
 using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Admin;
 using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Auth;
@@ -78,9 +79,11 @@ public partial class App : Avalonia.Application
                 services.AddTransient<GestionarProductosViewModel>();
                 services.AddTransient<CrearProductoViewModel>();
                 services.AddTransient<SincronizarCatalogosViewModel>();
+                services.AddTransient<AuditLogViewModel>();
 
                 // Auth
                 services.AddSingleton<SesionContext>();
+                services.AddSingleton<ICurrentUserProvider, SessionCurrentUserProvider>();
                 services.AddTransient<LoginViewModel>();
                 services.AddTransient<GestionarUsuariosViewModel>();
                 services.AddTransient<CambiarPasswordViewModel>();

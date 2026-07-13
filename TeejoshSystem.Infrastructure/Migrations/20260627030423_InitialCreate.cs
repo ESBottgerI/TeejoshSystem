@@ -30,6 +30,24 @@ namespace TeejoshSystem.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "audit_log",
+                columns: table => new
+                {
+                    id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    timestamp = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    usuario = table.Column<string>(type: "TEXT", maxLength: 100, nullable: true),
+                    entidad = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
+                    entidad_id = table.Column<string>(type: "TEXT", maxLength: 50, nullable: false),
+                    accion = table.Column<string>(type: "TEXT", maxLength: 20, nullable: false),
+                    cambios = table.Column<string>(type: "TEXT", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_audit_log", x => x.id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "funko_special_feature",
                 columns: table => new
                 {
@@ -392,6 +410,16 @@ namespace TeejoshSystem.Infrastructure.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_audit_log_entidad_entidad_id",
+                table: "audit_log",
+                columns: new[] { "entidad", "entidad_id" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_audit_log_timestamp",
+                table: "audit_log",
+                column: "timestamp");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_funko_special_feature_name",
                 table: "funko_special_feature",
                 column: "name",
@@ -438,6 +466,9 @@ namespace TeejoshSystem.Infrastructure.Migrations
         {
             migrationBuilder.DropTable(
                 name: "app_user");
+
+            migrationBuilder.DropTable(
+                name: "audit_log");
 
             migrationBuilder.DropTable(
                 name: "funko");

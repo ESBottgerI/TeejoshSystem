@@ -6,8 +6,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;          // NUEVO
-using Serilog;                               // NUEVO
+using Microsoft.Extensions.Logging;
+using Serilog;
 using System;
 using System.ComponentModel;
 using System.Threading.Tasks;
@@ -50,19 +50,16 @@ public partial class App : Avalonia.Application
         Console.WriteLine($"[STARTUP] ConnString: {dbCs[..Math.Min(50, dbCs.Length)]}...");
         // ───────────────────────────────────────────────────────
 
-        // NUEVO — Serilog lee su configuración completa desde appsettings.json
         Log.Logger = new LoggerConfiguration()
             .ReadFrom.Configuration(configuration)
             .CreateLogger();
 
         _host = Host.CreateDefaultBuilder()
-            .UseSerilog()                    // NUEVO — reemplaza el logging por defecto del host
+            .UseSerilog()
             .ConfigureServices((_, services) =>
             {
-                // Infrastructure (incluye registro de IAppLogger → AppLogger)
                 services.AddInfrastructure(configuration);
 
-                // Application (MediatR)
                 services.AddMediatR(cfg =>
                     cfg.RegisterServicesFromAssembly(
                         typeof(TeejoshSystem.Application.Common.Result).Assembly));
@@ -90,12 +87,21 @@ public partial class App : Avalonia.Application
             })
             .Build();
 
-        // Aplicar migraciones pendientes
+        // ── Migraciones ───────────────────────────────────────────────────────
         using (var scope = _host.Services.CreateScope())
         {
+            // Contexto principal (PostgreSQL o SQLite según proveedor)
             var db = scope.ServiceProvider.GetRequiredService<InventarioDbContext>();
             db.Database.Migrate();
             DatabaseSeeder.SeedUsuarioAdmin(db);
+
+            // LocalDbContext solo existe cuando provider = "postgresql"
+            // GetService (no GetRequiredService) retorna null si no está registrado
+            var localDb = scope.ServiceProvider.GetService<LocalDbContext>();
+            if (localDb is not null)
+            {
+                localDb.Database.Migrate();
+            }
         }
 
         // Configurar navegación
@@ -121,7 +127,6 @@ public partial class App : Avalonia.Application
             () => mainVm.CurrentView = _host.Services.GetRequiredService<MenuPrincipalViewModel>()
         );
 
-        // Navegación inicial con verificación de sesión
         var sesionContext = _host.Services.GetRequiredService<SesionContext>();
         var loginVm = _host.Services.GetRequiredService<LoginViewModel>();
 
@@ -140,7 +145,7 @@ public partial class App : Avalonia.Application
             desktop.Exit += (_, _) =>
             {
                 _host.Dispose();
-                Log.CloseAndFlush();         // NUEVO — cierra Serilog limpiamente al salir
+                Log.CloseAndFlush();
             };
         }
 

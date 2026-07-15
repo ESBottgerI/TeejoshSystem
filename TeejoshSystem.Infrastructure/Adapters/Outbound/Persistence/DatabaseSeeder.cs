@@ -15,7 +15,7 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence
             if (db.Usuarios.Any()) return;
 
             db.Database.ExecuteSqlRaw(
-                "INSERT INTO app_user (username, password_hash, rol, active) VALUES ('admin', {0}, 'Administrador', 1)",
+                "INSERT INTO app_user (username, password_hash, rol, active) VALUES ('admin', {0}, 'Administrador', true)",
                 BCrypt.Net.BCrypt.HashPassword("admin123", workFactor: 12));
         }
     }

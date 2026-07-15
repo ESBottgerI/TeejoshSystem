@@ -26,15 +26,18 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Configurati
 
             builder.Property(p => p.Alto)
                 .HasColumnName("height")
+                .HasColumnType("decimal(10,2)")
                 .IsRequired();
 
             builder.Property(p => p.Ancho)
                 .HasColumnName("width")
+                .HasColumnType("decimal(10,2)")
                 .IsRequired();
 
             builder.Property(p => p.Largo)
                 .HasColumnName("length")
-                .IsRequired();
+                .HasColumnType("decimal(10,2)")
+                .IsRequired(false);
 
             builder.Property(p => p.Material)
                 .HasColumnName("material")

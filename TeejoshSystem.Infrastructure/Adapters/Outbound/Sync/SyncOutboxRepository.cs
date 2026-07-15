@@ -5,8 +5,8 @@ using TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence;
 namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Sync
 {
     /// <summary>
-    /// Implementación del outbox sobre SQLite local.
-    /// Siempre usa LocalDbContext — nunca escribe en Supabase.
+    /// Implementacion del outbox sobre SQLite local.
+    /// Siempre usa LocalDbContext - nunca escribe en Supabase.
     /// </summary>
     public class SyncOutboxRepository : ISyncOutboxRepository
     {

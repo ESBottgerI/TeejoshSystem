@@ -1,5 +1,6 @@
 ﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
@@ -17,12 +18,12 @@ namespace TeejoshSystem.Infrastructure.Migrations
                 name: "app_user",
                 columns: table => new
                 {
-                    id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    rol = table.Column<string>(type: "TEXT", nullable: false),
-                    username = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
-                    password_hash = table.Column<string>(type: "TEXT", maxLength: 60, nullable: false),
-                    active = table.Column<bool>(type: "INTEGER", nullable: false, defaultValue: true)
+                    id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    rol = table.Column<string>(type: "text", nullable: false),
+                    username = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    password_hash = table.Column<string>(type: "character varying(60)", maxLength: 60, nullable: false),
+                    active = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true)
                 },
                 constraints: table =>
                 {
@@ -33,13 +34,13 @@ namespace TeejoshSystem.Infrastructure.Migrations
                 name: "audit_log",
                 columns: table => new
                 {
-                    id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    timestamp = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    usuario = table.Column<string>(type: "TEXT", maxLength: 100, nullable: true),
-                    entidad = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
-                    entidad_id = table.Column<string>(type: "TEXT", maxLength: 50, nullable: false),
-                    accion = table.Column<string>(type: "TEXT", maxLength: 20, nullable: false),
+                    id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    usuario = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    entidad = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    entidad_id = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    accion = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
                     cambios = table.Column<string>(type: "TEXT", nullable: true)
                 },
                 constraints: table =>
@@ -51,9 +52,9 @@ namespace TeejoshSystem.Infrastructure.Migrations
                 name: "funko_special_feature",
                 columns: table => new
                 {
-                    id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    name = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false)
+                    id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false)
                 },
                 constraints: table =>
                 {
@@ -64,9 +65,9 @@ namespace TeejoshSystem.Infrastructure.Migrations
                 name: "funko_subtype",
                 columns: table => new
                 {
-                    id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    name = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false)
+                    id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false)
                 },
                 constraints: table =>
                 {
@@ -77,9 +78,9 @@ namespace TeejoshSystem.Infrastructure.Migrations
                 name: "hot_wheels_category",
                 columns: table => new
                 {
-                    id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    name = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false)
+                    id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false)
                 },
                 constraints: table =>
                 {
@@ -90,13 +91,13 @@ namespace TeejoshSystem.Infrastructure.Migrations
                 name: "product",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    type = table.Column<string>(type: "TEXT", nullable: false),
-                    name = table.Column<string>(type: "TEXT", maxLength: 50, nullable: false),
-                    price = table.Column<decimal>(type: "decimal(10,2)", nullable: false),
-                    units = table.Column<int>(type: "INTEGER", nullable: false),
-                    image_path = table.Column<string>(type: "TEXT", nullable: true)
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    type = table.Column<string>(type: "text", nullable: false),
+                    name = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    price = table.Column<decimal>(type: "numeric(10,2)", nullable: false),
+                    units = table.Column<int>(type: "integer", nullable: false),
+                    image_path = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -107,10 +108,10 @@ namespace TeejoshSystem.Infrastructure.Migrations
                 name: "sale",
                 columns: table => new
                 {
-                    id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    date = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    total = table.Column<decimal>(type: "decimal(10,2)", nullable: false)
+                    id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    date = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    total = table.Column<decimal>(type: "numeric(10,2)", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -118,14 +119,33 @@ namespace TeejoshSystem.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "sync_outbox",
+                columns: table => new
+                {
+                    id = table.Column<Guid>(type: "uuid", nullable: false),
+                    operation_type = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: false),
+                    entity_table = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    entity_id = table.Column<int>(type: "integer", nullable: true),
+                    payload_json = table.Column<string>(type: "text", nullable: false),
+                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    device_id = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    retry_count = table.Column<int>(type: "integer", nullable: false, defaultValue: 0),
+                    last_error = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_sync_outbox", x => x.id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "tcg_expansion",
                 columns: table => new
                 {
-                    id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    name = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
-                    FranquiciaId = table.Column<int>(type: "INTEGER", nullable: false),
-                    image_url = table.Column<string>(type: "TEXT", nullable: true)
+                    id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    FranquiciaId = table.Column<int>(type: "integer", nullable: false),
+                    image_url = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -136,9 +156,9 @@ namespace TeejoshSystem.Infrastructure.Migrations
                 name: "tcg_franchise",
                 columns: table => new
                 {
-                    id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    name = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false)
+                    id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false)
                 },
                 constraints: table =>
                 {
@@ -149,10 +169,10 @@ namespace TeejoshSystem.Infrastructure.Migrations
                 name: "tcg_pack",
                 columns: table => new
                 {
-                    id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    name = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
-                    FranquiciaId = table.Column<int>(type: "INTEGER", nullable: false)
+                    id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    FranquiciaId = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -163,12 +183,12 @@ namespace TeejoshSystem.Infrastructure.Migrations
                 name: "funko",
                 columns: table => new
                 {
-                    product_id = table.Column<int>(type: "INTEGER", nullable: false),
-                    box_number = table.Column<int>(type: "INTEGER", nullable: false),
-                    license = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
-                    subtype = table.Column<int>(type: "INTEGER", nullable: false),
-                    special_caracteristic = table.Column<int>(type: "INTEGER", nullable: false),
-                    Discriminator = table.Column<string>(type: "TEXT", nullable: true)
+                    product_id = table.Column<int>(type: "integer", nullable: false),
+                    box_number = table.Column<int>(type: "integer", nullable: false),
+                    license = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    subtype = table.Column<int>(type: "integer", nullable: false),
+                    special_caracteristic = table.Column<int>(type: "integer", nullable: false),
+                    Discriminator = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -185,12 +205,12 @@ namespace TeejoshSystem.Infrastructure.Migrations
                 name: "hot_wheels",
                 columns: table => new
                 {
-                    product_id = table.Column<int>(type: "INTEGER", nullable: false),
-                    model = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
-                    year = table.Column<int>(type: "INTEGER", nullable: false),
-                    serie = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
-                    category_id = table.Column<int>(type: "INTEGER", nullable: false),
-                    Discriminator = table.Column<string>(type: "TEXT", nullable: true)
+                    product_id = table.Column<int>(type: "integer", nullable: false),
+                    model = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    year = table.Column<int>(type: "integer", nullable: false),
+                    serie = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    category_id = table.Column<int>(type: "integer", nullable: false),
+                    Discriminator = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -207,10 +227,10 @@ namespace TeejoshSystem.Infrastructure.Migrations
                 name: "tcg",
                 columns: table => new
                 {
-                    product_id = table.Column<int>(type: "INTEGER", nullable: false),
-                    pack_id = table.Column<int>(type: "INTEGER", nullable: false),
-                    expansion_id = table.Column<int>(type: "INTEGER", nullable: false),
-                    Discriminator = table.Column<string>(type: "TEXT", nullable: true)
+                    product_id = table.Column<int>(type: "integer", nullable: false),
+                    pack_id = table.Column<int>(type: "integer", nullable: false),
+                    expansion_id = table.Column<int>(type: "integer", nullable: false),
+                    Discriminator = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -227,12 +247,12 @@ namespace TeejoshSystem.Infrastructure.Migrations
                 name: "toy",
                 columns: table => new
                 {
-                    product_id = table.Column<int>(type: "INTEGER", nullable: false),
-                    min_years_old = table.Column<int>(type: "INTEGER", nullable: false),
-                    min_players = table.Column<int>(type: "INTEGER", nullable: false),
-                    max_players = table.Column<int>(type: "INTEGER", nullable: false),
-                    is_board_game = table.Column<bool>(type: "INTEGER", nullable: false),
-                    Discriminator = table.Column<string>(type: "TEXT", nullable: true)
+                    product_id = table.Column<int>(type: "integer", nullable: false),
+                    min_years_old = table.Column<int>(type: "integer", nullable: false),
+                    min_players = table.Column<int>(type: "integer", nullable: false),
+                    max_players = table.Column<int>(type: "integer", nullable: false),
+                    is_board_game = table.Column<bool>(type: "boolean", nullable: false),
+                    Discriminator = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -250,14 +270,14 @@ namespace TeejoshSystem.Infrastructure.Migrations
                 name: "varios",
                 columns: table => new
                 {
-                    product_id = table.Column<int>(type: "INTEGER", nullable: false),
-                    brand = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
-                    height = table.Column<decimal>(type: "TEXT", nullable: false),
-                    width = table.Column<decimal>(type: "TEXT", nullable: false),
-                    length = table.Column<decimal>(type: "TEXT", nullable: false),
-                    material = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
-                    ilustration = table.Column<bool>(type: "INTEGER", nullable: false),
-                    Discriminator = table.Column<string>(type: "TEXT", nullable: true)
+                    product_id = table.Column<int>(type: "integer", nullable: false),
+                    brand = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    height = table.Column<decimal>(type: "numeric(10,2)", nullable: false),
+                    width = table.Column<decimal>(type: "numeric(10,2)", nullable: false),
+                    length = table.Column<decimal>(type: "numeric(10,2)", nullable: true),
+                    material = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    ilustration = table.Column<bool>(type: "boolean", nullable: false),
+                    Discriminator = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -275,13 +295,13 @@ namespace TeejoshSystem.Infrastructure.Migrations
                 name: "sale_detail",
                 columns: table => new
                 {
-                    id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    sale_id = table.Column<int>(type: "INTEGER", nullable: false),
-                    product_id = table.Column<int>(type: "INTEGER", nullable: false),
-                    product_name = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
-                    quantity = table.Column<int>(type: "INTEGER", nullable: false),
-                    unit_price = table.Column<decimal>(type: "decimal(10,2)", nullable: false)
+                    id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    sale_id = table.Column<int>(type: "integer", nullable: false),
+                    product_id = table.Column<int>(type: "integer", nullable: false),
+                    product_name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    quantity = table.Column<int>(type: "integer", nullable: false),
+                    unit_price = table.Column<decimal>(type: "numeric(10,2)", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -443,6 +463,11 @@ namespace TeejoshSystem.Infrastructure.Migrations
                 column: "sale_id");
 
             migrationBuilder.CreateIndex(
+                name: "idx_outbox_created_at",
+                table: "sync_outbox",
+                column: "created_at");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_tcg_expansion_name_FranquiciaId",
                 table: "tcg_expansion",
                 columns: new[] { "name", "FranquiciaId" },
@@ -487,6 +512,9 @@ namespace TeejoshSystem.Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "sale_detail");
+
+            migrationBuilder.DropTable(
+                name: "sync_outbox");
 
             migrationBuilder.DropTable(
                 name: "tcg");

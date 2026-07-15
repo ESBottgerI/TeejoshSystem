@@ -39,6 +39,14 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence
         {
             modelBuilder.ApplyConfigurationsFromAssembly(typeof(InventarioDbContext).Assembly);
 
+            // Cada detalle se almacena en su propia tabla. Este ajuste final evita que las
+            // convenciones de herencia reintroduzcan un discriminador innecesario.
+            modelBuilder.Entity<HotWheelsDetalle>().HasNoDiscriminator();
+            modelBuilder.Entity<FunkoDetalle>().HasNoDiscriminator();
+            modelBuilder.Entity<TcgDetalle>().HasNoDiscriminator();
+            modelBuilder.Entity<ToyDetalle>().HasNoDiscriminator();
+            modelBuilder.Entity<VariosDetalle>().HasNoDiscriminator();
+
             base.OnModelCreating(modelBuilder);
         }
     }

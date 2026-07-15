@@ -1,7 +1,9 @@
+using System.Threading;
+using System.Threading.Tasks;
 namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.Services;
 
 public interface INavigationService
 {
-    void NavigateTo(object viewModel);
-    void NavigateToMenu();
+    Task NavigateToAsync(object viewModel, CancellationToken cancellationToken = default);
+    Task NavigateToMenuAsync(CancellationToken cancellationToken = default);
 }

@@ -45,11 +45,11 @@
                               IsReadOnly="True"
                               Margin="24,0,24,16">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="Nombre"
-                                                Binding="{Binding Nombre}"
-                                                Width="2*"/>
+                            <DataGridTemplateColumn Header="Nombre" Width="2*"><DataGridTemplateColumn.CellTemplate><DataTemplate>
+                                <Grid ColumnDefinitions="32,*" ToolTip.Tip="{Binding Nombre}"><Image Width="28" Height="28" Stretch="Uniform" Source="{Binding ImageThumbnail, Converter={StaticResource BytesToImageConverter}}"/><TextBlock Grid.Column="1" Text="{Binding Nombre}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/></Grid>
+                            </DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
                             <DataGridTextColumn Header="Precio"
-                                                Binding="{Binding Precio, StringFormat=\{0:C\}}"
+                                                Binding="{Binding Precio, Converter={StaticResource SolesConverter}}"
                                                 Width="90"/>
                             <DataGridTextColumn Header="Stock"
                                                 Binding="{Binding Unidades}"
@@ -94,17 +94,15 @@
                               IsReadOnly="True"
                               Margin="24,0,24,16">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="Producto"
-                                                Binding="{Binding Nombre}"
-                                                Width="2*"/>
+                            <DataGridTemplateColumn Header="Producto" Width="2*"><DataGridTemplateColumn.CellTemplate><DataTemplate><TextBlock Text="{Binding Nombre}" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Nombre}"/></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
                             <DataGridTextColumn Header="Cant."
                                                 Binding="{Binding Cantidad}"
                                                 Width="50"/>
                             <DataGridTextColumn Header="P.Unit."
-                                                Binding="{Binding PrecioUnitario, StringFormat=\{0:C\}}"
+                                                Binding="{Binding PrecioUnitario, Converter={StaticResource SolesConverter}}"
                                                 Width="80"/>
                             <DataGridTextColumn Header="Subtotal"
-                                                Binding="{Binding Subtotal, StringFormat=\{0:C\}}"
+                                                Binding="{Binding Subtotal, Converter={StaticResource SolesConverter}}"
                                                 Width="80"/>
                             <DataGridTemplateColumn Width="40">
                                 <DataGridTemplateColumn.CellTemplate>
@@ -131,7 +129,7 @@
                                        FontSize="18" FontWeight="SemiBold"
                                        VerticalAlignment="Center"/>
                             <TextBlock Grid.Column="1"
-                                       Text="{Binding TotalVenta, StringFormat=\{0:C\}}"
+                                       Text="{Binding TotalVenta, Converter={StaticResource SolesConverter}}"
                                        FontSize="18" FontWeight="Bold"
                                        Foreground="{DynamicResource TeejoshSuccessBrush}"
                                        VerticalAlignment="Center"/>

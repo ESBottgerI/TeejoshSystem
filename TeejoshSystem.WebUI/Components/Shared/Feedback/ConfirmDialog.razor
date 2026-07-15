@@ -1,4 +1,21 @@
-<dialog class="confirm-dialog" aria-labelledby="confirm-title">
-    <h2 id="confirm-title">Confirmacion</h2>
-    <p>Confirme la accion solicitada.</p>
-</dialog>
+@implements IDisposable
+@inject BlazorConfirmationService Confirmation
+
+@if (_request is not null)
+{
+    <div class="loading-overlay" @onclick="() => Complete(false)">
+        <section class="auth-card" role="alertdialog" aria-modal="true" aria-labelledby="confirm-title" @onclick:stopPropagation>
+            <h2 id="confirm-title">@_request.Title</h2>
+            <p>@_request.Message</p>
+            <div class="toolbar"><button class="btn secondary" @onclick="() => Complete(false)">Cancelar</button><button class="btn danger" @onclick="() => Complete(true)">Confirmar</button></div>
+        </section>
+    </div>
+}
+
+@code {
+    private TeejoshSystem.WebUI.Infrastructure.Services.ConfirmDialog? _request;
+    protected override void OnInitialized() => Confirmation.OnConfirmRequested += Show;
+    private void Show(TeejoshSystem.WebUI.Infrastructure.Services.ConfirmDialog request) { _request = request; _ = InvokeAsync(StateHasChanged); }
+    private void Complete(bool value) { var request = _request; _request = null; request?.Callback(value); }
+    public void Dispose() => Confirmation.OnConfirmRequested -= Show;
+}

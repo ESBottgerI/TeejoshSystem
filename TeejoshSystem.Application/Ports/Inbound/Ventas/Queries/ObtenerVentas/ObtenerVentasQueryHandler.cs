@@ -34,6 +34,7 @@ namespace TeejoshSystem.Application.Ports.Inbound.Ventas.Queries.ObtenerVentas
                     {
                         ProductoId = d.ProductoId,
                         NombreProducto = d.NombreProducto,
+                        Tipo = d.Tipo,
                         Cantidad = d.Cantidad,
                         PrecioUnitario = d.PrecioUnitario,
                         Subtotal = d.Subtotal

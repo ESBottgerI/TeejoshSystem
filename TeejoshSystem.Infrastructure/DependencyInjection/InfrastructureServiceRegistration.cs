@@ -10,6 +10,8 @@ using TeejoshSystem.Infrastructure.Adapters.Outbound.Logging;           // NUEVO
 using TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Repositories;
 using TeejoshSystem.Infrastructure.Adapters.Outbound.Storage;
 using TeejoshSystem.Infrastructure.Adapters.Outbound.Backup;
+using TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence;
+using TeejoshSystem.Application.Ports.Outbound.Dashboard;
 
 namespace TeejoshSystem.Infrastructure.DependencyInjection
 {
@@ -29,6 +31,8 @@ namespace TeejoshSystem.Infrastructure.DependencyInjection
             services.AddScoped<IAuthService, LocalAuthService>();
 
             services.AddSingleton<IImageStorageService, LocalImageStorageService>();
+            services.AddScoped<IApplicationTransaction, EfApplicationTransaction>();
+            services.AddScoped<IDashboardReadService, DashboardReadService>();
 
             // NUEVO — App logger (singleton: stateless, hilo-seguro, vive toda la app)
             services.AddSingleton<IAppLogger, AppLogger>();

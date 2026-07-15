@@ -1,11 +1,10 @@
 @using System.Security.Claims
 @inject TeejoshSystem.WebUI.Infrastructure.Auth.CustomAuthenticationStateProvider AuthProvider
+@inject CircuitStateStore StateStore
+@inject NavigationManager Navigation
 
 <header class="top-header">
-    <div>
-        <p class="eyebrow">Canal Web</p>
-        <strong>TeejoshSystem 0.2.0</strong>
-    </div>
+    <span class="session-label">Sesión activa</span>
     <AuthorizeView>
         <Authorized>
             <div class="user-chip" aria-label="Usuario activo">
@@ -17,5 +16,10 @@
 </header>
 
 @code {
-    private async Task CerrarSesionAsync() => await AuthProvider.SignOutAsync();
+    private async Task CerrarSesionAsync()
+    {
+        StateStore.Clear();
+        await AuthProvider.SignOutAsync();
+        Navigation.NavigateTo("/login");
+    }
 }

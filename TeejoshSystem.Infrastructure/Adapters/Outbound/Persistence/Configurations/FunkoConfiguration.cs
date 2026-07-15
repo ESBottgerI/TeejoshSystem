@@ -36,9 +36,6 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Configurati
                 .HasColumnName("special_caracteristic")
                 .IsRequired();
 
-            builder.Property<string>("Discriminator")
-                .IsRequired(false);
-
             builder.HasOne<Producto>()
                 .WithOne()
                 .HasForeignKey<FunkoDetalle>(p => p.ProductoId)

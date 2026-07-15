@@ -78,6 +78,6 @@ namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Catalogos
         }
 
         [RelayCommand]
-        private void Volver() => _navigation.NavigateToMenu();
+        private Task VolverAsync() => _navigation.NavigateToMenuAsync();
     }
 }

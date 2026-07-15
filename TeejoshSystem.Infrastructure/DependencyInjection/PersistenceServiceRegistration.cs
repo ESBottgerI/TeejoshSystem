@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -27,16 +27,17 @@ namespace TeejoshSystem.Infrastructure.DependencyInjection
         {
             if (provider.Equals("sqlite", StringComparison.OrdinalIgnoreCase))
             {
-                // SQLite: la ruta siempre se resuelve en runtime contra LocalAppData
-                // para garantizar permisos correctos en todos los SO.
-                // Database:ConnectionString en appsettings.json es solo documentación.
-                var dbPath = Path.Combine(
-                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                    "TeejoshSystem",
-                    "inventario.db");
+                var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+                var configured = configuration["Database:ConnectionString"];
+                var dbPath = string.IsNullOrWhiteSpace(configured)
+                    ? Path.Combine(localAppData, "TeejoshSystem", "inventario.db")
+                    : configured.Replace("Data Source=", string.Empty, StringComparison.OrdinalIgnoreCase)
+                        .Replace("{LocalAppData}", localAppData, StringComparison.OrdinalIgnoreCase);
+                dbPath = Path.GetFullPath(dbPath);
 
                 Directory.CreateDirectory(Path.GetDirectoryName(dbPath)!);
-                options.UseSqlite($"Data Source={dbPath}");
+                options.UseSqlite($"Data Source={dbPath}", provider =>
+                    provider.MigrationsAssembly("TeejoshSystem.Migrations.Sqlite"));
             }
             else if (provider.Equals("postgresql", StringComparison.OrdinalIgnoreCase))
             {
@@ -44,7 +45,8 @@ namespace TeejoshSystem.Infrastructure.DependencyInjection
                     ?? throw new InvalidOperationException(
                         "Database:ConnectionString es requerido cuando el proveedor es 'postgresql'.");
 
-                options.UseNpgsql(connectionString);
+                options.UseNpgsql(connectionString, providerOptions =>
+                    providerOptions.MigrationsAssembly("TeejoshSystem.Migrations.PostgreSql"));
             }
             else
             {

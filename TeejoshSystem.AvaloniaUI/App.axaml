@@ -16,6 +16,7 @@
              xmlns:vmCatalogos="clr-namespace:TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Catalogos"
              xmlns:viewsCatalogos="clr-namespace:TeejoshSystem.AvaloniaUI.Adapters.Inbound.Views.Catalogos"
              xmlns:helpers="clr-namespace:TeejoshSystem.AvaloniaUI.Adapters.Inbound.Helpers"
+             xmlns:converters="clr-namespace:TeejoshSystem.AvaloniaUI.Adapters.Inbound.Converters"
              x:Class="TeejoshSystem.AvaloniaUI.App">
 
     <Application.RequestedThemeVariant>Light</Application.RequestedThemeVariant>
@@ -28,6 +29,8 @@
             <SolidColorBrush x:Key="TeejoshInfoBrush">#1565C0</SolidColorBrush>
             <SolidColorBrush x:Key="TeejoshHeaderDarkBrush">#2C3E50</SolidColorBrush>
             <SolidColorBrush x:Key="TeejoshOverlayBrush">#CC000000</SolidColorBrush>
+            <converters:SolesValueConverter x:Key="SolesConverter"/>
+            <converters:BytesToImageConverter x:Key="BytesToImageConverter"/>
 
             <ResourceDictionary.ThemeDictionaries>
                 <ResourceDictionary x:Key="Light">

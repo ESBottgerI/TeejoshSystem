@@ -14,12 +14,12 @@
                 <li>
                     <span>@item.Name</span>
                     <input class="input quantity" type="number" min="1" max="@item.Stock" @bind="item.Quantity" aria-label="Cantidad de @item.Name" />
-                    <strong>@item.Subtotal.ToString("C")</strong>
+                    <strong>@SolesFormatter.Format(item.Subtotal)</strong>
                     <button class="link-button danger-text" @onclick="() => StateStore.Remove(item.ProductId)">Quitar</button>
                 </li>
             }
         </ul>
-        <p class="cart-total">Total <strong>@StateStore.CartItems.Sum(i => i.Subtotal).ToString("C")</strong></p>
+        <p class="cart-total">Total <strong>@SolesFormatter.Format(StateStore.CartItems.Sum(i => i.Subtotal))</strong></p>
         <button class="btn primary" @onclick="OnConfirm">Registrar venta</button>
     }
 </aside>

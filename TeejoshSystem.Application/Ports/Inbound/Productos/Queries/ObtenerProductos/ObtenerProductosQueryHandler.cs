@@ -29,6 +29,7 @@ namespace TeejoshSystem.Application.Ports.Inbound.Productos.Queries.ObtenerProdu
                 Nombre = p.Nombre.Value,
                 Precio = p.Precio.Value,
                 Unidades = p.Stock.Value,
+                TieneImagen = !string.IsNullOrWhiteSpace(p.ImagePath),
                 TipoDescripcion = p.Tipo.ToString(),
                 DetalleResumen = ""
             }).ToList();

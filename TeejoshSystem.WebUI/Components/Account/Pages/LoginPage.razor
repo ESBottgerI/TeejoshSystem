@@ -41,17 +41,30 @@
         PasswordError = string.IsNullOrWhiteSpace(Password) ? "La contrasena es obligatoria." : null;
         if (NombreUsuarioError is not null || PasswordError is not null) return;
 
-        IsBusy = true;
-        ErrorMessage = null;
-        var result = await AuthProvider.SignInWithPasswordAsync(NombreUsuario.Trim(), Password);
-        IsBusy = false;
-
-        if (!result.Success)
+        try
         {
-            ErrorMessage = result.Error;
-            return;
-        }
+            IsBusy = true;
+            ErrorMessage = null;
+            var result = await AuthProvider.SignInWithPasswordAsync(NombreUsuario.Trim(), Password);
+            if (!result.Success)
+            {
+                ErrorMessage = result.Error;
+                return;
+            }
 
-        Navigation.NavigateTo(string.IsNullOrWhiteSpace(ReturnUrl) ? "/" : ReturnUrl);
+            var destination = IsLocalReturnUrl(ReturnUrl) ? ReturnUrl! : "/";
+            Navigation.NavigateTo(destination);
+        }
+        catch
+        {
+            ErrorMessage = "No se pudo iniciar sesión. Intente nuevamente.";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
     }
+
+    private static bool IsLocalReturnUrl(string? value) =>
+        !string.IsNullOrWhiteSpace(value) && value.StartsWith('/') && !value.StartsWith("//");
 }

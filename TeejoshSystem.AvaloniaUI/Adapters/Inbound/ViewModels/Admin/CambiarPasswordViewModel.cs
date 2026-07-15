@@ -1,4 +1,4 @@
-﻿using System.Threading.Tasks;
+using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MediatR;
@@ -32,6 +32,7 @@ namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Admin
             _notification = notification;
             _navigation = navigation;
             _sesionContext = sesionContext;
+            PropertyChanged += (_, e) => { if (e.PropertyName == nameof(IsBusy)) CambiarPasswordCommand.NotifyCanExecuteChanged(); };
         }
 
         public void ActualizarPasswordActual(string password)
@@ -80,7 +81,7 @@ namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Admin
                 if (result.IsSuccess)
                 {
                     await _notification.ShowSuccessAsync("Contraseña actualizada correctamente.");
-                    _navigation.NavigateToMenu();
+                    await _navigation.NavigateToMenuAsync();
                 }
                 else
                 {
@@ -91,6 +92,6 @@ namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Admin
         }
 
         [RelayCommand]
-        private void Volver() => _navigation.NavigateToMenu();
+        private Task VolverAsync() => _navigation.NavigateToMenuAsync();
     }
 }

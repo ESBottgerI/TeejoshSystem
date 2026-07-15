@@ -15,5 +15,8 @@ namespace TeejoshSystem.Domain.Ports.Outbound
         /// </summary>
         string? GetFullPath(string? imageName);
         Task<string?> SaveImageFromUrlAsync(string? url);  // NUEVO
+        Task<StoredImageContent?> ReadImageAsync(string? imageName, bool thumbnail, CancellationToken cancellationToken = default);
     }
+
+    public sealed record StoredImageContent(byte[] Bytes, string ContentType);
 }

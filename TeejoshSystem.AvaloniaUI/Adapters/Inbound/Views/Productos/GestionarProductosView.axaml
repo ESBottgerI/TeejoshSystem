@@ -53,11 +53,13 @@
                                     <DataGridTextColumn Header="ID"
                                                         Binding="{Binding Id}"
                                                         Width="60"/>
-                                    <DataGridTextColumn Header="Nombre"
-                                                        Binding="{Binding Nombre}"
-                                                        Width="2*"/>
+                                    <DataGridTemplateColumn Header="Nombre" Width="2*">
+                                        <DataGridTemplateColumn.CellTemplate><DataTemplate>
+                                            <Grid ColumnDefinitions="32,*" ToolTip.Tip="{Binding Nombre}"><Image Width="28" Height="28" Stretch="Uniform" Source="{Binding ImageThumbnail, Converter={StaticResource BytesToImageConverter}}"/><TextBlock Grid.Column="1" Text="{Binding Nombre}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/></Grid>
+                                        </DataTemplate></DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
                                     <DataGridTextColumn Header="Precio"
-                                                        Binding="{Binding Precio, StringFormat=\{0:C\}}"
+                                                        Binding="{Binding Precio, Converter={StaticResource SolesConverter}}"
                                                         Width="100"/>
                                     <DataGridTextColumn Header="Stock"
                                                         Binding="{Binding Unidades}"

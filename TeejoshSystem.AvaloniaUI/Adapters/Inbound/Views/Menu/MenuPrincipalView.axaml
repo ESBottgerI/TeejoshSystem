@@ -41,12 +41,14 @@
                 <Button Content="Gestionar Productos"
                         Command="{Binding ModificarProductoCommand}"
                         Theme="{StaticResource StandardButton}"
-                        Width="200" HorizontalAlignment="Center"/>
+                        Width="200" HorizontalAlignment="Center"
+                        IsVisible="{Binding EsAdministrador}"/>
 
                 <Button Content="Añadir Producto"
                         Command="{Binding AnadirProductoCommand}"
                         Theme="{DynamicResource StandardButton}"
-                        Width="200" HorizontalAlignment="Center"/>
+                        Width="200" HorizontalAlignment="Center"
+                        IsVisible="{Binding EsAdministrador}"/>
 
                 <Button Content="Registrar Venta"
                         Command="{Binding RegistrarVentaCommand}"

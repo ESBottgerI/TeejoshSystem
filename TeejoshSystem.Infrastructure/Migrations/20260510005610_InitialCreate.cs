@@ -1,5 +1,6 @@
 ﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
@@ -18,7 +19,8 @@ namespace TeejoshSystem.Infrastructure.Migrations
                 columns: table => new
                 {
                     id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
+                        .Annotation("Sqlite:Autoincrement", true)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     rol = table.Column<string>(type: "TEXT", nullable: false),
                     username = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
                     password_hash = table.Column<string>(type: "TEXT", maxLength: 60, nullable: false),
@@ -34,7 +36,8 @@ namespace TeejoshSystem.Infrastructure.Migrations
                 columns: table => new
                 {
                     id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
+                        .Annotation("Sqlite:Autoincrement", true)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     name = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false)
                 },
                 constraints: table =>
@@ -47,7 +50,8 @@ namespace TeejoshSystem.Infrastructure.Migrations
                 columns: table => new
                 {
                     id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
+                        .Annotation("Sqlite:Autoincrement", true)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     name = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false)
                 },
                 constraints: table =>
@@ -60,7 +64,8 @@ namespace TeejoshSystem.Infrastructure.Migrations
                 columns: table => new
                 {
                     id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
+                        .Annotation("Sqlite:Autoincrement", true)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     name = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false)
                 },
                 constraints: table =>
@@ -73,7 +78,8 @@ namespace TeejoshSystem.Infrastructure.Migrations
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
+                        .Annotation("Sqlite:Autoincrement", true)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     type = table.Column<string>(type: "TEXT", nullable: false),
                     name = table.Column<string>(type: "TEXT", maxLength: 50, nullable: false),
                     price = table.Column<decimal>(type: "decimal(10,2)", nullable: false),
@@ -90,7 +96,8 @@ namespace TeejoshSystem.Infrastructure.Migrations
                 columns: table => new
                 {
                     id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
+                        .Annotation("Sqlite:Autoincrement", true)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     date = table.Column<DateTime>(type: "TEXT", nullable: false),
                     total = table.Column<decimal>(type: "decimal(10,2)", nullable: false)
                 },
@@ -104,7 +111,8 @@ namespace TeejoshSystem.Infrastructure.Migrations
                 columns: table => new
                 {
                     id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
+                        .Annotation("Sqlite:Autoincrement", true)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     name = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
                     FranquiciaId = table.Column<int>(type: "INTEGER", nullable: false),
                     image_url = table.Column<string>(type: "TEXT", nullable: true)
@@ -119,7 +127,8 @@ namespace TeejoshSystem.Infrastructure.Migrations
                 columns: table => new
                 {
                     id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
+                        .Annotation("Sqlite:Autoincrement", true)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     name = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false)
                 },
                 constraints: table =>
@@ -132,7 +141,8 @@ namespace TeejoshSystem.Infrastructure.Migrations
                 columns: table => new
                 {
                     id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
+                        .Annotation("Sqlite:Autoincrement", true)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     name = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),
                     FranquiciaId = table.Column<int>(type: "INTEGER", nullable: false)
                 },
@@ -258,7 +268,8 @@ namespace TeejoshSystem.Infrastructure.Migrations
                 columns: table => new
                 {
                     id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
+                        .Annotation("Sqlite:Autoincrement", true)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     sale_id = table.Column<int>(type: "INTEGER", nullable: false),
                     product_id = table.Column<int>(type: "INTEGER", nullable: false),
                     product_name = table.Column<string>(type: "TEXT", maxLength: 100, nullable: false),

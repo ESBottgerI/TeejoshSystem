@@ -33,8 +33,8 @@ El objetivo no es solo gestionar inventario, sino construir una base sólida que
 |**Plataformas verificadas**|Windows, Linux (Fedora 43)|
 |**Persistencia**|SQLite — Code-First con migraciones EF Core|
 |**Arquitectura**|Estable|
-|**Tests**|4 proyectos — Unit, BDD (SpecFlow), Integration, Mutation (Stryker)|
-|**Última actualización**|Mayo 2026|
+|**Tests**|5 proyectos — Unit, BDD (Reqnroll), Integration, UI y Mutation (Stryker)|
+|**Última actualización**|Julio 2026|
 
 ---
 
@@ -172,7 +172,7 @@ Esta sección explica qué resuelve cada patrón, por qué se eligió, y qué pr
 
 **Qué problema resuelve:** Sin esto, el dominio está atado a tecnologías específicas. Si mañana se reemplaza SQLite por PostgreSQL, o se agrega una API REST, o se migra de Avalonia a MAUI, el dominio no debería necesitar cambios.
 
-**Inbound Adapters actuales:** UI Avalonia
+**Inbound Adapters actuales:** UI Avalonia y WebUI Blazor Interactive Server
 **Outbound Adapters actuales:** EF Core + SQLite, BCrypt, APIs externas TCG, sistema de archivos local, logging
 **Puertos definidos:** `IProductoRepository`, `ICatalogoRepository`, `IVentaRepository`, `IAuthService`, `IUsuarioRepository`, `IImageStorageService`, `ITcgCatalogoApiService`, `IAppLogger`
 
@@ -611,7 +611,6 @@ La arquitectura hexagonal permite conectar nuevos adaptadores sin modificar el c
 
 - API REST con ASP.NET Core
 - CLI
-- WebUI Blazor Server (roadmap)
 - MAUI para mobile
 
 Solo se necesita un nuevo proyecto que invoque los inbound ports existentes vía MediatR.
@@ -688,7 +687,8 @@ Solo se necesita implementar el Port correspondiente con la nueva tecnología y 
 - [X] Temas claro/oscuro
 - [ ] Autenticación y roles vía Supabase (despliegue en VPS)
 - [ ] Internacionalización (i18n)
-- [ ] API REST / WebUI Blazor Server
+- [X] WebUI Blazor Interactive Server
+- [ ] API REST
 - [ ] Migración a PostgreSQL (Supabase) para producción
 
 

@@ -1,9 +1,11 @@
+using System.Threading;
+using System.Threading.Tasks;
 ﻿
 
 namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.Services
 {
     public interface ILoadable
     {
-        void OnLoaded();
+        Task LoadAsync(CancellationToken cancellationToken = default);
     }
 }

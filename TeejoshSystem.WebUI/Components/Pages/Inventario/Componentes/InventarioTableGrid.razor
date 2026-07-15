@@ -3,16 +3,16 @@
 <div class="table-shell" role="region" aria-label="Tabla de inventario" tabindex="0">
     <table class="data-table">
         <thead>
-            <tr><th>Producto</th><th>Tipo</th><th>Precio</th><th>Stock</th><th>Detalle</th></tr>
+            <tr><th>Producto</th><th>Tipo</th><th>Precio</th><th><span class="stock-heading">Stock <button class="icon-button" title="@StockToggleTitle" aria-label="@StockToggleTitle" @onclick="ToggleStock">@(_showStock ? "👁" : "◉")</button></span></th><th>Detalle</th></tr>
         </thead>
         <tbody>
             <Virtualize Items="Items" Context="item">
                 <tr>
-                    <td><a class="nav-link" style="padding:0;color:var(--tj-on-surface)" href="/productos/@item.Id">@item.Nombre</a></td>
-                    <td>@item.Tipo</td>
-                    <td>@item.Precio.ToString("C")</td>
-                    <td><BadgeStatus Stock="item.Unidades" /></td>
-                    <td>@item.DetalleResumen</td>
+                    <td data-label="Producto" class="product-name-cell"><ProductIdentityCell ProductId="item.Id" Name="item.Nombre" HasImage="item.TieneImagen" Href="@($"/productos/{item.Id}")" /></td>
+                    <td data-label="Tipo">@item.Tipo</td>
+                    <td data-label="Precio">@SolesFormatter.Format(item.Precio)</td>
+                    <td data-label="Stock"><button class="link-button" aria-label="Stock de @item.Nombre" @onclick="() => ToggleRow(item.Id)">@StockText(item)</button></td>
+                    <td data-label="Detalle">@item.DetalleResumen</td>
                 </tr>
             </Virtualize>
         </tbody>
@@ -21,4 +21,10 @@
 
 @code {
     [Parameter] public List<ProductoBusquedaDto> Items { get; set; } = new();
+    private bool _showStock = true;
+    private readonly HashSet<int> _revealed = new();
+    private string StockToggleTitle => _showStock ? "Ocultar cantidades de stock" : "Mostrar cantidades de stock";
+    private void ToggleStock() { _showStock = !_showStock; _revealed.Clear(); }
+    private void ToggleRow(int id) { if (!_revealed.Add(id)) _revealed.Remove(id); }
+    private string StockText(ProductoBusquedaDto item) => _showStock || _revealed.Contains(item.Id) ? item.Unidades.ToString() : item.Unidades > 0 ? "Disponible" : "Sin stock";
 }

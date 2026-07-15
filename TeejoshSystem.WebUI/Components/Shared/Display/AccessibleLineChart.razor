@@ -1,0 +1,36 @@
+@using TeejoshSystem.Application.Ports.Inbound.Dashboard.ObtenerDashboard
+
+<figure class="chart-card" aria-labelledby="chart-title">
+    <figcaption id="chart-title"><strong>Ingresos diarios</strong></figcaption>
+    @if (Items.Count == 0)
+    {
+        <p>No hay datos para graficar.</p>
+    }
+    else
+    {
+        <svg class="line-chart" viewBox="0 0 600 240" role="img" aria-label="Gráfica de ingresos diarios en el rango seleccionado">
+            <line x1="20" y1="220" x2="580" y2="220" class="chart-axis" />
+            <polyline points="@Points" class="chart-line" />
+        </svg>
+        <details><summary>Ver alternativa textual</summary><table class="compact-table"><thead><tr><th>Fecha</th><th>Ingresos</th></tr></thead><tbody>
+        @foreach (var item in Items) { <tr><td>@item.Fecha.ToString("dd/MM/yyyy")</td><td>@SolesFormatter.Format(item.Ingresos)</td></tr> }
+        </tbody></table></details>
+    }
+</figure>
+
+@code {
+    [Parameter] public IReadOnlyList<IngresoDiarioDto> Items { get; set; } = Array.Empty<IngresoDiarioDto>();
+    private string Points
+    {
+        get
+        {
+            if (Items.Count == 0) return string.Empty;
+            var max = Math.Max(1m, Items.Max(x => x.Ingresos));
+            return string.Join(' ', Items.Select((x, i) => {
+                var px = Items.Count == 1 ? 300d : 20d + i * 560d / (Items.Count - 1);
+                var py = 220d - (double)(x.Ingresos / max) * 190d;
+                return $"{px:F1},{py:F1}";
+            }));
+        }
+    }
+}

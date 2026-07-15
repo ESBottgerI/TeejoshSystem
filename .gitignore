@@ -3,5 +3,7 @@
 bin/
 obj/
 logs/
+.tmp/
+artifacts/
 *.user
 *.suo

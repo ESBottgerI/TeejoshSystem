@@ -1,0 +1,132 @@
+@using TeejoshSystem.Application.Ports.Inbound.Productos.Queries.ObtenerImagenProducto
+@implements IAsyncDisposable
+@inject IMediator Mediator
+@inject IJSRuntime JS
+
+<div class="product-identity">
+    <button @ref="_thumbnailButton" type="button" class="product-thumbnail-button" @onclick="OpenAsync" aria-label="Ampliar imagen de @Name">
+        <img class="product-thumbnail" src="@(_thumbnailUrl ?? "images/product-placeholder.svg")" alt="@(HasImage ? $"Miniatura de {Name}" : $"{Name} sin imagen")" />
+    </button>
+    @if (!string.IsNullOrWhiteSpace(Href))
+    {
+        <a class="product-name" href="@Href" title="@Name" aria-label="@Name">@Name</a>
+    }
+    else
+    {
+        <span class="product-name" title="@Name" aria-label="@Name">@Name</span>
+    }
+</div>
+
+@if (_open)
+{
+    <div class="image-modal" role="dialog" aria-modal="true" aria-label="Imagen de @Name" @onclick="CloseAsync" @onkeydown="HandleKeyAsync">
+        <div class="image-modal-content" @onclick:stopPropagation>
+            <button @ref="_closeButton" class="image-modal-close" @onclick="CloseAsync" aria-label="Cerrar imagen">×</button>
+            <img src="@(_fullUrl ?? _thumbnailUrl ?? "images/product-placeholder.svg")" alt="Imagen de @Name" />
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public int ProductId { get; set; }
+    [Parameter, EditorRequired] public string Name { get; set; } = string.Empty;
+    [Parameter] public bool HasImage { get; set; }
+    [Parameter] public string? Href { get; set; }
+
+    private ProductoImagenDto? _thumbnailData;
+    private ProductoImagenDto? _fullData;
+    private string? _thumbnailUrl;
+    private string? _fullUrl;
+    private bool _open;
+    private bool _focusModal;
+    private int _loadedId;
+    private ElementReference _thumbnailButton;
+    private ElementReference _closeButton;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (ProductId != _loadedId)
+        {
+            await RevokeAsync(_thumbnailUrl);
+            await RevokeAsync(_fullUrl);
+            _thumbnailUrl = null;
+            _fullUrl = null;
+            _thumbnailData = null;
+            _fullData = null;
+            _loadedId = ProductId;
+        }
+
+        if (!HasImage || _thumbnailData is not null) return;
+        var result = await Mediator.Send(
+            new ObtenerImagenProductoQuery(ProductId, VarianteImagen.Thumbnail));
+        if (result.IsSuccess) _thumbnailData = result.Value;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        var changed = false;
+        if (_thumbnailData is not null && _thumbnailUrl is null)
+        {
+            _thumbnailUrl = await CreateUrlAsync(_thumbnailData);
+            changed = true;
+        }
+        if (_fullData is not null && _fullUrl is null)
+        {
+            _fullUrl = await CreateUrlAsync(_fullData);
+            changed = true;
+        }
+        if (_focusModal)
+        {
+            _focusModal = false;
+            await JS.InvokeVoidAsync("teejoshInterop.focus", _closeButton);
+        }
+        if (changed) StateHasChanged();
+    }
+
+    private async Task OpenAsync()
+    {
+        _open = true;
+        _focusModal = true;
+        if (HasImage && _fullData is null)
+        {
+            var result = await Mediator.Send(
+                new ObtenerImagenProductoQuery(ProductId, VarianteImagen.Completa));
+            if (result.IsSuccess) _fullData = result.Value;
+        }
+    }
+
+    private async Task CloseAsync()
+    {
+        _open = false;
+        await RevokeAsync(_fullUrl);
+        _fullUrl = null;
+        _fullData = null;
+        await JS.InvokeVoidAsync("teejoshInterop.focus", _thumbnailButton);
+    }
+
+    private Task HandleKeyAsync(KeyboardEventArgs args) =>
+        args.Key == "Escape" ? CloseAsync() : Task.CompletedTask;
+
+    private ValueTask<string> CreateUrlAsync(ProductoImagenDto image) =>
+        JS.InvokeAsync<string>("teejoshInterop.createObjectUrl",
+            Convert.ToBase64String(image.Contenido), image.ContentType);
+
+    private async ValueTask RevokeAsync(string? url)
+    {
+        if (!string.IsNullOrWhiteSpace(url))
+            await JS.InvokeVoidAsync("teejoshInterop.revokeObjectUrl", url);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        try
+        {
+            await RevokeAsync(_thumbnailUrl);
+            await RevokeAsync(_fullUrl);
+        }
+        catch (JSDisconnectedException)
+        {
+            // El circuito ya terminó; el navegador libera sus Blob URLs al descargar el documento.
+        }
+    }
+}

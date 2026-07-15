@@ -13,9 +13,9 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Storage
         private readonly string _imagesFolder;
         private static readonly HttpClient _http = new();
 
-        public LocalImageStorageService()
+        public LocalImageStorageService(string? imagesFolder = null)
         {
-            _imagesFolder = Path.Combine(
+            _imagesFolder = imagesFolder ?? Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
                 "TeejoshSystem",
                 "images");
@@ -32,21 +32,70 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Storage
                 return null;
 
             var extension = Path.GetExtension(rutaOrigen).ToLowerInvariant();
+            if (extension is not (".png" or ".jpg" or ".jpeg" or ".gif" or ".webp"))
+                return null;
+            var bytes = await File.ReadAllBytesAsync(rutaOrigen);
+            if (bytes.Length == 0 || bytes.Length > 10 * 1024 * 1024)
+                return null;
+            try
+            {
+                try
+                {
+                    using var decoded = SKBitmap.Decode(bytes);
+                    if (decoded is null) return null;
+                }
+                catch
+                {
+                    return null;
+                }
+            }
+            catch
+            {
+                return null;
+            }
+
             var nombreArchivo = $"{Guid.NewGuid()}{extension}";
             var rutaDestino = Path.Combine(_imagesFolder, nombreArchivo);
-
-            await Task.Run(() => File.Copy(rutaOrigen, rutaDestino, overwrite: true));
-
+            await File.WriteAllBytesAsync(rutaDestino, bytes);
             return nombreArchivo;
         }
 
         public string? GetFullPath(string? imageName)
         {
-            if (string.IsNullOrWhiteSpace(imageName))
+            if (string.IsNullOrWhiteSpace(imageName) || Path.GetFileName(imageName) != imageName)
                 return null;
 
-            var fullPath = Path.Combine(_imagesFolder, imageName);
-            return File.Exists(fullPath) ? fullPath : null;
+            var fullPath = Path.GetFullPath(Path.Combine(_imagesFolder, imageName));
+            var root = Path.GetFullPath(_imagesFolder) + Path.DirectorySeparatorChar;
+            return fullPath.StartsWith(root, StringComparison.OrdinalIgnoreCase) && File.Exists(fullPath)
+                ? fullPath
+                : null;
+        }
+
+        public async Task<StoredImageContent?> ReadImageAsync(string? imageName, bool thumbnail, CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrWhiteSpace(imageName) || Path.GetFileName(imageName) != imageName)
+                return null;
+            var fullPath = Path.GetFullPath(Path.Combine(_imagesFolder, imageName));
+            var root = Path.GetFullPath(_imagesFolder) + Path.DirectorySeparatorChar;
+            if (!fullPath.StartsWith(root, StringComparison.OrdinalIgnoreCase) || !File.Exists(fullPath))
+                return null;
+            var extension = Path.GetExtension(fullPath).ToLowerInvariant();
+            var contentType = extension switch { ".png" => "image/png", ".jpg" or ".jpeg" => "image/jpeg", ".gif" => "image/gif", ".webp" => "image/webp", _ => null };
+            if (contentType is null) return null;
+            var bytes = await File.ReadAllBytesAsync(fullPath, cancellationToken);
+            using var source = SKBitmap.Decode(bytes);
+            if (source is null) return null;
+            if (!thumbnail) return new StoredImageContent(bytes, contentType);
+            const int side = 48;
+            var scale = Math.Min((float)side / source.Width, (float)side / source.Height);
+            var width = Math.Max(1, (int)(source.Width * scale));
+            var height = Math.Max(1, (int)(source.Height * scale));
+            using var resized = source.Resize(new SKImageInfo(width, height), SKFilterQuality.Medium);
+            if (resized is null) return null;
+            using var image = SKImage.FromBitmap(resized);
+            using var encoded = image.Encode(SKEncodedImageFormat.Png, 90);
+            return new StoredImageContent(encoded.ToArray(), "image/png");
         }
 
         public async Task<string?> SaveImageFromUrlAsync(string? url)
@@ -56,16 +105,33 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Storage
 
             try
             {
-                var bytes = await _http.GetByteArrayAsync(url);
+                if (!Uri.TryCreate(url, UriKind.Absolute, out var uri) || uri.Scheme != Uri.UriSchemeHttps || uri.IsLoopback)
+                    return null;
+                using var response = await _http.GetAsync(uri, HttpCompletionOption.ResponseHeadersRead);
+                response.EnsureSuccessStatusCode();
+                if (response.Content.Headers.ContentLength is > 10485760)
+                    return null;
+                var bytes = await response.Content.ReadAsByteArrayAsync();
+                if (bytes.Length == 0 || bytes.Length > 10 * 1024 * 1024)
+                    return null;
                 var extension = Path.GetExtension(
-                    new Uri(url).AbsolutePath).ToLowerInvariant();
+                    uri.AbsolutePath).ToLowerInvariant();
 
                 // Si es SVG, convertir a PNG antes de guardar
                 if (extension == ".svg")
                     return await ConvertirSvgAPngAsync(bytes);
 
-                if (string.IsNullOrWhiteSpace(extension))
-                    extension = ".png";
+                if (extension is not (".png" or ".jpg" or ".jpeg" or ".gif" or ".webp"))
+                    return null;
+                try
+                {
+                    using var decoded = SKBitmap.Decode(bytes);
+                    if (decoded is null) return null;
+                }
+                catch
+                {
+                    return null;
+                }
 
                 var nombreArchivo = $"{Guid.NewGuid()}{extension}";
                 var rutaDestino = Path.Combine(_imagesFolder, nombreArchivo);

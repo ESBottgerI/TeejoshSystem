@@ -1,8 +1,9 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MediatR;
 using System;
 using System.Threading.Tasks;
+using System.Threading;
 
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Platform.Storage;
@@ -73,10 +74,7 @@ public partial class EditarProductoViewModel : ValidatableViewModel, ILoadable
         };
     }
 
-    public void OnLoaded()
-    {
-        _ = CargarProductoAsync();
-    }
+    public Task LoadAsync(CancellationToken cancellationToken = default) => CargarProductoAsync();
 
     private async Task CargarProductoAsync()
     {
@@ -100,9 +98,8 @@ public partial class EditarProductoViewModel : ValidatableViewModel, ILoadable
             Unidades = dto.Unidades;
 
             // Cargar imagen actual si existe
-            ImagePathActual = _imageStorage.GetFullPath(dto.ImagePath);
-            if (ImagePathActual is not null)
-                ImageNombre = System.IO.Path.GetFileName(ImagePathActual);
+            ImagePathActual = null;
+            ImageNombre = dto.TieneImagen ? "Imagen guardada" : null;
         }
         catch (Exception ex)
         {
@@ -153,7 +150,7 @@ public partial class EditarProductoViewModel : ValidatableViewModel, ILoadable
     }
 
     [RelayCommand]
-    private void Volver() => _navigation.NavigateTo(_gestionarVm);
+    private Task VolverAsync() => _navigation.NavigateToAsync(_gestionarVm);
 
     [RelayCommand(CanExecute = nameof(CanGuardar))]
     private async Task GuardarAsync()
@@ -185,13 +182,17 @@ public partial class EditarProductoViewModel : ValidatableViewModel, ILoadable
             {
                 await _notification.ShowSuccessAsync("Producto actualizado correctamente.");
                 await _gestionarVm.BuscarAsync();
-                _navigation.NavigateTo(_gestionarVm);
+                await _navigation.NavigateToAsync(_gestionarVm);
             }
             else
             {
                 await _notification.ShowErrorAsync(
                     result.Error ?? "Ocurrió un error al guardar el producto.");
             }
+        }
+        catch (Exception ex)
+        {
+            await _notification.ShowErrorAsync("Error inesperado al guardar: " + ex.Message);
         }
         finally
         {

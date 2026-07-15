@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
 using TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence;
-using TeejoshSystem.Infrastructure.DependencyInjection;
 using TeejoshSystem.WebUI.Infrastructure.Auth;
 using TeejoshSystem.WebUI.Infrastructure.Services;
 using TeejoshSystem.WebUI.Infrastructure.State;
@@ -11,9 +10,7 @@ namespace TeejoshSystem.WebUI.Extensions;
 
 public static class ServiceCollectionExtensions
 {
-    public static IServiceCollection AddTeejoshWebUi(
-        this IServiceCollection services,
-        IConfiguration configuration)
+    public static IServiceCollection AddTeejoshWebUi(this IServiceCollection services)
     {
         services.AddHttpClient();
         services.AddHttpContextAccessor();
@@ -24,10 +21,6 @@ public static class ServiceCollectionExtensions
         services.AddAuthenticationCore();
         services.AddAuthorization();
         services.AddCascadingAuthenticationState();
-
-        services.AddInfrastructure(configuration);
-        services.AddMediatR(cfg =>
-            cfg.RegisterServicesFromAssembly(typeof(TeejoshSystem.Application.Common.Result).Assembly));
 
         services.AddScoped<BlazorSesionContext>();
         services.AddScoped<CustomAuthenticationStateProvider>();
@@ -46,12 +39,16 @@ public static class ServiceCollectionExtensions
         using var scope = services.CreateScope();
         var configuration = scope.ServiceProvider.GetRequiredService<IConfiguration>();
 
+        var db = scope.ServiceProvider.GetRequiredService<InventarioDbContext>();
         if (!configuration.GetValue<bool>("Database:ApplyMigrationsOnStartup"))
         {
+            if (!await db.Database.CanConnectAsync())
+                throw new InvalidOperationException("No se pudo conectar con la base de datos configurada.");
+            if ((await db.Database.GetPendingMigrationsAsync()).Any())
+                throw new InvalidOperationException("La base de datos tiene migraciones pendientes. Ejecute el migrador antes de iniciar WebUI.");
             return;
         }
 
-        var db = scope.ServiceProvider.GetRequiredService<InventarioDbContext>();
         await db.Database.MigrateAsync();
         DatabaseSeeder.SeedUsuarioAdmin(db);
     }

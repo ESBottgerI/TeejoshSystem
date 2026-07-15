@@ -27,9 +27,6 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Configurati
                 .HasColumnName("expansion_id")
                 .IsRequired();
 
-            builder.Property<string>("Discriminator")
-                .IsRequired(false);
-
             builder.HasOne<Producto>()
                 .WithOne()
                 .HasForeignKey<TcgDetalle>(p => p.ProductoId)

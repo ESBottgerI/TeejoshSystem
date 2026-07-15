@@ -1,9 +1,10 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MediatR;
 
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Threading;
 using System.Threading.Tasks;
 
 using TeejoshSystem.Application.Ports.Inbound.Productos.Commands.EliminarProducto;
@@ -15,7 +16,7 @@ using TeejoshSystem.Domain.Ports.Outbound;
 
 namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Productos;
 
-public partial class GestionarProductosViewModel : ViewModelBase
+public partial class GestionarProductosViewModel : ViewModelBase, ILoadable
 {
     private readonly IMediator _mediator;
     private readonly INotificationService _notification;
@@ -60,10 +61,18 @@ public partial class GestionarProductosViewModel : ViewModelBase
         _navigation = navigation;
         _imageStorage = imageStorage;
 
-        _ = BuscarAsync();
+        PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName != nameof(IsBusy)) return;
+            EditarCommand.NotifyCanExecuteChanged();
+            EliminarCommand.NotifyCanExecuteChanged();
+            BuscarCommand.NotifyCanExecuteChanged();
+        };
     }
 
-    [RelayCommand]
+    public Task LoadAsync(CancellationToken cancellationToken = default) => BuscarAsync();
+
+    [RelayCommand(CanExecute = nameof(PuedeBuscar))]
     public async Task BuscarAsync()
     {
         if (IsBusy) return;
@@ -78,14 +87,20 @@ public partial class GestionarProductosViewModel : ViewModelBase
             foreach (var producto in resultados)
                 Productos.Add(producto);
         }
+        catch (System.Exception ex)
+        {
+            await _notification.ShowErrorAsync("Error al buscar productos: " + ex.Message);
+        }
         finally
         {
             IsBusy = false;
         }
     }
 
+    private bool PuedeBuscar() => !IsBusy;
+
     [RelayCommand(CanExecute = nameof(HaySeleccion))]
-    private void Editar()
+    private async Task EditarAsync()
     {
         var editarVm = new EditarProductoViewModel(
             _mediator,
@@ -97,15 +112,17 @@ public partial class GestionarProductosViewModel : ViewModelBase
             ProductoSeleccionado!.Id,
             ProductoSeleccionado!.Tipo);
 
-        _navigation.NavigateTo(editarVm);
+        await _navigation.NavigateToAsync(editarVm);
     }
 
     [RelayCommand(CanExecute = nameof(HaySeleccion))]
     private async Task EliminarAsync()
     {
+        if (IsBusy) return;
+
         var confirmar = await _confirmation.ConfirmAsync(
             $"¿Desea eliminar '{ProductoSeleccionado!.Nombre}'?");
-        if (!confirmar) return;
+        if (!confirmar || IsBusy) return;
 
         try
         {
@@ -133,7 +150,7 @@ public partial class GestionarProductosViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private void Volver() => _navigation.NavigateToMenu();
+    private Task VolverAsync() => _navigation.NavigateToMenuAsync();
 
-    private bool HaySeleccion() => ProductoSeleccionado is not null;
+    private bool HaySeleccion() => ProductoSeleccionado is not null && !IsBusy;
 }

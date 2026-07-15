@@ -46,12 +46,22 @@
                                   DisplayMemberBinding="{Binding Nombre}"
                                   PlaceholderText="Tipo de producto"/>
 
-                        <Button Grid.Column="4"
-                                Command="{Binding CargarCommand}"
-                                Theme="{StaticResource BrandButton}"
-                                Content="Buscar"/>
+                        <StackPanel Grid.Column="4" Orientation="Horizontal" Spacing="8">
+                            <Button Command="{Binding CargarCommand}"
+                                    Theme="{StaticResource BrandButton}"
+                                    Content="Buscar"/>
+                            <Button Command="{Binding AlternarStockGlobalCommand}"
+                                    Content="Alternar todo el stock"
+                                    AutomationProperties.Name="Alternar visibilidad de todo el stock"/>
+                        </StackPanel>
                     </Grid>
                 </StackPanel>
+
+                <TextBlock Grid.Row="1"
+                           Text="{Binding MensajeError}"
+                           Foreground="{DynamicResource TeejoshErrorTextBrush}"
+                           IsVisible="{Binding MensajeError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                           Margin="24,0"/>
 
                 <!-- DataGrid -->
                 <!-- CAMBIO: AutoGenerateColumns="False" para controlar columnas manualmente -->
@@ -63,25 +73,20 @@
                           Margin="24,0,24,24">
                     <DataGrid.Columns>
 
-                        <!-- NUEVA columna de imagen -->
-                        <DataGridTemplateColumn Header="Imagen" Width="70" IsReadOnly="True">
+                        <DataGridTemplateColumn Header="Nombre" Width="2*" IsReadOnly="True">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
-                                    <Panel Width="50" Height="50" Margin="4">
-                                        <!-- Imagen real si existe -->
-                                        <Image Source="{Binding ImagePath, Converter={StaticResource PathToImage}}"
-                                               Width="50" Height="50"
-                                               Stretch="UniformToFill"
-                                               IsVisible="{Binding ImagePath, Converter={x:Static ObjectConverters.IsNotNull}}"/>
-                                        <!-- Placeholder si no existe -->
+                                    <Grid ColumnDefinitions="32,*" Margin="2" ToolTip.Tip="{Binding Nombre}">
+                                        <Image Source="{Binding ImageThumbnail, Converter={StaticResource BytesToImageConverter}}"
+                                               Width="28" Height="28" Stretch="Uniform"
+                                               IsVisible="{Binding ImageThumbnail, Converter={x:Static ObjectConverters.IsNotNull}}"/>
                                         <Border Background="{DynamicResource TeejoshBorderBrush}" CornerRadius="4"
-                                                Width="50" Height="50"
-                                                IsVisible="{Binding ImagePath, Converter={x:Static ObjectConverters.IsNull}}">
-                                            <TextBlock Text="🖼" FontSize="20"
-                                                       HorizontalAlignment="Center"
-                                                       VerticalAlignment="Center"/>
+                                                Width="28" Height="28"
+                                                IsVisible="{Binding ImageThumbnail, Converter={x:Static ObjectConverters.IsNull}}">
+                                            <TextBlock Text="□" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                         </Border>
-                                    </Panel>
+                                        <TextBlock Grid.Column="1" Text="{Binding Nombre}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+                                    </Grid>
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
@@ -90,15 +95,20 @@
                         <DataGridTextColumn Header="ID"
                                             Binding="{Binding Id}"
                                             Width="60"/>
-                        <DataGridTextColumn Header="Nombre"
-                                            Binding="{Binding Nombre}"
-                                            Width="2*"/>
                         <DataGridTextColumn Header="Precio"
-                                            Binding="{Binding Precio, StringFormat=\{0:C\}}"
+                                            Binding="{Binding Precio, Converter={StaticResource SolesConverter}}"
                                             Width="100"/>
-                        <DataGridTextColumn Header="Stock"
-                                            Binding="{Binding Unidades}"
-                                            Width="80"/>
+                        <DataGridTemplateColumn Header="Stock" Width="110" IsReadOnly="True">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Button Content="{Binding StockTexto}"
+                                            Command="{Binding $parent[UserControl].DataContext.AlternarStockFilaCommand}"
+                                            CommandParameter="{Binding}"
+                                            AutomationProperties.Name="Alternar visibilidad del stock de esta fila"
+                                            HorizontalAlignment="Stretch"/>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
                         <DataGridTextColumn Header="Tipo"
                                             Binding="{Binding Tipo}"
                                             Width="120"/>

@@ -95,7 +95,7 @@ public class ObtenerProductosPorIdQueryHandlerTests
         dto.Nombre.Should().Be("Monopoly");
         dto.Precio.Should().Be(49.99m);
         dto.Unidades.Should().Be(12);
-        dto.ImagePath.Should().Be("imgs/monopoly.jpg");
+        dto.TieneImagen.Should().BeTrue();
     }
 
     [Fact]

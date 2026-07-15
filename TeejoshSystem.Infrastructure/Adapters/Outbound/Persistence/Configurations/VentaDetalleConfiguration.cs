@@ -28,6 +28,12 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Configurati
                 .HasMaxLength(100)
                 .IsRequired();
 
+            builder.Property(d => d.Tipo)
+                .HasColumnName("product_type")
+                .HasConversion<string>()
+                .HasMaxLength(20)
+                .IsRequired();
+
             builder.Property(d => d.Cantidad)
                 .HasColumnName("quantity")
                 .IsRequired();

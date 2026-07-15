@@ -66,10 +66,12 @@ public partial class App : Avalonia.Application
                 services.AddMediatR(cfg =>
                     cfg.RegisterServicesFromAssembly(
                         typeof(TeejoshSystem.Application.Common.Result).Assembly));
+                services.AddSingleton(TimeProvider.System);
 
                 // UI Services
                 services.AddSingleton<INotificationService, NotificationService>();
                 services.AddSingleton<IConfirmationService, ConfirmationService>();
+                services.AddSingleton<IImagePreviewService, ImagePreviewService>();
                 services.AddSingleton<IThemePreferenceService, ThemePreferenceService>();
                 services.AddSingleton<NavigationService>();
                 services.AddSingleton<INavigationService>(sp =>
@@ -110,11 +112,8 @@ public partial class App : Avalonia.Application
             }
         };
 
-        _ = Task.Run(async () =>
-        {
-            await mainVm.InitializeAsync();
-            Dispatcher.UIThread.Post(() => RequestedThemeVariant = mainVm.ThemeVariant);
-        });
+        mainVm.InitializeAsync().GetAwaiter().GetResult();
+        RequestedThemeVariant = mainVm.ThemeVariant;
 
         navService.Configure(
             vm => mainVm.CurrentView = vm,
@@ -125,8 +124,8 @@ public partial class App : Avalonia.Application
         var sesionContext = _host.Services.GetRequiredService<SesionContext>();
         var loginVm = _host.Services.GetRequiredService<LoginViewModel>();
 
-        loginVm.OnLoginExitoso = () =>
-            mainVm.CurrentView = _host.Services.GetRequiredService<MenuPrincipalViewModel>();
+        loginVm.OnLoginExitoso = () => navService.NavigateToAsync(
+            _host.Services.GetRequiredService<MenuPrincipalViewModel>());
 
         mainVm.CurrentView = sesionContext.EstaAutenticado
             ? _host.Services.GetRequiredService<MenuPrincipalViewModel>()

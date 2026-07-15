@@ -1,35 +1,41 @@
 @page "/"
 @attribute [Authorize(Roles = "Administrador,Operador")]
-@using TeejoshSystem.Application.Ports.Inbound.Productos.Queries.BuscarProductos
-@using TeejoshSystem.Application.Ports.Inbound.Ventas.Queries.ObtenerVentas
+@using TeejoshSystem.Application.Common
+@using TeejoshSystem.Application.Ports.Inbound.Dashboard.ObtenerDashboard
 @inject IMediator Mediator
+@inject IJSRuntime JS
 
-<section class="page-header">
-    <p class="eyebrow">Resumen operativo</p>
-    <h1>Dashboard</h1>
-    <p>Metricas rapidas de inventario y ventas cargadas desde Application.</p>
-</section>
+<PageHeader Title="Dashboard" Eyebrow="Resumen operativo" />
 
-<section class="metric-grid" aria-label="Metricas principales">
-    <article class="metric-card"><span>Productos</span><strong>@_productos</strong></article>
-    <article class="metric-card"><span>Sin stock</span><strong>@_sinStock</strong></article>
-    <article class="metric-card"><span>Ventas hoy</span><strong>@_ventasHoy</strong></article>
-    <article class="metric-card"><span>Ingresos hoy</span><strong>@_ingresosHoy.ToString("C")</strong></article>
+<form class="toolbar dashboard-filters" @onsubmit="LoadAsync" @onsubmit:preventDefault="true">
+    <div class="field"><label for="from">Desde</label><input id="from" class="input" type="date" @bind="_from" /></div>
+    <div class="field"><label for="to">Hasta</label><input id="to" class="input" type="date" @bind="_to" /></div>
+    <div class="field"><label for="criterion">Criterio</label><select id="criterion" class="input" @bind="_criterion"><option value="Ingresos">Ingresos</option><option value="UnidadesVendidas">Unidades vendidas</option></select></div>
+    <CustomButton Type="submit" IsBusy="_busy">Actualizar</CustomButton>
+</form>
+
+@if (_error is not null) { <p class="field-error" role="alert">@_error</p> }
+@if (_dashboard is not null) {
+<section class="metric-grid" aria-label="Métricas principales">
+    <article class="metric-card"><span>Productos</span><strong>@_dashboard.Productos</strong></article>
+    <article class="metric-card"><span>Sin stock</span><strong>@_dashboard.ProductosSinStock</strong></article>
+    <article class="metric-card"><span>Ventas hoy</span><strong>@_dashboard.VentasHoy</strong></article>
+    <article class="metric-card"><span>Ingresos hoy</span><strong>@SolesFormatter.Format(_dashboard.IngresosHoy)</strong></article>
 </section>
+<section class="dashboard-grid">
+    <div class="table-shell"><h2>Top 10 productos</h2>@if (_dashboard.ProductosTop.Count == 0) { <p>No hay ventas en el rango.</p> } else { <table class="data-table"><thead><tr><th>Producto</th><th>Ingresos</th><th>Unidades</th></tr></thead><tbody>@foreach (var item in _dashboard.ProductosTop) { <tr><td title="@item.NombreHistorico">@item.NombreHistorico</td><td>@SolesFormatter.Format(item.Ingresos)</td><td>@item.UnidadesVendidas</td></tr> }</tbody></table> }</div>
+    <AccessibleLineChart Items="_dashboard.IngresosDiarios" />
+</section> }
+<LoadingOverlay IsVisible="_busy" Message="Cargando Dashboard..." />
 
 @code {
-    private int _productos;
-    private int _sinStock;
-    private int _ventasHoy;
-    private decimal _ingresosHoy;
-
-    protected override async Task OnInitializedAsync()
-    {
-        var productos = await Mediator.Send(new BuscarProductosQuery(null, null));
-        var ventas = await Mediator.Send(new ObtenerVentasQuery(DateTime.Today, DateTime.Today));
-        _productos = productos.Count;
-        _sinStock = productos.Count(p => p.Unidades <= 0);
-        _ventasHoy = ventas.Count;
-        _ingresosHoy = ventas.Sum(v => v.Total);
-    }
+    private DateTime _from = DateTime.Today.AddMonths(-3);
+    private DateTime _to = DateTime.Today;
+    private CriterioRankingProducto _criterion = CriterioRankingProducto.Ingresos;
+    private DashboardDto? _dashboard; private bool _busy = true; private string? _error;
+    protected override async Task OnAfterRenderAsync(bool firstRender) { if (!firstRender) return; var saved = await JS.InvokeAsync<DashboardPreference?>("teejoshInterop.getDashboardPreference"); if (saved is not null && IsValid(saved.From, saved.To)) { _from = DateTime.Parse(saved.From); _to = DateTime.Parse(saved.To); if (Enum.TryParse<CriterioRankingProducto>(saved.Criterion, out var criterion)) _criterion = criterion; } await LoadAsync(); StateHasChanged(); }
+    private async Task LoadAsync() { if (_from.Date > _to.Date) ResetRange(); var from = DateOnly.FromDateTime(_from); var to = DateOnly.FromDateTime(_to); try { _busy = true; _error = null; var result = await Mediator.Send(new ObtenerDashboardQuery(from, to, _criterion)); if (result.IsSuccess) { _dashboard = result.Value; await JS.InvokeVoidAsync("teejoshInterop.setDashboardPreference", new DashboardPreference(_from.ToString("yyyy-MM-dd"), _to.ToString("yyyy-MM-dd"), _criterion.ToString())); } else _error = result.Error; } catch { _error = "No se pudo cargar el Dashboard."; } finally { _busy = false; } }
+    private static bool IsValid(string? from, string? to) => DateOnly.TryParse(from, out var f) && DateOnly.TryParse(to, out var t) && f <= t;
+    private void ResetRange() { _from = DateTime.Today.AddMonths(-3); _to = DateTime.Today; }
+    public sealed record DashboardPreference(string From, string To, string Criterion);
 }

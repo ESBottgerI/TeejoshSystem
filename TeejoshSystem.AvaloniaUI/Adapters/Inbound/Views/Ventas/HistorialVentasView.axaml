@@ -65,7 +65,7 @@
 											Binding="{Binding Detalles.Count}"
 											Width="90"/>
 						<DataGridTextColumn Header="Total"
-											Binding="{Binding Total, StringFormat=\{0:C\}}"
+											Binding="{Binding Total, Converter={StaticResource SolesConverter}}"
 											Width="120"/>
 					</DataGrid.Columns>
 				</DataGrid>
@@ -82,17 +82,15 @@
 								  IsReadOnly="True"
 								  MaxHeight="180">
 							<DataGrid.Columns>
-								<DataGridTextColumn Header="Producto"
-													Binding="{Binding NombreProducto}"
-													Width="2*"/>
+								<DataGridTemplateColumn Header="Producto" Width="2*"><DataGridTemplateColumn.CellTemplate><DataTemplate><TextBlock Text="{Binding NombreProducto}" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding NombreProducto}"/></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
 								<DataGridTextColumn Header="Cant."
 													Binding="{Binding Cantidad}"
 													Width="60"/>
 								<DataGridTextColumn Header="P.Unit."
-													Binding="{Binding PrecioUnitario, StringFormat=\{0:C\}}"
+													Binding="{Binding PrecioUnitario, Converter={StaticResource SolesConverter}}"
 													Width="100"/>
 								<DataGridTextColumn Header="Subtotal"
-													Binding="{Binding Subtotal, StringFormat=\{0:C\}}"
+													Binding="{Binding Subtotal, Converter={StaticResource SolesConverter}}"
 													Width="100"/>
 							</DataGrid.Columns>
 						</DataGrid>

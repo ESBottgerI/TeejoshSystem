@@ -11,11 +11,15 @@
     </div>
     <div class="table-shell">
         <table class="data-table">
-            <thead><tr><th>Fecha</th><th>Items</th><th>Total</th></tr></thead>
+            <thead><tr><th>Fecha</th><th>Items</th><th>Total</th><th>Detalle</th></tr></thead>
             <tbody>
                 @foreach (var venta in Ventas)
                 {
-                    <tr><td>@venta.Fecha.ToString("g")</td><td>@venta.Detalles.Count</td><td>@venta.Total.ToString("C")</td></tr>
+                    <tr><td data-label="Fecha">@venta.Fecha.ToString("g")</td><td data-label="Items">@venta.Detalles.Count</td><td data-label="Total">@SolesFormatter.Format(venta.Total)</td><td data-label="Detalle"><button class="link-button" @onclick="() => Toggle(venta.Id)">@(_expanded.Contains(venta.Id) ? "Ocultar" : "Ver")</button></td></tr>
+                    @if (_expanded.Contains(venta.Id))
+                    {
+                        <tr class="detail-row"><td colspan="4"><ul class="sale-detail-list">@foreach (var detail in venta.Detalles) { <li><span class="product-name" title="@detail.NombreProducto">@detail.NombreProducto</span><span>@detail.Cantidad × @SolesFormatter.Format(detail.PrecioUnitario)</span><strong>@SolesFormatter.Format(detail.Subtotal)</strong></li> }</ul></td></tr>
+                    }
                 }
             </tbody>
         </table>
@@ -23,17 +27,22 @@
 </section>
 
 <LoadingOverlay IsVisible="_isBusy" Message="Cargando historial..." />
+@if (_error is not null) { <p class="field-error" role="alert">@_error</p> }
 
 @code {
     private DateTime? Desde { get; set; } = DateTime.Today.AddDays(-7);
     private DateTime? Hasta { get; set; } = DateTime.Today;
     private IReadOnlyList<VentaDto> Ventas { get; set; } = Array.Empty<VentaDto>();
     private bool _isBusy;
+    private string? _error;
+    private readonly HashSet<int> _expanded = new();
+    private void Toggle(int id) { if (!_expanded.Add(id)) _expanded.Remove(id); }
     protected override async Task OnInitializedAsync() => await CargarAsync();
     private async Task CargarAsync()
     {
-        _isBusy = true;
-        Ventas = await Mediator.Send(new ObtenerVentasQuery(Desde, Hasta));
-        _isBusy = false;
+        if (Desde.HasValue && Hasta.HasValue && Desde.Value.Date > Hasta.Value.Date) { _error = "El rango de fechas está invertido."; return; }
+        try { _isBusy = true; _error = null; Ventas = await Mediator.Send(new ObtenerVentasQuery(Desde, Hasta)); }
+        catch { _error = "No se pudo cargar el historial."; }
+        finally { _isBusy = false; }
     }
 }

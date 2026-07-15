@@ -24,12 +24,7 @@ public class BuscarProductosQueryHandlerTests
     {
         _repo = Substitute.For<IProductoRepository>();
 
-        var imageStorage = Substitute.For<IImageStorageService>();
-
-        _handler = new BuscarProductosQueryHandler(
-            _repo,
-            imageStorage
-        );
+        _handler = new BuscarProductosQueryHandler(_repo);
     }
 
     [Fact]

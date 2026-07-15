@@ -1,15 +1,37 @@
 ﻿<aside class="side-nav" aria-label="Navegacion principal">
     <a class="brand" href="/" aria-label="TeejoshSystem inicio">
         <span class="brand-mark" aria-hidden="true">T</span>
-        <span>TeejoshSystem</span>
+        <span class="brand-copy"><span>TeejoshSystem</span><small>@Version</small></span>
     </a>
 
     <nav>
         <NavLink class="nav-link" href="/" Match="NavLinkMatch.All">Dashboard</NavLink>
         <NavLink class="nav-link" href="/inventario">Inventario</NavLink>
-        <NavLink class="nav-link" href="/productos">Productos</NavLink>
-        <NavLink class="nav-link" href="/productos/crear">Crear producto</NavLink>
+        <AuthorizeView Roles="Administrador">
+            <NavLink class="nav-link" href="/productos">Gestionar productos</NavLink>
+            <NavLink class="nav-link" href="/productos/crear">Crear producto</NavLink>
+        </AuthorizeView>
         <NavLink class="nav-link" href="/ventas">Ventas</NavLink>
+        <NavLink class="nav-link" href="/ventas/historial">Historial de ventas</NavLink>
+        <NavLink class="nav-link" href="/cuenta/cambiar-contrasena">Cambiar contraseña</NavLink>
+        <AuthorizeView Roles="Administrador">
+            <NavLink class="nav-link" href="/admin/usuarios">Gestionar usuarios</NavLink>
+            <NavLink class="nav-link" href="/admin/catalogos/sincronizar">Sincronizar catálogos</NavLink>
+        </AuthorizeView>
     </nav>
 </aside>
+
+@code {
+    private static string Version
+    {
+        get
+        {
+            var assembly = System.Reflection.Assembly.GetEntryAssembly();
+            var informational = assembly?.GetCustomAttributes(typeof(System.Reflection.AssemblyInformationalVersionAttribute), false)
+                .OfType<System.Reflection.AssemblyInformationalVersionAttribute>()
+                .FirstOrDefault()?.InformationalVersion;
+            return $"v{(informational?.Split('+')[0] ?? assembly?.GetName().Version?.ToString(3) ?? "0.0.0")}";
+        }
+    }
+}
 

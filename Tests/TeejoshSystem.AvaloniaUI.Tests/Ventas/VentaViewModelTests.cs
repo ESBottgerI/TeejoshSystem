@@ -273,7 +273,7 @@ public class RegistrarVentaViewModelTests
 
         await vm.ConfirmarVentaCommand.ExecuteAsync(null);
 
-        _navigation.Received(1).NavigateToMenu();
+        await _navigation.Received(1).NavigateToMenuAsync(Arg.Any<CancellationToken>());
     }
 
     [Fact]

@@ -1,18 +1,15 @@
 ﻿using MediatR;
 
-using TeejoshSystem.Domain.Ports.Outbound;
 using TeejoshSystem.Domain.Ports.Outbound.Repositories;
+using TeejoshSystem.Domain.Ports.Outbound;
 
 namespace TeejoshSystem.Application.Ports.Inbound.Productos.Queries.BuscarProductos
 {
     public class BuscarProductosQueryHandler : IRequestHandler<BuscarProductosQuery, List<ProductoBusquedaDto>>
     {
         private readonly IProductoRepository _repository;
-        private readonly IImageStorageService _imageStorage;  // NUEVO
-
-        public BuscarProductosQueryHandler(
-            IProductoRepository repository,
-            IImageStorageService imageStorage)  // NUEVO
+        private readonly IImageStorageService? _imageStorage;
+        public BuscarProductosQueryHandler(IProductoRepository repository, IImageStorageService? imageStorage = null)
         {
             _repository = repository;
             _imageStorage = imageStorage;
@@ -25,16 +22,23 @@ namespace TeejoshSystem.Application.Ports.Inbound.Productos.Queries.BuscarProduc
             var resultados = await _repository.SearchWithDetalleAsync(
                 request.Nombre, request.Tipo);
 
-            return resultados.Select(p => new ProductoBusquedaDto
+            var dtos = new List<ProductoBusquedaDto>();
+            foreach (var p in resultados)
             {
+                var thumbnail = _imageStorage is null ? null : await _imageStorage.ReadImageAsync(p.ImagePath, true, cancellationToken);
+                dtos.Add(new ProductoBusquedaDto
+                {
                 Id = p.Id,
                 Tipo = p.Tipo,
                 Nombre = p.Nombre,
                 Precio = p.Precio,
                 Unidades = p.Unidades,
                 DetalleResumen = p.DetalleResumen,
-                ImagePath = _imageStorage.GetFullPath(p.ImagePath)  // NUEVO - ruta absoluta lista para la UI
-            }).ToList();
+                TieneImagen = !string.IsNullOrWhiteSpace(p.ImagePath),
+                ImageThumbnail = thumbnail?.Bytes
+                });
+            }
+            return dtos;
         }
     }
 }

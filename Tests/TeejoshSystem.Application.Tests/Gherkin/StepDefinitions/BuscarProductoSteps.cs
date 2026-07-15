@@ -14,20 +14,13 @@ public class BuscarProductoSteps
     private readonly IProductoRepository _repository;
     private readonly BuscarProductosQueryHandler _handler;
 
-    private readonly IImageStorageService _imageStorageMock;
-
     private List<ProductoBusquedaDto> _resultado = new();
 
     public BuscarProductoSteps()
     {
         _repository = Substitute.For<IProductoRepository>();
         
-        _imageStorageMock = Substitute.For<IImageStorageService>();
-
-        _handler = new BuscarProductosQueryHandler(
-            _repository,
-            _imageStorageMock
-        );
+        _handler = new BuscarProductosQueryHandler(_repository);
     }
 
     [Given("existen productos registrados")]

@@ -5,11 +5,7 @@
 @inject IMediator Mediator
 @inject NavigationManager Navigation
 
-<section class="page-header">
-    <p class="eyebrow">Detalle de producto</p>
-    <h1>@_producto?.Nombre ?? "Producto"</h1>
-    <a class="btn secondary" href="/productos">Volver</a>
-</section>
+<PageHeader Title="@(_producto?.Nombre ?? "Producto")" Eyebrow="Detalle de producto"><Actions><a class="btn secondary" href="/inventario">Volver</a></Actions></PageHeader>
 
 @if (_producto is null && _error is null)
 {
@@ -27,15 +23,15 @@ else
     <div class="metric-grid" style="margin-bottom:var(--tj-space-4)">
         <article class="metric-card"><span>Id</span><strong>@_producto!.Id</strong></article>
         <article class="metric-card"><span>Tipo</span><strong>@_producto.Tipo</strong></article>
-        <article class="metric-card"><span>Precio</span><strong>@_producto.Precio.ToString("C")</strong></article>
+        <article class="metric-card"><span>Precio</span><strong>@SolesFormatter.Format(_producto.Precio)</strong></article>
         <article class="metric-card"><span>Stock</span><strong>@_producto.Unidades</strong></article>
     </div>
 
     <div class="form-section">
         <div class="field"><label>Nombre</label><span>@_producto.Nombre</span></div>
-        @if (!string.IsNullOrWhiteSpace(_producto.ImagePath))
+        @if (_producto.TieneImagen)
         {
-            <div class="field"><label>Imagen</label><span>@_producto.ImagePath</span></div>
+            <div class="field"><label>Imagen</label><ProductIdentityCell ProductId="_producto.Id" Name="_producto.Nombre" HasImage="true" /></div>
         }
     </div>
 

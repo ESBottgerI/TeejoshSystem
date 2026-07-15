@@ -1,9 +1,10 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MediatR;
 
 using System;
 using System.Collections.ObjectModel;
+using System.Threading;
 using System.Threading.Tasks;
 
 using Avalonia.Controls.ApplicationLifetimes;
@@ -21,7 +22,7 @@ using TeejoshSystem.Domain.Ports.Outbound;
 
 namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Productos;
 
-public partial class CrearProductoViewModel : ValidatableViewModel
+public partial class CrearProductoViewModel : ValidatableViewModel, ILoadable
 {
     private readonly IMediator _mediator;
     private readonly INotificationService _notification;
@@ -165,18 +166,31 @@ public partial class CrearProductoViewModel : ValidatableViewModel
         {
             if (e.PropertyName == nameof(IsBusy) ||
                 e.PropertyName == nameof(CatalogosCargados))
+            {
                 GuardarCommand.NotifyCanExecuteChanged();
+                ActualizarFranquiciaTcgCommand.NotifyCanExecuteChanged();
+                UsarImagenExpansionCommand.NotifyCanExecuteChanged();
+            }
         };
 
-        _ = CargarCatalogosAsync();
     }
 
-    private async Task CargarCatalogosAsync()
+    public Task LoadAsync(CancellationToken cancellationToken = default) => CargarCatalogosAsync(cancellationToken);
+
+    private async Task CargarCatalogosAsync(CancellationToken cancellationToken = default)
     {
+        if (IsBusy) return;
+
         try
         {
             IsBusy = true;
-            var catalogos = await _mediator.Send(new ObtenerCatalogosQuery());
+            CatalogosCargados = false;
+            var catalogos = await _mediator.Send(new ObtenerCatalogosQuery(), cancellationToken);
+
+            CategoriasHotWheels.Clear();
+            SubtiposFunko.Clear();
+            CaracteristicasFunko.Clear();
+            FranquiciasTcg.Clear();
 
             foreach (var cat in catalogos.CategoriasHotWheels)
                 CategoriasHotWheels.Add(cat);
@@ -210,21 +224,26 @@ public partial class CrearProductoViewModel : ValidatableViewModel
 
     partial void OnTcgFranquiciaSeleccionadaChanged(CatalogoItemDto? value)
     {
-        if (value is null)
-        {
-            TcgExpansionesDisponibles.Clear();
-            TcgPacksDisponibles.Clear();
-            return;
-        }
-        _ = CargarExpansionesYPacksAsync(value.Id);
+        TcgExpansionesDisponibles.Clear();
+        TcgPacksDisponibles.Clear();
+        TcgExpansionSeleccionada = null;
+        TcgPackSeleccionado = null;
+        ActualizarFranquiciaTcgCommand.NotifyCanExecuteChanged();
     }
 
-    // NUEVO — al seleccionar expansión, asignar imagen automáticamente
     partial void OnTcgExpansionSeleccionadaChanged(CatalogoItemDto? value)
-    {
-        if (value is null) return;
-        _ = AsignarImagenDesdeExpansionAsync(value.Id);
-    }
+        => UsarImagenExpansionCommand.NotifyCanExecuteChanged();
+
+    [RelayCommand(CanExecute = nameof(PuedeActualizarFranquiciaTcg))]
+    private Task ActualizarFranquiciaTcgAsync() =>
+        CargarExpansionesYPacksAsync(TcgFranquiciaSeleccionada!.Id);
+
+    [RelayCommand(CanExecute = nameof(PuedeUsarImagenExpansion))]
+    private Task UsarImagenExpansionAsync() =>
+        AsignarImagenDesdeExpansionAsync(TcgExpansionSeleccionada!.Id);
+
+    private bool PuedeActualizarFranquiciaTcg() => TcgFranquiciaSeleccionada is not null && !IsBusy;
+    private bool PuedeUsarImagenExpansion() => TcgExpansionSeleccionada is not null && !IsBusy;
 
     private async Task AsignarImagenDesdeExpansionAsync(int expansionId)
     {
@@ -299,12 +318,16 @@ public partial class CrearProductoViewModel : ValidatableViewModel
             if (result.IsSuccess)
             {
                 await _notification.ShowSuccessAsync("Producto creado exitosamente.");
-                _navigation.NavigateToMenu();
+                await _navigation.NavigateToMenuAsync();
             }
             else
             {
                 await _notification.ShowErrorAsync(result.Error ?? "Error al crear producto.");
             }
+        }
+        catch (Exception ex)
+        {
+            await _notification.ShowErrorAsync("Error al crear producto: " + ex.Message);
         }
         finally
         {
@@ -348,7 +371,7 @@ public partial class CrearProductoViewModel : ValidatableViewModel
     };
 
     [RelayCommand]
-    private void Volver() => _navigation.NavigateToMenu();
+    private Task VolverAsync() => _navigation.NavigateToMenuAsync();
 
     private bool CanGuardar() => !HasErrors && !IsBusy && CatalogosCargados;
 
@@ -357,6 +380,8 @@ public partial class CrearProductoViewModel : ValidatableViewModel
         ClearErrors(nameof(Nombre));
         if (string.IsNullOrWhiteSpace(value))
             AddError(nameof(Nombre), "El nombre es obligatorio.");
+        else if (value.Trim().Length > 100)
+            AddError(nameof(Nombre), "El nombre no puede exceder 100 caracteres.");
     }
 
     partial void OnNombreChanged(string? value)
@@ -365,8 +390,8 @@ public partial class CrearProductoViewModel : ValidatableViewModel
     private void ValidarPrecio(decimal value)
     {
         ClearErrors(nameof(Precio));
-        if (value == 0m)
-            AddError(nameof(Precio), "El precio es obligatorio.");
+        if (value < 0m)
+            AddError(nameof(Precio), "El precio no puede ser negativo.");
     }
 
     partial void OnPrecioChanged(decimal value)
@@ -375,8 +400,8 @@ public partial class CrearProductoViewModel : ValidatableViewModel
     private void ValidarUnidades(int value)
     {
         ClearErrors(nameof(Unidades));
-        if (value == 0)
-            AddError(nameof(Unidades), "Las unidades son obligatorias.");
+        if (value < 0)
+            AddError(nameof(Unidades), "Las unidades no pueden ser negativas.");
     }
 
     partial void OnUnidadesChanged(int value)

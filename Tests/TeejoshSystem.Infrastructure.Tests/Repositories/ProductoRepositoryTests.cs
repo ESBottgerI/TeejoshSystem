@@ -60,6 +60,26 @@ public class ProductoRepositoryTests : IClassFixture<DatabaseFixture>
         enBd.Descripcion.Should().BeOfType<FunkoDetalle>();
     }
 
+    [Fact]
+    public async Task AddHotWheelsDetalleAsync_DespuesDelProducto_DebePersistirDetalle()
+    {
+        var producto = new Producto(
+            TipoProducto.HotWheels,
+            new NombreProducto("Hot Wheels en dos pasos"),
+            new Precio(20m),
+            new Unidades(5));
+        var productoId = await _repo.AddAsync(producto);
+        var detalle = new HotWheelsDetalle("Modelo Test", 2024, "Serie Test", 1);
+        detalle.AsignarProductoId(productoId);
+
+        await _repo.AddHotWheelsDetalleAsync(detalle);
+
+        _fixture.Context.ChangeTracker.Clear();
+        var enBd = await _repo.GetByIdWithDetalleAsync(productoId);
+        enBd.Should().NotBeNull();
+        enBd!.Descripcion.Should().BeOfType<HotWheelsDetalle>();
+    }
+
     // ── GetAllAsync ───────────────────────────────────────────────────────────
 
     [Fact]

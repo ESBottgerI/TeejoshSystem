@@ -22,7 +22,7 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Configurati
             {
                 p.Property(x => x.Value)
                     .HasColumnName("name")
-                    .HasMaxLength(50)
+                    .HasMaxLength(100)
                     .IsRequired();
             });
 

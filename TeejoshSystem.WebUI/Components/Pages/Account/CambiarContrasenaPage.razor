@@ -1,0 +1,45 @@
+@page "/cuenta/cambiar-contrasena"
+@attribute [Authorize(Roles = "Administrador,Operador")]
+@using TeejoshSystem.Application.Common
+@using TeejoshSystem.Application.Ports.Inbound.Auth.Commands.CambiarPassword
+@inject IMediator Mediator
+@inject TeejoshSystem.WebUI.Infrastructure.Auth.BlazorSesionContext Session
+@inject BlazorNotificationService Notifications
+
+<PageHeader Title="Cambiar contraseña" Eyebrow="Cuenta" />
+
+<form class="form-grid form-centered" @onsubmit="SubmitAsync" @onsubmit:preventDefault="true">
+    <div class="field"><label for="current-password">Contraseña actual</label><input id="current-password" class="input" type="password" @bind="_current" disabled="@_busy" /></div>
+    <div class="field"><label for="new-password">Nueva contraseña</label><input id="new-password" class="input" type="password" @bind="_next" disabled="@_busy" /></div>
+    <div class="field"><label for="confirm-password">Confirmar contraseña</label><input id="confirm-password" class="input" type="password" @bind="_confirm" disabled="@_busy" /></div>
+    @if (!string.IsNullOrWhiteSpace(_validation)) { <p class="field-error" role="alert">@_validation</p> }
+    <ResultErrorDisplay Result="_result" />
+    <CustomButton Type="submit" IsBusy="_busy" BusyText="Actualizando">Actualizar contraseña</CustomButton>
+</form>
+
+@code {
+    private string _current = string.Empty;
+    private string _next = string.Empty;
+    private string _confirm = string.Empty;
+    private string? _validation;
+    private bool _busy;
+    private Result? _result;
+
+    private async Task SubmitAsync()
+    {
+        _validation = _next != _confirm ? "Las contraseñas nuevas no coinciden." : null;
+        if (_validation is not null || Session.SesionActual is null) return;
+        try
+        {
+            _busy = true;
+            _result = await Mediator.Send(new CambiarPasswordCommand(Session.SesionActual.UsuarioId, _current, _next));
+            if (_result.IsSuccess)
+            {
+                _current = _next = _confirm = string.Empty;
+                await Notifications.ShowSuccessAsync("Contraseña actualizada correctamente.");
+            }
+        }
+        catch { _result = Result.Failure("No se pudo actualizar la contraseña."); }
+        finally { _busy = false; }
+    }
+}

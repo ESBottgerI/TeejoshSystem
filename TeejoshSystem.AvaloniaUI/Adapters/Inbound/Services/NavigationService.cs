@@ -1,4 +1,6 @@
-﻿using System;
+using System.Threading;
+using System.Threading.Tasks;
+using System;
 
 namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.Services;
 
@@ -13,6 +15,18 @@ public class NavigationService : INavigationService
         _navigateToMenu = navigateToMenu;
     }
 
-    public void NavigateTo(object viewModel) => _navigate?.Invoke(viewModel);
-    public void NavigateToMenu() => _navigateToMenu?.Invoke();
+    public async Task NavigateToAsync(object viewModel, CancellationToken cancellationToken = default)
+    {
+        if (viewModel is ILoadable loadable)
+            await loadable.LoadAsync(cancellationToken).ConfigureAwait(true);
+
+        _navigate?.Invoke(viewModel);
+    }
+
+    public Task NavigateToMenuAsync(CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        _navigateToMenu?.Invoke();
+        return Task.CompletedTask;
+    }
 }

@@ -10,10 +10,7 @@
 @inject BlazorNotificationService Notifications
 @inject NavigationManager Navigation
 
-<section class="page-header">
-    <p class="eyebrow">Edicion de inventario</p>
-    <h1>Editar producto</h1>
-</section>
+<PageHeader Title="Editar producto" Eyebrow="Edición de inventario"><Actions><a class="btn secondary" href="/productos">Volver</a></Actions></PageHeader>
 
 @if (_guardarResult is not null && !_guardarResult.IsSuccess)
 {
@@ -35,9 +32,9 @@ else
 
         <div class="field">
             <label>Imagen actual</label>
-            @if (!string.IsNullOrWhiteSpace(_producto.ImagePath))
+            @if (_producto.TieneImagen)
             {
-                <span>@_producto.ImagePath</span>
+                <span>Imagen almacenada de forma segura</span>
             }
             else
             {
@@ -91,7 +88,13 @@ else
         var file = args.File;
         if (file is null) return;
 
-        var ext = Path.GetExtension(file.Name);
+        var ext = Path.GetExtension(file.Name).ToLowerInvariant();
+        if (ext is not (".png" or ".jpg" or ".jpeg" or ".gif" or ".webp"))
+        {
+            _guardarResult = Result.Failure("El formato de imagen no está permitido.");
+            return;
+        }
+        DeleteTemporaryImage();
         var tempPath = Path.Combine(Path.GetTempPath(), $"teejosh_upload_{Guid.NewGuid()}{ext}");
         await using var stream = file.OpenReadStream(maxAllowedSize: 5 * 1024 * 1024);
         await using var fs = new FileStream(tempPath, FileMode.Create);
@@ -105,17 +108,21 @@ else
         _nombreError = string.IsNullOrWhiteSpace(_nombre) ? "El nombre es obligatorio." : null;
         if (_nombreError is not null) return;
 
-        _isBusy = true;
-        _guardarResult = null;
-
-        var command = new ActualizarProductoCommand(Id, _nombre, _precio, _unidades, _tempImagePath);
-        _guardarResult = await Mediator.Send(command);
-        _isBusy = false;
-
-        if (_guardarResult.IsSuccess)
+        try
         {
-            await Notifications.ShowSuccessAsync("Producto actualizado correctamente.");
-            Navigation.NavigateTo("/productos");
+            _isBusy = true;
+            _guardarResult = null;
+            var command = new ActualizarProductoCommand(Id, _nombre, _precio, _unidades, _tempImagePath);
+            _guardarResult = await Mediator.Send(command);
+            if (_guardarResult.IsSuccess)
+            {
+                await Notifications.ShowSuccessAsync("Producto actualizado correctamente.");
+                Navigation.NavigateTo("/productos");
+            }
         }
+        catch { _guardarResult = Result.Failure("No se pudo actualizar el producto."); }
+        finally { _isBusy = false; DeleteTemporaryImage(); }
     }
+
+    private void DeleteTemporaryImage() { if (_tempImagePath is not null && File.Exists(_tempImagePath)) File.Delete(_tempImagePath); _tempImagePath = null; }
 }

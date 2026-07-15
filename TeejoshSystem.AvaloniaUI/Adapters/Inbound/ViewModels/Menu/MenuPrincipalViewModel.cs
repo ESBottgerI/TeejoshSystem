@@ -1,129 +1,134 @@
+using System;
+using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.Input;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
-using System;
 using TeejoshSystem.AvaloniaUI.Adapters.Inbound.Services;
 using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Admin;
 using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Auth;
+using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Catalogos;
 using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Common;
 using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Productos;
 using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Ventas;
-using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Catalogos;
 using TeejoshSystem.Domain.Enums;
 
-namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Menu
+namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Menu;
+
+public partial class MenuPrincipalViewModel : ViewModelBase
 {
-    public partial class MenuPrincipalViewModel : ViewModelBase
+    private readonly IServiceProvider _serviceProvider;
+    private readonly INavigationService _navigation;
+    private readonly SesionContext _sesionContext;
+    private readonly INotificationService _notification;
+    private readonly SincronizarCatalogosViewModel _sincronizarVm;
+
+    public MenuPrincipalViewModel(
+        IServiceProvider serviceProvider,
+        INavigationService navigation,
+        SesionContext sesionContext,
+        INotificationService notification,
+        SincronizarCatalogosViewModel sincronizarVm)
     {
-        private readonly IServiceProvider _serviceProvider;
-        private readonly INavigationService _navigation;
-        private readonly SesionContext _sesionContext;
-        private readonly INotificationService _notification;
-        private readonly SincronizarCatalogosViewModel _sincronizarVm;
+        _serviceProvider = serviceProvider;
+        _navigation = navigation;
+        _sesionContext = sesionContext;
+        _notification = notification;
+        _sincronizarVm = sincronizarVm;
+    }
 
-        public MenuPrincipalViewModel(
-            IServiceProvider serviceProvider,
-            INavigationService navigation,
-            SesionContext sesionContext,
-            INotificationService notification,
-            SincronizarCatalogosViewModel sincronizarVm)
+    public bool EsAdministrador =>
+        _sesionContext.SesionActual?.Rol == RolUsuario.Administrador;
+
+    public string UsuarioActivo =>
+        _sesionContext.SesionActual?.NombreUsuario ?? "—";
+
+    public string VersionApp
+    {
+        get
         {
-            _serviceProvider = serviceProvider;
-            _navigation = navigation;
-            _sesionContext = sesionContext;
-            _notification = notification;
-            _sincronizarVm = sincronizarVm;
+            var version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
+            return version != null ? $"v{version.ToString(3)}" : "v0.2.0";
         }
+    }
 
-        public bool EsAdministrador
-            => _sesionContext.SesionActual?.Rol == RolUsuario.Administrador;
+    [RelayCommand]
+    private Task VisualizarInventarioAsync()
+    {
+        var vm = new InventarioViewModel(
+            _serviceProvider.GetRequiredService<IMediator>(),
+            () => _navigation.NavigateToMenuAsync(),
+            _serviceProvider.GetRequiredService<IImagePreviewService>());
+        return _navigation.NavigateToAsync(vm);
+    }
 
-        public string UsuarioActivo =>
-            _sesionContext.SesionActual?.NombreUsuario ?? "—";
+    [RelayCommand]
+    private async Task ModificarProductoAsync()
+    {
+        if (!await AutorizarAdministradorAsync()) return;
+        await _navigation.NavigateToAsync(
+            _serviceProvider.GetRequiredService<GestionarProductosViewModel>());
+    }
 
-        public string VersionApp
-        {
-            get
-            {
-                var version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
-                return version != null ? $"v{version.ToString(3)}" : "v0.2.0";
-            }
-        }
+    [RelayCommand]
+    private async Task AnadirProductoAsync()
+    {
+        if (!await AutorizarAdministradorAsync()) return;
+        await _navigation.NavigateToAsync(
+            _serviceProvider.GetRequiredService<CrearProductoViewModel>());
+    }
 
-        [RelayCommand]
-        private void VisualizarInventario()
-        {
-            var vm = new InventarioViewModel(
-                _serviceProvider.GetRequiredService<IMediator>(),
-                _navigation.NavigateToMenu);
-            _navigation.NavigateTo(vm);
-        }
+    [RelayCommand]
+    private Task RegistrarVentaAsync()
+    {
+        var vm = new RegistrarVentaViewModel(
+            _serviceProvider.GetRequiredService<IMediator>(),
+            _serviceProvider.GetRequiredService<INotificationService>(),
+            _serviceProvider.GetRequiredService<IConfirmationService>(),
+            _navigation);
+        return _navigation.NavigateToAsync(vm);
+    }
 
-        [RelayCommand]
-        private void ModificarProducto()
-        {
-            var vm = _serviceProvider.GetRequiredService<GestionarProductosViewModel>();
-            _navigation.NavigateTo(vm);
-        }
+    [RelayCommand]
+    private Task VerHistorialVentasAsync()
+    {
+        var vm = new HistorialVentasViewModel(
+            _serviceProvider.GetRequiredService<IMediator>(),
+            _serviceProvider.GetRequiredService<INotificationService>(),
+            _navigation);
+        return _navigation.NavigateToAsync(vm);
+    }
 
-        [RelayCommand]
-        private void AnadirProducto()
-        {
-            var vm = _serviceProvider.GetRequiredService<CrearProductoViewModel>();
-            _navigation.NavigateTo(vm);
-        }
+    [RelayCommand]
+    private async Task IrAGestionarUsuariosAsync()
+    {
+        if (!await AutorizarAdministradorAsync()) return;
+        await _navigation.NavigateToAsync(
+            _serviceProvider.GetRequiredService<GestionarUsuariosViewModel>());
+    }
 
-        [RelayCommand]
-        private void RegistrarVenta()
-        {
-            var vm = new RegistrarVentaViewModel(
-                _serviceProvider.GetRequiredService<IMediator>(),
-                _serviceProvider.GetRequiredService<INotificationService>(),
-                _serviceProvider.GetRequiredService<IConfirmationService>(),
-                _navigation);
-            _navigation.NavigateTo(vm);
-        }
+    [RelayCommand]
+    private Task IrACambiarPasswordAsync() =>
+        _navigation.NavigateToAsync(
+            _serviceProvider.GetRequiredService<CambiarPasswordViewModel>());
 
-        [RelayCommand]
-        private void VerHistorialVentas()
-        {
-            var vm = new HistorialVentasViewModel(
-                _serviceProvider.GetRequiredService<IMediator>(),
-                _serviceProvider.GetRequiredService<INotificationService>(),
-                _navigation);
-            _navigation.NavigateTo(vm);
-        }
+    [RelayCommand]
+    private async Task CerrarSesionAsync()
+    {
+        _sesionContext.CerrarSesion();
+        var loginVm = _serviceProvider.GetRequiredService<LoginViewModel>();
+        loginVm.OnLoginExitoso = () => _navigation.NavigateToAsync(
+            _serviceProvider.GetRequiredService<MenuPrincipalViewModel>());
+        await _navigation.NavigateToAsync(loginVm);
+    }
 
-        [RelayCommand]
-        private void IrAGestionarUsuarios()
-        {
-            if (_sesionContext.SesionActual?.Rol != RolUsuario.Administrador)
-            {
-                _ = _notification.ShowErrorAsync("Acceso restringido a administradores.");
-                return;
-            }
-            _navigation.NavigateTo(_serviceProvider.GetRequiredService<GestionarUsuariosViewModel>());
-        }
+    [RelayCommand]
+    private Task SincronizarCatalogosAsync() =>
+        _navigation.NavigateToAsync(_sincronizarVm);
 
-        [RelayCommand]
-        private void IrACambiarPassword()
-            => _navigation.NavigateTo(_serviceProvider.GetRequiredService<CambiarPasswordViewModel>());
-
-        [RelayCommand]
-        private void CerrarSesion()
-        {
-            _sesionContext.CerrarSesion();
-
-            var loginVm = _serviceProvider.GetRequiredService<LoginViewModel>();
-
-            loginVm.OnLoginExitoso = () =>
-                _navigation.NavigateTo(_serviceProvider.GetRequiredService<MenuPrincipalViewModel>());
-
-            _navigation.NavigateTo(loginVm);
-        }
-
-        [RelayCommand]
-        private void SincronizarCatalogos() =>
-            _navigation.NavigateTo(_sincronizarVm);
+    private async Task<bool> AutorizarAdministradorAsync()
+    {
+        if (EsAdministrador) return true;
+        await _notification.ShowErrorAsync("Acceso restringido a administradores.");
+        return false;
     }
 }

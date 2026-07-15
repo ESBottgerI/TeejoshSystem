@@ -6,13 +6,12 @@
 @inject IMediator Mediator
 @inject CircuitStateStore StateStore
 @inject BlazorNotificationService Notifications
+@inject BlazorConfirmationService Confirmation
 
-<section class="page-header">
-    <p class="eyebrow">Punto de venta</p>
-    <h1>Ventas</h1>
-</section>
+<PageHeader Title="Ventas" Eyebrow="Punto de venta"><Actions><a class="btn secondary" href="/ventas/historial">Ver historial</a></Actions></PageHeader>
 
-<section class="split-view">
+<ResizableSalesSplit>
+  <Products>
     <div>
         <form class="toolbar" @onsubmit="BuscarAsync" @onsubmit:preventDefault="true">
             <input class="input" placeholder="Buscar producto" @bind="Nombre" aria-label="Buscar producto para venta" />
@@ -20,33 +19,37 @@
         </form>
         <div class="table-shell">
             <table class="data-table">
-                <thead><tr><th>Producto</th><th>Precio</th><th>Stock</th><th></th></tr></thead>
+                <thead><tr><th>Producto</th><th>Precio</th><th><span class="stock-heading">Stock <button class="icon-button" aria-label="Alternar cantidades de stock" @onclick="ToggleStock">@(_showStock ? "👁" : "◉")</button></span></th><th></th></tr></thead>
                 <tbody>
                     @foreach (var producto in Productos)
                     {
                         <tr>
-                            <td>@producto.Nombre</td>
-                            <td>@producto.Precio.ToString("C")</td>
-                            <td>@producto.Unidades</td>
-                            <td><button class="btn primary" disabled="@(producto.Unidades <= 0)" @onclick="() => Agregar(producto)">Agregar</button></td>
+                            <td data-label="Producto" class="product-name-cell"><ProductIdentityCell ProductId="producto.Id" Name="producto.Nombre" HasImage="producto.TieneImagen" /></td>
+                            <td data-label="Precio">@SolesFormatter.Format(producto.Precio)</td>
+                            <td data-label="Stock"><button class="link-button" @onclick="() => ToggleRow(producto.Id)">@StockText(producto)</button></td>
+                            <td data-label="Acción"><button class="btn primary" disabled="@(producto.Unidades <= 0)" @onclick="() => Agregar(producto)">Agregar</button></td>
                         </tr>
                     }
                 </tbody>
             </table>
         </div>
     </div>
-    <CarritoVenta OnConfirm="RegistrarAsync" />
-</section>
+  </Products>
+  <Cart><CarritoVenta OnConfirm="RegistrarAsync" /></Cart>
+</ResizableSalesSplit>
 
 <ResultErrorDisplay Result="_ventaResult" />
-<HistorialVentasTable @key="_historialKey" />
 
 @code {
     private string? Nombre { get; set; }
     private bool IsBusy { get; set; }
     private List<ProductoBusquedaDto> Productos { get; set; } = new();
     private Result<int>? _ventaResult;
-    private int _historialKey;
+    private bool _showStock = true;
+    private readonly HashSet<int> _revealedStock = new();
+    private void ToggleStock() { _showStock = !_showStock; _revealedStock.Clear(); }
+    private void ToggleRow(int id) { if (!_revealedStock.Add(id)) _revealedStock.Remove(id); }
+    private string StockText(ProductoBusquedaDto item) => _showStock || _revealedStock.Contains(item.Id) ? item.Unidades.ToString() : item.Unidades > 0 ? "Disponible" : "Sin stock";
 
     protected override async Task OnInitializedAsync() => await BuscarAsync();
 
@@ -63,6 +66,7 @@
     private async Task RegistrarAsync()
     {
         if (StateStore.CartItems.Count == 0) return;
+        if (!await Confirmation.ConfirmAsync($"¿Registrar la venta por {SolesFormatter.Format(StateStore.CartItems.Sum(i => i.Subtotal))}?", "Confirmar venta")) return;
 
         IsBusy = true;
         _ventaResult = null;
@@ -76,7 +80,6 @@
         if (result.IsSuccess)
         {
             StateStore.Clear();
-            _historialKey++;
             await Notifications.ShowSuccessAsync($"Venta registrada #{result.Value}.");
             await BuscarAsync();
         }

@@ -1,0 +1,5 @@
+@page "/ventas/historial"
+@attribute [Authorize(Roles = "Administrador,Operador")]
+
+<PageHeader Title="Historial de ventas" Eyebrow="Ventas" />
+<HistorialVentasTable />

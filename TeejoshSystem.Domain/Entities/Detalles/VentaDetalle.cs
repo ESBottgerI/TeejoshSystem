@@ -1,5 +1,7 @@
 ﻿
 
+using TeejoshSystem.Domain.Enums;
+
 namespace TeejoshSystem.Domain.Entities.Detalles
 {
     public class VentaDetalle
@@ -8,6 +10,7 @@ namespace TeejoshSystem.Domain.Entities.Detalles
         public int VentaId { get; private set; }
         public int ProductoId { get; private set; }
         public string NombreProducto { get; private set; } = null!;
+        public TipoProducto Tipo { get; private set; }
         public int Cantidad { get; private set; }
 
         // Precio capturado en el momento de la venta - inmutable
@@ -20,7 +23,8 @@ namespace TeejoshSystem.Domain.Entities.Detalles
             int productoId,
             string nombreProducto,
             int cantidad,
-            decimal precioUnitario)
+            decimal precioUnitario,
+            TipoProducto tipo = default)
         {
             if (cantidad <= 0)
                 throw new ArgumentException("La cantidad debe ser mayor a cero.");
@@ -31,6 +35,7 @@ namespace TeejoshSystem.Domain.Entities.Detalles
 
             ProductoId = productoId;
             NombreProducto = nombreProducto;
+            Tipo = tipo;
             Cantidad = cantidad;
             PrecioUnitario = precioUnitario;
         }

@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence;
+using TeejoshSystem.Migrations.Sqlite;
 
 namespace TeejoshSystem.Infrastructure.Tests.Fixtures;
 
@@ -25,7 +26,8 @@ public sealed class DatabaseFixture : IDisposable
             $"teejosh_test_{Guid.NewGuid():N}.db");
 
         var options = new DbContextOptionsBuilder<InventarioDbContext>()
-            .UseSqlite($"Data Source={_dbPath}")
+            .UseSqlite($"Data Source={_dbPath}", provider => provider.MigrationsAssembly(
+                typeof(SqliteDesignTimeDbContextFactory).Assembly.GetName().Name))
             .Options;
 
         Context = new InventarioDbContext(options);

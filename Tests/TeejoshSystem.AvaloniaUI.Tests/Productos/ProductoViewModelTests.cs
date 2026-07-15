@@ -9,15 +9,15 @@ using TeejoshSystem.Domain.Ports.Outbound;
 
 namespace TeejoshSystem.AvaloniaUI.Tests.Productos;
 
-// ═══════════════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // GestionarProductosViewModel
 //
-// El constructor dispara _ = BuscarAsync() → mock de BuscarProductosQuery
+// El constructor dispara _ = BuscarAsync() â†’ mock de BuscarProductosQuery
 // requerido antes de crear la instancia.
 // TipoFiltro es TipoProductoFiltroItem, no TipoProducto.
 // TextoBusqueda (no TerminoBusqueda).
 // EliminarAsync es un RelayCommand que internamente llama a IConfirmationService.
-// ═══════════════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 public class GestionarProductosViewModelTests
 {
@@ -35,7 +35,7 @@ public class GestionarProductosViewModelTests
         _navigation = Substitute.For<INavigationService>();
         _imageStorage = Substitute.For<IImageStorageService>();
 
-        // El constructor llama BuscarAsync() → necesita este mock
+        // El constructor llama BuscarAsync() â†’ necesita este mock
         ConfigurarBusquedaVacia();
     }
 
@@ -49,15 +49,14 @@ public class GestionarProductosViewModelTests
     private GestionarProductosViewModel CrearVm()
         => new(_mediator, _notification, _confirmation, _navigation, _imageStorage);
 
-    // ── Constructor / BuscarAsync inicial ─────────────────────────────────────
+    // â”€â”€ Constructor / BuscarAsync inicial â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     [Fact]
-    public async Task Constructor_DebeLanzarBusquedaInicial()
+    public async Task LoadAsync_DebeLanzarBusquedaInicial()
     {
         var vm = CrearVm();
 
-        // Esperar que el fire-and-forget del constructor complete
-        await Task.Delay(100);
+        await vm.LoadAsync();
 
         await _mediator.Received().Send(
             Arg.Any<BuscarProductosQuery>(),
@@ -70,7 +69,7 @@ public class GestionarProductosViewModelTests
         var productos = new List<ProductoBusquedaDto>
         {
             new() { Id = 1, Tipo = TipoProducto.HotWheels, Nombre = "Ford GT",     Precio = 25m, Unidades = 5, DetalleResumen = "Test" },
-            new() { Id = 2, Tipo = TipoProducto.Funko,     Nombre = "Pikachu 25°", Precio = 15m, Unidades = 2, DetalleResumen = "Test" }
+            new() { Id = 2, Tipo = TipoProducto.Funko,     Nombre = "Pikachu 25Â°", Precio = 15m, Unidades = 2, DetalleResumen = "Test" }
         };
 
         _mediator
@@ -93,7 +92,7 @@ public class GestionarProductosViewModelTests
         vm.Productos.Should().BeEmpty();
     }
 
-    // ── Filtros ───────────────────────────────────────────────────────────────
+    // â”€â”€ Filtros â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     [Fact]
     public async Task BuscarAsync_ConTextoBusqueda_DebeEnviarTerminoAlQuery()
@@ -122,10 +121,10 @@ public class GestionarProductosViewModelTests
             Arg.Any<CancellationToken>());
     }
 
-    // ── Eliminación ───────────────────────────────────────────────────────────
+    // â”€â”€ EliminaciÃ³n â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     [Fact]
-    public async Task EliminarCommand_SinSeleccion_NoDebeEjecutarse()
+    public void EliminarCommand_SinSeleccion_NoDebeEjecutarse()
     {
         var vm = CrearVm();
         vm.ProductoSeleccionado = null;
@@ -187,15 +186,14 @@ public class GestionarProductosViewModelTests
             Arg.Any<CancellationToken>());
     }
 }
-
-// ═══════════════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // CrearProductoViewModel
 //
-// Hereda ValidatableViewModel — tiene HasErrors, AddError, ClearErrors.
-// Constructor dispara CargarCatalogosAsync() → mock de ObtenerCatalogosQuery.
+// Hereda ValidatableViewModel â€” tiene HasErrors, AddError, ClearErrors.
+// Constructor dispara CargarCatalogosAsync() â†’ mock de ObtenerCatalogosQuery.
 // CanGuardar() = !HasErrors && !IsBusy && CatalogosCargados.
 // Las validaciones se disparan en los partial OnXxxChanged().
-// ═══════════════════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 public class CrearProductoViewModelTests
 {
@@ -213,7 +211,7 @@ public class CrearProductoViewModelTests
         _navigation = Substitute.For<INavigationService>();
         _imageStorage = Substitute.For<IImageStorageService>();
 
-        // Constructor dispara CargarCatalogosAsync() → mock mínimo
+        // Constructor dispara CargarCatalogosAsync() â†’ mock mÃ­nimo
         _mediator
             .Send(Arg.Any<ObtenerCatalogosQuery>(), Arg.Any<CancellationToken>())
             .Returns(new CatalogosDto
@@ -228,7 +226,7 @@ public class CrearProductoViewModelTests
     private CrearProductoViewModel CrearVm()
         => new(_mediator, _notification, _confirmation, _navigation, _imageStorage);
 
-    // ── Visibilidad de paneles ────────────────────────────────────────────────
+    // â”€â”€ Visibilidad de paneles â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     [Fact]
     public void TipoSeleccionado_HotWheels_SoloPanelHotWheelsVisible()
@@ -253,7 +251,7 @@ public class CrearProductoViewModelTests
         vm.MostrarHotWheels.Should().BeFalse();
     }
 
-    // ── Validaciones ──────────────────────────────────────────────────────────
+    // â”€â”€ Validaciones â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     [Fact]
     public void Nombre_CuandoVacio_DebeAgregarError()
@@ -276,11 +274,11 @@ public class CrearProductoViewModelTests
     }
 
     [Fact]
-    public void Nombre_MayorA50Caracteres_DebeAgregarError()
+    public void Nombre_MayorA100Caracteres_DebeAgregarError()
     {
         var vm = CrearVm();
 
-        vm.Nombre = new string('A', 51);
+        vm.Nombre = new string('A', 101);
 
         vm.HasErrors.Should().BeTrue();
     }
@@ -315,7 +313,7 @@ public class CrearProductoViewModelTests
         vm.HasErrors.Should().BeTrue();
     }
 
-    // ── CanGuardar ────────────────────────────────────────────────────────────
+    // â”€â”€ CanGuardar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     [Fact]
     public void CanGuardar_SinCatalogosCargados_DebeSerFalse()

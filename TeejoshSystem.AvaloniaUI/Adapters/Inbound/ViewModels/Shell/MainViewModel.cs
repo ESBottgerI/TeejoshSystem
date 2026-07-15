@@ -54,7 +54,7 @@ namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Shell
             if (value != null && value.Value != ThemeVariant)
             {
                 ThemeVariant = value.Value;
-                _ = _themeService.SaveThemeAsync(value.Value);
+                _themeService.SaveThemeAsync(value.Value).GetAwaiter().GetResult();
             }
         }
     }

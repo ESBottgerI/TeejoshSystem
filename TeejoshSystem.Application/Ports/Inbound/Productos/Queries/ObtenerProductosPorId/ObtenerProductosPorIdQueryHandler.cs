@@ -39,7 +39,7 @@ namespace TeejoshSystem.Application.Ports.Inbound.Productos.Queries.ObtenerProdu
                 Nombre = producto.Nombre.Value,
                 Precio = producto.Precio.Value,
                 Unidades = producto.Stock.Value,
-                ImagePath = producto.ImagePath,  // NUEVO
+                TieneImagen = !string.IsNullOrWhiteSpace(producto.ImagePath),
                 Detalle = await MapearDetalleAsync(producto.Descripcion, producto.Tipo)
             };
 

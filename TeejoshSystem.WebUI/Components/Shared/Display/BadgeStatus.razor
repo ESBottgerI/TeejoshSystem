@@ -2,6 +2,6 @@
 
 @code {
     [Parameter] public int Stock { get; set; }
-    private string Text => Stock <= 0 ? "Sin stock" : Stock <= 3 ? "Stock bajo" : "Disponible";
-    private string CssClass => Stock <= 0 ? "danger" : Stock <= 3 ? "warning" : "success";
+    private string Text => Stock <= 0 ? "Sin stock" : "Disponible";
+    private string CssClass => Stock <= 0 ? "danger" : "success";
 }

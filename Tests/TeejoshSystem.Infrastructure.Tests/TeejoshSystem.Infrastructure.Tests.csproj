@@ -33,6 +33,8 @@
     <ProjectReference Include="..\..\TeejoshSystem.Domain\TeejoshSystem.Domain.csproj" />
     <ProjectReference Include="..\..\TeejoshSystem.Application\TeejoshSystem.Application.csproj" />
     <ProjectReference Include="..\..\TeejoshSystem.Infrastructure\TeejoshSystem.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\TeejoshSystem.Migrations.Sqlite\TeejoshSystem.Migrations.Sqlite.csproj" />
+    <ProjectReference Include="..\..\TeejoshSystem.Migrations.PostgreSql\TeejoshSystem.Migrations.PostgreSql.csproj" />
   </ItemGroup>
 
 </Project>

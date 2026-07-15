@@ -3,6 +3,7 @@ using TeejoshSystem.Application.Common;
 using TeejoshSystem.Domain.Entities;
 using TeejoshSystem.Domain.Entities.Detalles;
 using TeejoshSystem.Domain.Ports.Outbound.Repositories;
+using TeejoshSystem.Domain.Ports.Outbound;
 
 namespace TeejoshSystem.Application.Ports.Inbound.Ventas.Commands.RegistrarVenta
 {
@@ -11,16 +12,34 @@ namespace TeejoshSystem.Application.Ports.Inbound.Ventas.Commands.RegistrarVenta
     {
         private readonly IVentaRepository _ventaRepository;
         private readonly IProductoRepository _productoRepository;
+        private readonly IApplicationTransaction? _transaction;
 
         public RegistrarVentaCommandHandler(
             IVentaRepository ventaRepository,
-            IProductoRepository productoRepository)
+            IProductoRepository productoRepository,
+            IApplicationTransaction? transaction = null)
         {
             _ventaRepository = ventaRepository;
             _productoRepository = productoRepository;
+            _transaction = transaction;
         }
 
         public async Task<Result<int>> Handle(
+            RegistrarVentaCommand request,
+            CancellationToken cancellationToken)
+        {
+            if (_transaction is not null)
+            {
+                return await _transaction.ExecuteAsync(
+                    () => HandleCore(request, cancellationToken),
+                    result => result.IsSuccess,
+                    cancellationToken);
+            }
+
+            return await HandleCore(request, cancellationToken);
+        }
+
+        private async Task<Result<int>> HandleCore(
             RegistrarVentaCommand request,
             CancellationToken cancellationToken)
         {
@@ -54,7 +73,8 @@ namespace TeejoshSystem.Application.Ports.Inbound.Ventas.Commands.RegistrarVenta
                         producto.Id,
                         producto.Nombre.Value,
                         item.Cantidad,
-                        producto.Precio.Value);
+                        producto.Precio.Value,
+                        producto.Tipo);
 
                     venta.AgregarDetalle(detalle);
                 }

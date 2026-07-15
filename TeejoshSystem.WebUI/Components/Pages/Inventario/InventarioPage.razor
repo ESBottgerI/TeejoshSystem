@@ -6,10 +6,7 @@
 @using TeejoshSystem.Domain.Enums
 @inject IMediator Mediator
 
-<section class="page-header">
-    <p class="eyebrow">Stock general</p>
-    <h1>Inventario</h1>
-</section>
+<PageHeader Title="Inventario" Eyebrow="Stock general" />
 
 <form class="toolbar" @onsubmit="BuscarAsync" @onsubmit:preventDefault="true">
     <input class="input" placeholder="Buscar por nombre" @bind="Nombre" aria-label="Buscar por nombre" />
@@ -23,6 +20,10 @@
     <CustomButton Type="submit" IsBusy="IsBusy">Buscar</CustomButton>
 </form>
 
+@if (!string.IsNullOrWhiteSpace(ErrorMessage))
+{
+    <p class="field-error" role="alert">@ErrorMessage</p>
+}
 <InventarioTableGrid Items="Productos" />
 <LoadingOverlay IsVisible="IsBusy" Message="Consultando inventario" />
 
@@ -30,22 +31,31 @@
     private string? Nombre { get; set; }
     private TipoProducto? Tipo { get; set; }
     private bool IsBusy { get; set; }
+    private string? ErrorMessage { get; set; }
     private List<ProductoBusquedaDto> Productos { get; set; } = new();
 
-    protected override async Task OnInitializedAsync() => await CargarListadoAsync();
+    protected override async Task OnInitializedAsync() => await BuscarAsync();
 
     private async Task BuscarAsync()
     {
+        if (IsBusy) return;
         IsBusy = true;
-        if (string.IsNullOrWhiteSpace(Nombre) && Tipo is null)
+        ErrorMessage = null;
+        try
         {
-            await CargarListadoAsync();
+            if (string.IsNullOrWhiteSpace(Nombre) && Tipo is null)
+                await CargarListadoAsync();
+            else
+                Productos = await Mediator.Send(new BuscarProductosQuery(Nombre, Tipo));
         }
-        else
+        catch (Exception ex)
         {
-            Productos = await Mediator.Send(new BuscarProductosQuery(Nombre, Tipo));
+            ErrorMessage = "No se pudo cargar el inventario: " + ex.Message;
         }
-        IsBusy = false;
+        finally
+        {
+            IsBusy = false;
+        }
     }
 
     private async Task CargarListadoAsync()
@@ -61,6 +71,7 @@
         Nombre = producto.Nombre,
         Precio = producto.Precio,
         Unidades = producto.Unidades,
+        TieneImagen = producto.TieneImagen,
         DetalleResumen = producto.DetalleResumen
     };
 }

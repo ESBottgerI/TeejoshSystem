@@ -1,11 +1,13 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
-using MediatR;
 using System;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using MediatR;
 using TeejoshSystem.Application.Common.Dtos;
+using TeejoshSystem.Application.Common.Formatting;
 using TeejoshSystem.Application.Ports.Inbound.Productos.Queries.BuscarProductos;
 using TeejoshSystem.Application.Ports.Inbound.Ventas.Commands.RegistrarVenta;
 using TeejoshSystem.AvaloniaUI.Adapters.Inbound.Services;
@@ -13,14 +15,13 @@ using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Common;
 
 namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Ventas;
 
-public partial class RegistrarVentaViewModel : ViewModelBase
+public partial class RegistrarVentaViewModel : ViewModelBase, ILoadable
 {
     private readonly IMediator _mediator;
     private readonly INotificationService _notification;
     private readonly IConfirmationService _confirmation;
     private readonly INavigationService _navigation;
 
-    // --- Búsqueda de productos ---
     [ObservableProperty]
     private string? _textoBusqueda;
 
@@ -33,8 +34,6 @@ public partial class RegistrarVentaViewModel : ViewModelBase
     private int _cantidadSeleccionada = 1;
 
     public ObservableCollection<ProductoBusquedaDto> ProductosDisponibles { get; } = new();
-
-    // --- Carrito de venta ---
     public ObservableCollection<ItemVentaVm> ItemsVenta { get; } = new();
 
     [ObservableProperty]
@@ -52,22 +51,32 @@ public partial class RegistrarVentaViewModel : ViewModelBase
         _confirmation = confirmation;
         _navigation = navigation;
 
-        _ = BuscarProductosAsync();
+        PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName != nameof(IsBusy)) return;
+            ConfirmarVentaCommand.NotifyCanExecuteChanged();
+            AgregarItemCommand.NotifyCanExecuteChanged();
+            BuscarProductosCommand.NotifyCanExecuteChanged();
+        };
     }
 
-    [RelayCommand]
-    public async Task BuscarProductosAsync()
+    public Task LoadAsync(CancellationToken cancellationToken = default) =>
+        BuscarProductosAsync(cancellationToken);
+
+    [RelayCommand(CanExecute = nameof(PuedeBuscarProductos))]
+    public async Task BuscarProductosAsync(CancellationToken cancellationToken = default)
     {
         if (IsBusy) return;
+
+        IsBusy = true;
         try
         {
-            IsBusy = true;
             var resultados = await _mediator.Send(
-                new BuscarProductosQuery(TextoBusqueda, null));
+                new BuscarProductosQuery(TextoBusqueda, null), cancellationToken);
 
             ProductosDisponibles.Clear();
-            foreach (var p in resultados)
-                ProductosDisponibles.Add(p);
+            foreach (var producto in resultados)
+                ProductosDisponibles.Add(producto);
         }
         catch (Exception ex)
         {
@@ -79,19 +88,21 @@ public partial class RegistrarVentaViewModel : ViewModelBase
         }
     }
 
-    [RelayCommand(CanExecute = nameof(CanAgregarItem))]
-    private void AgregarItem()
-    {
-        var producto = ProductoSeleccionado!;
+    private bool PuedeBuscarProductos() => !IsBusy;
 
-        // Si ya existe en el carrito, sumar cantidad
+    [RelayCommand(CanExecute = nameof(CanAgregarItem))]
+    private async Task AgregarItemAsync()
+    {
+        if (!CanAgregarItem()) return;
+
+        var producto = ProductoSeleccionado!;
         var existente = ItemsVenta.FirstOrDefault(i => i.ProductoId == producto.Id);
         if (existente is not null)
         {
             var nuevaCantidad = existente.Cantidad + CantidadSeleccionada;
             if (nuevaCantidad > producto.Unidades)
             {
-                _ = _notification.ShowErrorAsync(
+                await _notification.ShowErrorAsync(
                     $"Stock insuficiente. Disponible: {producto.Unidades}.");
                 return;
             }
@@ -101,7 +112,7 @@ public partial class RegistrarVentaViewModel : ViewModelBase
         {
             if (CantidadSeleccionada > producto.Unidades)
             {
-                _ = _notification.ShowErrorAsync(
+                await _notification.ShowErrorAsync(
                     $"Stock insuficiente. Disponible: {producto.Unidades}.");
                 return;
             }
@@ -132,31 +143,35 @@ public partial class RegistrarVentaViewModel : ViewModelBase
     [RelayCommand(CanExecute = nameof(CanConfirmarVenta))]
     private async Task ConfirmarVentaAsync()
     {
-        var confirmar = await _confirmation.ConfirmAsync(
-            $"¿Confirmar venta por {TotalVenta:C}?");
-        if (!confirmar) return;
+        if (IsBusy) return;
 
+        var confirmar = await _confirmation.ConfirmAsync(
+            $"¿Confirmar venta por {SolesFormatter.Format(TotalVenta)}?");
+        if (!confirmar || IsBusy) return;
+
+        IsBusy = true;
         try
         {
-            IsBusy = true;
-
             var command = new RegistrarVentaCommand(
                 ItemsVenta.Select(i => new RegistrarVentaItemCommand(
                     i.ProductoId, i.Cantidad)).ToList());
-
             var result = await _mediator.Send(command);
 
             if (result.IsSuccess)
             {
                 await _notification.ShowSuccessAsync(
                     $"Venta #{result.Value} registrada correctamente.");
-                _navigation.NavigateToMenu();
+                await _navigation.NavigateToMenuAsync();
             }
             else
             {
                 await _notification.ShowErrorAsync(
                     result.Error ?? "Error al registrar la venta.");
             }
+        }
+        catch (Exception ex)
+        {
+            await _notification.ShowErrorAsync("Error al registrar la venta: " + ex.Message);
         }
         finally
         {
@@ -165,21 +180,18 @@ public partial class RegistrarVentaViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private void Volver() => _navigation.NavigateToMenu();
+    private Task VolverAsync() => _navigation.NavigateToMenuAsync();
 
-    private void RecalcularTotal()
-    {
+    private void RecalcularTotal() =>
         TotalVenta = ItemsVenta.Sum(i => i.Subtotal);
-    }
 
     private bool CanAgregarItem() =>
-        ProductoSeleccionado is not null && CantidadSeleccionada > 0;
+        ProductoSeleccionado is not null && CantidadSeleccionada > 0 && !IsBusy;
 
     private bool CanConfirmarVenta() =>
         ItemsVenta.Count > 0 && !IsBusy;
 }
 
-// ViewModel auxiliar para items del carrito
 public partial class ItemVentaVm : ObservableObject
 {
     public int ProductoId { get; set; }
@@ -188,6 +200,7 @@ public partial class ItemVentaVm : ObservableObject
     public int StockDisponible { get; set; }
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(Subtotal))]
     private int _cantidad;
 
     public decimal Subtotal => PrecioUnitario * Cantidad;

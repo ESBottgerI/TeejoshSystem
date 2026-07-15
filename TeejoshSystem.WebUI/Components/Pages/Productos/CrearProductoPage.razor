@@ -8,10 +8,7 @@
 @inject BlazorNotificationService Notifications
 @inject NavigationManager Navigation
 
-<section class="page-header">
-    <p class="eyebrow">Alta de inventario</p>
-    <h1>Crear producto</h1>
-</section>
+<PageHeader Title="Crear producto" Eyebrow="Alta de inventario"><Actions><a class="btn secondary" href="/productos">Volver</a></Actions></PageHeader>
 
 <form class="form-grid" @onsubmit="CrearAsync" @onsubmit:preventDefault="true">
     <div class="field">
@@ -73,7 +70,13 @@
         var file = args.File;
         if (file is null) return;
 
-        var ext = Path.GetExtension(file.Name);
+        var ext = Path.GetExtension(file.Name).ToLowerInvariant();
+        if (ext is not (".png" or ".jpg" or ".jpeg" or ".gif" or ".webp"))
+        {
+            _crearResult = Result.Failure("El formato de imagen no está permitido.");
+            return;
+        }
+        DeleteTemporaryImage();
         var tempPath = Path.Combine(Path.GetTempPath(), $"teejosh_upload_{Guid.NewGuid()}{ext}");
         await using var stream = file.OpenReadStream(maxAllowedSize: 5 * 1024 * 1024);
         await using var fs = new FileStream(tempPath, FileMode.Create);
@@ -87,19 +90,23 @@
         NombreError = string.IsNullOrWhiteSpace(Model.Nombre) ? "El nombre es obligatorio." : null;
         if (NombreError is not null) return;
 
-        IsBusy = true;
-        _crearResult = null;
-        var command = Model.ToCommand();
-        command = command with { ImagePath = _tempImagePath };
-        _crearResult = await Mediator.Send(command);
-        IsBusy = false;
-
-        if (_crearResult.IsSuccess)
+        try
         {
-            await Notifications.ShowSuccessAsync("Producto creado correctamente.");
-            Navigation.NavigateTo("/productos");
+            IsBusy = true;
+            _crearResult = null;
+            var command = Model.ToCommand() with { ImagePath = _tempImagePath };
+            _crearResult = await Mediator.Send(command);
+            if (_crearResult.IsSuccess)
+            {
+                await Notifications.ShowSuccessAsync("Producto creado correctamente.");
+                Navigation.NavigateTo("/productos");
+            }
         }
+        catch { _crearResult = Result.Failure("No se pudo crear el producto."); }
+        finally { IsBusy = false; DeleteTemporaryImage(); }
     }
+
+    private void DeleteTemporaryImage() { if (_tempImagePath is not null && File.Exists(_tempImagePath)) File.Delete(_tempImagePath); _tempImagePath = null; }
 
     public sealed class CrearProductoFormModel
     {

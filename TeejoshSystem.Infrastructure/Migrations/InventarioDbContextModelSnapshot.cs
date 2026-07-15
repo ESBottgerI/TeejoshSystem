@@ -732,6 +732,12 @@ namespace TeejoshSystem.Infrastructure.Migrations
                         .HasColumnType("decimal(10,2)")
                         .HasColumnName("unit_price");
 
+                    b.Property<string>("Tipo")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("TEXT")
+                        .HasColumnName("product_type");
+
                     b.Property<int>("ProductoId")
                         .HasColumnType("INTEGER")
                         .HasColumnName("product_id");
@@ -888,7 +894,7 @@ namespace TeejoshSystem.Infrastructure.Migrations
 
                             b1.Property<string>("Value")
                                 .IsRequired()
-                                .HasMaxLength(50)
+                                .HasMaxLength(100)
                                 .HasColumnType("TEXT")
                                 .HasColumnName("name");
 

@@ -6,29 +6,25 @@
 @inject IMediator Mediator
 @inject BlazorNotificationService Notifications
 
-<section class="page-header">
-    <p class="eyebrow">Operacion</p>
-    <h1>Gestionar productos</h1>
-    <a class="btn primary" href="/productos/crear">Nuevo producto</a>
-</section>
+<PageHeader Title="Gestionar productos" Eyebrow="Operación"><Actions><a class="btn primary" href="/productos/crear">Nuevo producto</a></Actions></PageHeader>
 
 <ResultErrorDisplay Result="_eliminarResult" />
 
 <div class="table-shell">
     <table class="data-table">
         <thead>
-            <tr><th>Producto</th><th>Tipo</th><th>Precio</th><th>Stock</th><th>Detalle</th><th>Acciones</th></tr>
+            <tr><th>Producto</th><th>Tipo</th><th>Precio</th><th><span class="stock-heading">Stock <button class="icon-button" aria-label="Alternar cantidades de stock" @onclick="ToggleStock">@(_showStock ? "👁" : "◉")</button></span></th><th>Detalle</th><th>Acciones</th></tr>
         </thead>
         <tbody>
             @foreach (var producto in Productos)
             {
                 <tr>
-                    <td><a class="nav-link" style="padding:0;color:var(--tj-on-surface)" href="/productos/@producto.Id">@producto.Nombre</a></td>
-                    <td>@producto.Tipo</td>
-                    <td>@producto.Precio.ToString("C")</td>
-                    <td><BadgeStatus Stock="producto.Unidades" /></td>
-                    <td>@producto.DetalleResumen</td>
-                    <td class="toolbar" style="margin:0">
+                    <td data-label="Producto" class="product-name-cell"><ProductIdentityCell ProductId="producto.Id" Name="producto.Nombre" HasImage="producto.TieneImagen" Href="@($"/productos/{producto.Id}")" /></td>
+                    <td data-label="Tipo">@producto.Tipo</td>
+                    <td data-label="Precio">@SolesFormatter.Format(producto.Precio)</td>
+                    <td data-label="Stock"><button class="link-button" @onclick="() => ToggleRow(producto.Id)">@StockText(producto)</button></td>
+                    <td data-label="Detalle">@producto.DetalleResumen</td>
+                    <td data-label="Acciones" class="toolbar" style="margin:0">
                         <a class="btn secondary" href="/productos/editar/@producto.Id">Editar</a>
                         <button class="btn danger" @onclick="() => ConfirmarEliminar(producto)" disabled="@_isBusy">Eliminar</button>
                     </td>
@@ -62,6 +58,11 @@
     private ProductoBusquedaDto? _productoAEliminar;
     private Result? _eliminarResult;
     private bool _isBusy;
+    private bool _showStock = true;
+    private readonly HashSet<int> _revealedStock = new();
+    private void ToggleStock() { _showStock = !_showStock; _revealedStock.Clear(); }
+    private void ToggleRow(int id) { if (!_revealedStock.Add(id)) _revealedStock.Remove(id); }
+    private string StockText(ProductoBusquedaDto item) => _showStock || _revealedStock.Contains(item.Id) ? item.Unidades.ToString() : item.Unidades > 0 ? "Disponible" : "Sin stock";
 
     protected override async Task OnInitializedAsync() => await CargarAsync();
 

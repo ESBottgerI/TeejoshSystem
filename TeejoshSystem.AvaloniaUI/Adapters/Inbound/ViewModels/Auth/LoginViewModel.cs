@@ -17,7 +17,7 @@ namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Auth
         // Callback configurado desde App.axaml.cs.
         // LoginViewModel no conoce NavigationService ni MainViewModel —
         // el acoplamiento de navegación vive en el punto de composición.
-        public Action? OnLoginExitoso { get; set; }
+        public Func<Task>? OnLoginExitoso { get; set; }
 
         [ObservableProperty]
         [NotifyCanExecuteChangedFor(nameof(IniciarSesionCommand))]
@@ -55,6 +55,8 @@ namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Auth
         [RelayCommand(CanExecute = nameof(PuedeIniciarSesion))]
         private async Task IniciarSesionAsync()
         {
+            if (IsBusy) return;
+
             IsBusy = true;
             MensajeError = string.Empty;
 
@@ -66,7 +68,8 @@ namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Auth
                 if (result.IsSuccess)
                 {
                     _sesionContext.IniciarSesion(result.Value);
-                    OnLoginExitoso?.Invoke();
+                    if (OnLoginExitoso is not null)
+                        await OnLoginExitoso();
                 }
                 else
                 {

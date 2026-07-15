@@ -1,0 +1,41 @@
+@page "/admin/usuarios"
+@attribute [Authorize(Roles = "Administrador")]
+@using TeejoshSystem.Application.Common
+@using TeejoshSystem.Application.Common.Dtos
+@using TeejoshSystem.Application.Ports.Inbound.Auth.Commands.RegistrarUsuario
+@using TeejoshSystem.Application.Ports.Inbound.Auth.Commands.DesactivarUsuario
+@using TeejoshSystem.Application.Ports.Inbound.Auth.Queries.ListarUsuarios
+@using TeejoshSystem.Domain.Enums
+@inject IMediator Mediator
+@inject BlazorNotificationService Notifications
+
+<PageHeader Title="Gestionar usuarios" Eyebrow="Administración" />
+<ResultErrorDisplay Result="_result" />
+
+<section class="form-section form-centered">
+    <div class="field"><label for="username">Usuario</label><input id="username" class="input" @bind="_name" disabled="@_busy" /></div>
+    <div class="field"><label for="password">Contraseña</label><input id="password" class="input" type="password" @bind="_password" disabled="@_busy" /></div>
+    <div class="field"><label for="confirm">Confirmación</label><input id="confirm" class="input" type="password" @bind="_confirm" disabled="@_busy" /></div>
+    <div class="field"><label for="role">Rol</label><select id="role" class="input" @bind="_role">@foreach (var role in Enum.GetValues<RolUsuario>()) { <option value="@role">@role</option> }</select></div>
+    <button class="btn primary" @onclick="CreateAsync" disabled="@_busy">Crear usuario</button>
+</section>
+
+<div class="table-shell"><table class="data-table"><thead><tr><th>Usuario</th><th>Rol</th><th>Estado</th><th>Acción</th></tr></thead><tbody>
+@foreach (var user in _users) { <tr><td>@user.NombreUsuario</td><td>@user.Rol</td><td>@(user.Activo ? "Activo" : "Inactivo")</td><td><button class="btn danger" @onclick="() => AskDeactivate(user)" disabled="@(_busy || !user.Activo)">Desactivar</button></td></tr> }
+</tbody></table></div>
+
+@if (_pending is not null) {
+<div class="loading-overlay" @onclick="CancelDeactivate"><section class="auth-card" @onclick:stopPropagation><h2>Confirmar</h2><p>¿Desactivar a <strong>@_pending.NombreUsuario</strong>?</p><div class="toolbar"><button class="btn secondary" @onclick="CancelDeactivate">Cancelar</button><button class="btn danger" @onclick="DeactivateAsync">Desactivar</button></div></section></div> }
+<LoadingOverlay IsVisible="_busy" Message="Procesando usuarios..." />
+
+@code {
+    private IReadOnlyList<UsuarioListaDto> _users = Array.Empty<UsuarioListaDto>();
+    private UsuarioListaDto? _pending; private string _name = string.Empty; private string _password = string.Empty; private string _confirm = string.Empty;
+    private RolUsuario _role = RolUsuario.Operador; private bool _busy; private Result? _result;
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+    private async Task LoadAsync() { try { _busy = true; _users = (await Mediator.Send(new ListarUsuariosQuery())).ToList(); } catch { _result = Result.Failure("No se pudo cargar los usuarios."); } finally { _busy = false; } }
+    private async Task CreateAsync() { if (_password != _confirm) { _result = Result.Failure("Las contraseñas no coinciden."); return; } try { _busy = true; _result = await Mediator.Send(new RegistrarUsuarioCommand(_name, _password, _role)); if (_result.IsSuccess) { _name = _password = _confirm = string.Empty; await Notifications.ShowSuccessAsync("Usuario creado."); await LoadAsync(); } } catch { _result = Result.Failure("No se pudo crear el usuario."); } finally { _busy = false; } }
+    private void AskDeactivate(UsuarioListaDto user) => _pending = user;
+    private void CancelDeactivate() => _pending = null;
+    private async Task DeactivateAsync() { if (_pending is null) return; try { _busy = true; _result = await Mediator.Send(new DesactivarUsuarioCommand(_pending.Id)); if (_result.IsSuccess) { await Notifications.ShowSuccessAsync("Usuario desactivado."); _pending = null; await LoadAsync(); } } catch { _result = Result.Failure("No se pudo desactivar el usuario."); } finally { _busy = false; } }
+}

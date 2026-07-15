@@ -1,7 +1,8 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MediatR;
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.ObjectModel;
 using TeejoshSystem.Application.Common.Dtos;
@@ -11,7 +12,7 @@ using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Common;
 
 namespace TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Ventas;
 
-public partial class HistorialVentasViewModel : ViewModelBase
+public partial class HistorialVentasViewModel : ViewModelBase, ILoadable
 {
     private readonly IMediator _mediator;
     private readonly INotificationService _notification;
@@ -37,8 +38,9 @@ public partial class HistorialVentasViewModel : ViewModelBase
         _notification = notification;
         _navigation = navigation;
 
-        _ = BuscarAsync();
     }
+
+    public Task LoadAsync(CancellationToken cancellationToken = default) => BuscarAsync();
 
     [RelayCommand]
     public async Task BuscarAsync()
@@ -65,13 +67,13 @@ public partial class HistorialVentasViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private void LimpiarFiltros()
+    private async Task LimpiarFiltrosAsync()
     {
         FechaDesde = null;
         FechaHasta = null;
-        _ = BuscarAsync();
+        await BuscarAsync();
     }
 
     [RelayCommand]
-    private void Volver() => _navigation.NavigateToMenu();
+    private Task VolverAsync() => _navigation.NavigateToMenuAsync();
 }

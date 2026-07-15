@@ -1,0 +1,16 @@
+@implements IAsyncDisposable
+@inject IJSRuntime JS
+
+<div class="sales-split" @ref="_root">
+    <section class="sales-products">@Products</section>
+    <div class="sales-separator" @ref="_separator" role="separator" aria-orientation="vertical" aria-label="Ajustar paneles de venta"></div>
+    <section class="sales-cart">@Cart</section>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public RenderFragment? Products { get; set; }
+    [Parameter, EditorRequired] public RenderFragment? Cart { get; set; }
+    private ElementReference _root; private ElementReference _separator; private IJSObjectReference? _handle;
+    protected override async Task OnAfterRenderAsync(bool firstRender) { if (firstRender) _handle = await JS.InvokeAsync<IJSObjectReference>("teejoshSalesSplit.attach", _root, _separator); }
+    public async ValueTask DisposeAsync() { if (_handle is not null) { await _handle.InvokeVoidAsync("dispose"); await _handle.DisposeAsync(); } }
+}

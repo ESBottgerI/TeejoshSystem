@@ -1,0 +1,19 @@
+@page "/admin/catalogos/sincronizar"
+@attribute [Authorize(Roles = "Administrador")]
+@using TeejoshSystem.Application.Ports.Inbound.Catalogos.Commands.SincronizarCatalogos
+@inject IMediator Mediator
+@inject BlazorNotificationService Notifications
+
+<PageHeader Title="Sincronizar catálogos" Eyebrow="Administración" />
+<section class="form-section form-centered">
+    <p>Actualiza los catálogos TCG desde sus proveedores configurados. El resto del sistema continúa disponible sin conexión.</p>
+    <button class="btn primary" @onclick="SynchronizeAsync" disabled="@_busy">Sincronizar ahora</button>
+    @if (_result is not null) { <div role="status"><p>Nuevas: @_result.TotalAgregadas</p><p>Actualizadas: @_result.TotalActualizadas</p>@foreach (var error in _result.Errores) { <p class="field-error">@error</p> }</div> }
+    @if (_error is not null) { <p class="field-error" role="alert">@_error</p> }
+</section>
+<LoadingOverlay IsVisible="_busy" Message="Sincronizando catálogos..." />
+
+@code {
+    private bool _busy; private string? _error; private SincronizarCatalogosResult? _result;
+    private async Task SynchronizeAsync() { try { _busy = true; _error = null; _result = await Mediator.Send(new SincronizarCatalogosCommand()); if (_result.Errores.Count == 0) await Notifications.ShowSuccessAsync("Catálogos sincronizados."); } catch { _error = "No se pudo sincronizar los catálogos."; } finally { _busy = false; } }
+}

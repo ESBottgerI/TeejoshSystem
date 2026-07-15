@@ -10,15 +10,15 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Sync
     /// BackgroundService que escucha cambios de conectividad y, al reconectar,
     /// replica en Supabase (via REST API) todas las operaciones encoladas en el outbox.
     ///
-    /// Estrategia de conflicto — last-write-wins por registro:
+    /// Estrategia de conflicto, last-write-wins por registro:
     ///   El payload incluye el campo updated_at generado en el dispositivo.
-    ///   Supabase aplica un UPSERT: si el registro remoto tiene updated_at más reciente,
-    ///   la operación no sobreescribe (manejado via política RLS o trigger en PostgreSQL).
+    ///   Supabase aplica un UPSERT: si el registro remoto tiene updated_at mï¿½s reciente,
+    ///   la operaciï¿½n no sobreescribe (manejado via polï¿½tica RLS o trigger en PostgreSQL).
     ///   Para la fase actual (1 caja), last-write-wins es suficiente.
-    ///   Al escalar a múltiples cajas, se agrega un trigger de conflicto en Supabase.
+    ///   Al escalar a mï¿½ltiples cajas, se agrega un trigger de conflicto en Supabase.
     ///
     /// Reintentos:
-    ///   Máximo 5 intentos por entrada. Tras 5 fallos la entrada se marca como "stuck"
+    ///   Mï¿½ximo 5 intentos por entrada. Tras 5 fallos la entrada se marca como "stuck"
     ///   (RetryCount >= 5) y el operador debe resolverla manualmente desde el panel admin.
     /// </summary>
     public class SyncService : BackgroundService
@@ -32,7 +32,7 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Sync
         private readonly string _supabaseServiceKey;
         private readonly string _deviceId;
 
-        // Semáforo para evitar sync concurrente si el ping llega mientras ya se sincroniza
+        // Semï¿½foro para evitar sync concurrente si el ping llega mientras ya se sincroniza
         private readonly SemaphoreSlim _syncLock = new(1, 1);
 
         public SyncService(
@@ -56,7 +56,7 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Sync
 
         protected override Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            // Suscribirse al evento de conectividad — al pasar a online, disparar sync
+            // Suscribirse al evento de conectividad ï¿½ al pasar a online, disparar sync
             _connectivity.ConnectivityChanged += async (isOnline) =>
             {
                 if (isOnline && !stoppingToken.IsCancellationRequested)
@@ -118,8 +118,8 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Sync
             {
                 case "INSERT":
                     // UPSERT via header Prefer: resolution=merge-duplicates
-                    // Si el registro ya existe en Supabase (otro dispositivo lo insertó antes),
-                    // se actualiza en lugar de fallar con violación de PK.
+                    // Si el registro ya existe en Supabase (otro dispositivo lo insertï¿½ antes),
+                    // se actualiza en lugar de fallar con violaciï¿½n de PK.
                     var insertContent = new StringContent(
                         entry.PayloadJson, Encoding.UTF8, "application/json");
                     insertContent.Headers.Add("Prefer", "resolution=merge-duplicates");

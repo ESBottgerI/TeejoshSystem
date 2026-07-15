@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence;
 
 #nullable disable
@@ -15,19 +16,25 @@ namespace TeejoshSystem.Infrastructure.Migrations
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder.HasAnnotation("ProductVersion", "8.0.0");
+            modelBuilder
+                .HasAnnotation("ProductVersion", "8.0.0")
+                .HasAnnotation("Relational:MaxIdentifierLength", 63);
+
+            NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
             modelBuilder.Entity("TeejoshSystem.Domain.Entities.AuditLog", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER")
+                        .HasColumnType("integer")
                         .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Accion")
                         .IsRequired()
                         .HasMaxLength(20)
-                        .HasColumnType("TEXT")
+                        .HasColumnType("character varying(20)")
                         .HasColumnName("accion");
 
                     b.Property<string>("Cambios")
@@ -37,22 +44,22 @@ namespace TeejoshSystem.Infrastructure.Migrations
                     b.Property<string>("Entidad")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("TEXT")
+                        .HasColumnType("character varying(100)")
                         .HasColumnName("entidad");
 
                     b.Property<string>("EntidadId")
                         .IsRequired()
                         .HasMaxLength(50)
-                        .HasColumnType("TEXT")
+                        .HasColumnType("character varying(50)")
                         .HasColumnName("entidad_id");
 
                     b.Property<DateTime>("Timestamp")
-                        .HasColumnType("TEXT")
+                        .HasColumnType("timestamp with time zone")
                         .HasColumnName("timestamp");
 
                     b.Property<string>("Usuario")
                         .HasMaxLength(100)
-                        .HasColumnType("TEXT")
+                        .HasColumnType("character varying(100)")
                         .HasColumnName("usuario");
 
                     b.HasKey("Id");
@@ -68,13 +75,15 @@ namespace TeejoshSystem.Infrastructure.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER")
+                        .HasColumnType("integer")
                         .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Nombre")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("TEXT")
+                        .HasColumnType("character varying(100)")
                         .HasColumnName("name");
 
                     b.HasKey("Id");
@@ -136,13 +145,15 @@ namespace TeejoshSystem.Infrastructure.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER")
+                        .HasColumnType("integer")
                         .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Nombre")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("TEXT")
+                        .HasColumnType("character varying(100)")
                         .HasColumnName("name");
 
                     b.HasKey("Id");
@@ -209,13 +220,15 @@ namespace TeejoshSystem.Infrastructure.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER")
+                        .HasColumnType("integer")
                         .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Nombre")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("TEXT")
+                        .HasColumnType("character varying(100)")
                         .HasColumnName("name");
 
                     b.HasKey("Id");
@@ -282,20 +295,22 @@ namespace TeejoshSystem.Infrastructure.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER")
+                        .HasColumnType("integer")
                         .HasColumnName("id");
 
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
                     b.Property<int>("FranquiciaId")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("integer");
 
                     b.Property<string>("ImageUrl")
-                        .HasColumnType("TEXT")
+                        .HasColumnType("text")
                         .HasColumnName("image_url");
 
                     b.Property<string>("Nombre")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("TEXT")
+                        .HasColumnType("character varying(100)")
                         .HasColumnName("name");
 
                     b.HasKey("Id");
@@ -408,13 +423,15 @@ namespace TeejoshSystem.Infrastructure.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER")
+                        .HasColumnType("integer")
                         .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Nombre")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("TEXT")
+                        .HasColumnType("character varying(100)")
                         .HasColumnName("name");
 
                     b.HasKey("Id");
@@ -456,16 +473,18 @@ namespace TeejoshSystem.Infrastructure.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER")
+                        .HasColumnType("integer")
                         .HasColumnName("id");
 
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
                     b.Property<int>("FranquiciaId")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("integer");
 
                     b.Property<string>("Nombre")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("TEXT")
+                        .HasColumnType("character varying(100)")
                         .HasColumnName("name");
 
                     b.HasKey("Id");
@@ -583,125 +602,121 @@ namespace TeejoshSystem.Infrastructure.Migrations
             modelBuilder.Entity("TeejoshSystem.Domain.Entities.Detalles.FunkoDetalle", b =>
                 {
                     b.Property<int>("ProductoId")
-                        .HasColumnType("INTEGER")
+                        .HasColumnType("integer")
                         .HasColumnName("product_id");
 
                     b.Property<int?>("CaracteristicaEspecialId")
                         .IsRequired()
-                        .HasColumnType("INTEGER")
+                        .HasColumnType("integer")
                         .HasColumnName("special_caracteristic");
 
                     b.Property<string>("Discriminator")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("text");
 
                     b.Property<string>("Licencia")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("TEXT")
+                        .HasColumnType("character varying(100)")
                         .HasColumnName("license");
 
                     b.Property<int>("NumeroCaja")
-                        .HasColumnType("INTEGER")
+                        .HasColumnType("integer")
                         .HasColumnName("box_number");
 
                     b.Property<int>("SubtipoId")
-                        .HasColumnType("INTEGER")
+                        .HasColumnType("integer")
                         .HasColumnName("subtype");
 
                     b.HasKey("ProductoId");
 
                     b.ToTable("funko", (string)null);
 
-                    b.HasDiscriminator<string>("Discriminator").HasValue("FunkoDetalle");
+                    b.HasDiscriminator().HasValue("FunkoDetalle");
                 });
 
             modelBuilder.Entity("TeejoshSystem.Domain.Entities.Detalles.HotWheelsDetalle", b =>
                 {
                     b.Property<int>("ProductoId")
-                        .HasColumnType("INTEGER")
+                        .HasColumnType("integer")
                         .HasColumnName("product_id");
 
                     b.Property<int>("Anio")
-                        .HasColumnType("INTEGER")
+                        .HasColumnType("integer")
                         .HasColumnName("year");
 
                     b.Property<int>("CategoriaId")
-                        .HasColumnType("INTEGER")
+                        .HasColumnType("integer")
                         .HasColumnName("category_id");
 
                     b.Property<string>("Discriminator")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("text");
 
                     b.Property<string>("Modelo")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("TEXT")
+                        .HasColumnType("character varying(100)")
                         .HasColumnName("model");
 
                     b.Property<string>("Serie")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("TEXT")
+                        .HasColumnType("character varying(100)")
                         .HasColumnName("serie");
 
                     b.HasKey("ProductoId");
 
                     b.ToTable("hot_wheels", (string)null);
 
-                    b.HasDiscriminator<string>("Discriminator").HasValue("HotWheelsDetalle");
+                    b.HasDiscriminator().HasValue("HotWheelsDetalle");
                 });
 
             modelBuilder.Entity("TeejoshSystem.Domain.Entities.Detalles.TcgDetalle", b =>
                 {
                     b.Property<int>("ProductoId")
-                        .HasColumnType("INTEGER")
+                        .HasColumnType("integer")
                         .HasColumnName("product_id");
 
                     b.Property<string>("Discriminator")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("text");
 
                     b.Property<int>("ExpansionId")
-                        .HasColumnType("INTEGER")
+                        .HasColumnType("integer")
                         .HasColumnName("expansion_id");
 
                     b.Property<int>("PackId")
-                        .HasColumnType("INTEGER")
+                        .HasColumnType("integer")
                         .HasColumnName("pack_id");
 
                     b.HasKey("ProductoId");
 
                     b.ToTable("tcg", (string)null);
 
-                    b.HasDiscriminator<string>("Discriminator").HasValue("TcgDetalle");
+                    b.HasDiscriminator().HasValue("TcgDetalle");
                 });
 
             modelBuilder.Entity("TeejoshSystem.Domain.Entities.Detalles.ToyDetalle", b =>
                 {
                     b.Property<int>("ProductoId")
-                        .HasColumnType("INTEGER")
+                        .HasColumnType("integer")
                         .HasColumnName("product_id");
 
                     b.Property<string>("Discriminator")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("text");
 
                     b.Property<int>("EdadMinima")
-                        .HasColumnType("INTEGER")
+                        .HasColumnType("integer")
                         .HasColumnName("min_years_old");
 
                     b.Property<bool>("EsJuegoDeMesa")
-                        .HasColumnType("INTEGER")
+                        .HasColumnType("boolean")
                         .HasColumnName("is_board_game");
 
                     b.Property<int>("JugadoresMax")
-                        .HasColumnType("INTEGER")
+                        .HasColumnType("integer")
                         .HasColumnName("max_players");
 
                     b.Property<int>("JugadoresMin")
-                        .HasColumnType("INTEGER")
+                        .HasColumnType("integer")
                         .HasColumnName("min_players");
 
                     b.HasKey("ProductoId");
@@ -711,46 +726,44 @@ namespace TeejoshSystem.Infrastructure.Migrations
                             t.HasCheckConstraint("check_players", "max_players >= min_players");
                         });
 
-                    b.HasDiscriminator<string>("Discriminator").HasValue("ToyDetalle");
+                    b.HasDiscriminator().HasValue("ToyDetalle");
                 });
 
             modelBuilder.Entity("TeejoshSystem.Domain.Entities.Detalles.VariosDetalle", b =>
                 {
                     b.Property<int>("ProductoId")
-                        .HasColumnType("INTEGER")
+                        .HasColumnType("integer")
                         .HasColumnName("product_id");
 
                     b.Property<decimal>("Alto")
-                        .HasColumnType("TEXT")
+                        .HasColumnType("decimal(10,2)")
                         .HasColumnName("height");
 
                     b.Property<decimal>("Ancho")
-                        .HasColumnType("TEXT")
+                        .HasColumnType("decimal(10,2)")
                         .HasColumnName("width");
 
                     b.Property<string>("Discriminator")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("text");
 
                     b.Property<decimal?>("Largo")
-                        .IsRequired()
-                        .HasColumnType("TEXT")
+                        .HasColumnType("decimal(10,2)")
                         .HasColumnName("length");
 
                     b.Property<string>("Marca")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("TEXT")
+                        .HasColumnType("character varying(100)")
                         .HasColumnName("brand");
 
                     b.Property<string>("Material")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("TEXT")
+                        .HasColumnType("character varying(100)")
                         .HasColumnName("material");
 
                     b.Property<bool>("TieneIlustracion")
-                        .HasColumnType("INTEGER")
+                        .HasColumnType("boolean")
                         .HasColumnName("ilustration");
 
                     b.HasKey("ProductoId");
@@ -760,24 +773,26 @@ namespace TeejoshSystem.Infrastructure.Migrations
                             t.HasCheckConstraint("check_dimensions", "height > 0 AND width > 0 AND (length IS NULL OR length > 0)");
                         });
 
-                    b.HasDiscriminator<string>("Discriminator").HasValue("VariosDetalle");
+                    b.HasDiscriminator().HasValue("VariosDetalle");
                 });
 
             modelBuilder.Entity("TeejoshSystem.Domain.Entities.Detalles.VentaDetalle", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER")
+                        .HasColumnType("integer")
                         .HasColumnName("id");
 
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
                     b.Property<int>("Cantidad")
-                        .HasColumnType("INTEGER")
+                        .HasColumnType("integer")
                         .HasColumnName("quantity");
 
                     b.Property<string>("NombreProducto")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("TEXT")
+                        .HasColumnType("character varying(100)")
                         .HasColumnName("product_name");
 
                     b.Property<decimal>("PrecioUnitario")
@@ -785,11 +800,11 @@ namespace TeejoshSystem.Infrastructure.Migrations
                         .HasColumnName("unit_price");
 
                     b.Property<int>("ProductoId")
-                        .HasColumnType("INTEGER")
+                        .HasColumnType("integer")
                         .HasColumnName("product_id");
 
                     b.Property<int>("VentaId")
-                        .HasColumnType("INTEGER")
+                        .HasColumnType("integer")
                         .HasColumnName("sale_id");
 
                     b.HasKey("Id");
@@ -803,15 +818,17 @@ namespace TeejoshSystem.Infrastructure.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("ImagePath")
-                        .HasColumnType("TEXT")
+                        .HasColumnType("text")
                         .HasColumnName("image_path");
 
                     b.Property<string>("Tipo")
                         .IsRequired()
-                        .HasColumnType("TEXT")
+                        .HasColumnType("text")
                         .HasColumnName("type");
 
                     b.HasKey("Id");
@@ -823,30 +840,32 @@ namespace TeejoshSystem.Infrastructure.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER")
+                        .HasColumnType("integer")
                         .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<bool>("Activo")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER")
+                        .HasColumnType("boolean")
                         .HasDefaultValue(true)
                         .HasColumnName("active");
 
                     b.Property<string>("NombreUsuario")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("TEXT")
+                        .HasColumnType("character varying(100)")
                         .HasColumnName("username");
 
                     b.Property<string>("PasswordHash")
                         .IsRequired()
                         .HasMaxLength(60)
-                        .HasColumnType("TEXT")
+                        .HasColumnType("character varying(60)")
                         .HasColumnName("password_hash");
 
                     b.Property<string>("Rol")
                         .IsRequired()
-                        .HasColumnType("TEXT")
+                        .HasColumnType("text")
                         .HasColumnName("rol");
 
                     b.HasKey("Id");
@@ -861,11 +880,13 @@ namespace TeejoshSystem.Infrastructure.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER")
+                        .HasColumnType("integer")
                         .HasColumnName("id");
 
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
                     b.Property<DateTime>("Fecha")
-                        .HasColumnType("TEXT")
+                        .HasColumnType("timestamp with time zone")
                         .HasColumnName("date");
 
                     b.Property<decimal>("Total")
@@ -875,6 +896,61 @@ namespace TeejoshSystem.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("sale", (string)null);
+                });
+
+            modelBuilder.Entity("TeejoshSystem.Domain.Ports.Outbound.SyncOutboxEntry", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("DeviceId")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("device_id");
+
+                    b.Property<int?>("EntityId")
+                        .HasColumnType("integer")
+                        .HasColumnName("entity_id");
+
+                    b.Property<string>("EntityTable")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("entity_table");
+
+                    b.Property<string>("LastError")
+                        .HasColumnType("text")
+                        .HasColumnName("last_error");
+
+                    b.Property<string>("OperationType")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("operation_type");
+
+                    b.Property<string>("PayloadJson")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("payload_json");
+
+                    b.Property<int>("RetryCount")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("retry_count");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedAt")
+                        .HasDatabaseName("idx_outbox_created_at");
+
+                    b.ToTable("sync_outbox", (string)null);
                 });
 
             modelBuilder.Entity("TeejoshSystem.Domain.Entities.Detalles.FunkoDetalle", b =>
@@ -933,29 +1009,29 @@ namespace TeejoshSystem.Infrastructure.Migrations
 
             modelBuilder.Entity("TeejoshSystem.Domain.Entities.Producto", b =>
                 {
-                    b.OwnsOne("TeejoshSystem.Domain.Entities.Producto.Nombre#TeejoshSystem.Domain.ValueObjects.NombreProducto", "Nombre", b1 =>
+                    b.OwnsOne("TeejoshSystem.Domain.ValueObjects.NombreProducto", "Nombre", b1 =>
                         {
                             b1.Property<int>("ProductoId")
-                                .HasColumnType("INTEGER");
+                                .HasColumnType("integer");
 
                             b1.Property<string>("Value")
                                 .IsRequired()
                                 .HasMaxLength(50)
-                                .HasColumnType("TEXT")
+                                .HasColumnType("character varying(50)")
                                 .HasColumnName("name");
 
                             b1.HasKey("ProductoId");
 
-                            b1.ToTable("product", (string)null);
+                            b1.ToTable("product");
 
                             b1.WithOwner()
                                 .HasForeignKey("ProductoId");
                         });
 
-                    b.OwnsOne("TeejoshSystem.Domain.Entities.Producto.Precio#TeejoshSystem.Domain.ValueObjects.Precio", "Precio", b1 =>
+                    b.OwnsOne("TeejoshSystem.Domain.ValueObjects.Precio", "Precio", b1 =>
                         {
                             b1.Property<int>("ProductoId")
-                                .HasColumnType("INTEGER");
+                                .HasColumnType("integer");
 
                             b1.Property<decimal>("Value")
                                 .HasColumnType("decimal(10,2)")
@@ -963,24 +1039,24 @@ namespace TeejoshSystem.Infrastructure.Migrations
 
                             b1.HasKey("ProductoId");
 
-                            b1.ToTable("product", (string)null);
+                            b1.ToTable("product");
 
                             b1.WithOwner()
                                 .HasForeignKey("ProductoId");
                         });
 
-                    b.OwnsOne("TeejoshSystem.Domain.Entities.Producto.Stock#TeejoshSystem.Domain.ValueObjects.Unidades", "Stock", b1 =>
+                    b.OwnsOne("TeejoshSystem.Domain.ValueObjects.Unidades", "Stock", b1 =>
                         {
                             b1.Property<int>("ProductoId")
-                                .HasColumnType("INTEGER");
+                                .HasColumnType("integer");
 
                             b1.Property<int>("Value")
-                                .HasColumnType("INTEGER")
+                                .HasColumnType("integer")
                                 .HasColumnName("units");
 
                             b1.HasKey("ProductoId");
 
-                            b1.ToTable("product", (string)null);
+                            b1.ToTable("product");
 
                             b1.WithOwner()
                                 .HasForeignKey("ProductoId");

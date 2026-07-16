@@ -129,6 +129,8 @@ namespace TeejoshSystem.Infrastructure.DependencyInjection
             var hasSupabase = !string.IsNullOrEmpty(supabaseUrl)
                         && !string.IsNullOrEmpty(supabaseKey);
 
+            Console.WriteLine($"[DI] hasSupabase={hasSupabase}, supabaseUrl={supabaseUrl ?? "(null)"}");
+
             if (!hasSupabase)
             {
                 // Sin Supabase — repositorios directos, sin routing ni sync
@@ -136,8 +138,6 @@ namespace TeejoshSystem.Infrastructure.DependencyInjection
                 services.AddScoped<IVentaRepository, VentaRepository>();
                 services.AddScoped<ICatalogoRepository, CatalogoRepository>();
                 services.AddScoped<IUsuarioRepository, UsuarioRepository>();
-
-                Console.WriteLine($"[DI] hasSupabase={hasSupabase}, supabaseUrl={supabaseUrl ?? "(null)"}");
 
                 return;
             }
@@ -174,20 +174,20 @@ namespace TeejoshSystem.Infrastructure.DependencyInjection
                 sp.GetRequiredService<IConnectivityService>(),
                 sp.GetRequiredService<ISyncOutboxRepository>(),
                 sp.GetRequiredService<InventarioDbContext>(),
-                sp.GetRequiredService<LocalDbContext>(),
+                sp.GetRequiredService<InventarioDbContext>(),
                 deviceId));
 
             services.AddScoped<IVentaRepository>(sp => new RoutingVentaRepository(
                 sp.GetRequiredService<IConnectivityService>(),
                 sp.GetRequiredService<ISyncOutboxRepository>(),
                 sp.GetRequiredService<InventarioDbContext>(),
-                sp.GetRequiredService<LocalDbContext>(),
+                sp.GetRequiredService<InventarioDbContext>(),
                 deviceId));
 
             services.AddScoped<ICatalogoRepository>(sp => new RoutingCatalogoRepository(
                 sp.GetRequiredService<IConnectivityService>(),
                 sp.GetRequiredService<InventarioDbContext>(),
-                sp.GetRequiredService<LocalDbContext>()));
+                sp.GetRequiredService<InventarioDbContext>()));
 
             services.AddScoped<IUsuarioRepository, UsuarioRepository>();
         }

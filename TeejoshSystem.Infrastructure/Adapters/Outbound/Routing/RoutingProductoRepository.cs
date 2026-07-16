@@ -1,4 +1,5 @@
 ﻿using System.Text.Json;
+using TeejoshSystem.Infrastructure.Adapters.Outbound.Routing;
 using TeejoshSystem.Domain.Entities;
 using TeejoshSystem.Domain.Entities.Detalles;
 using TeejoshSystem.Domain.Enums;
@@ -6,6 +7,7 @@ using TeejoshSystem.Domain.Ports.Outbound;
 using TeejoshSystem.Domain.Ports.Outbound.Repositories;
 using TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence;
 using TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Repositories;
+using TeejoshSystem.Infrastructure.Adapters.Outbound.Sync;
 
 namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Routing
 {
@@ -23,8 +25,12 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Routing
         private readonly IConnectivityService _connectivity;
         private readonly ISyncOutboxRepository _outbox;
         private readonly InventarioDbContext _pgContext;       // PostgreSQL
-        private readonly LocalDbContext _localContext;         // SQLite
+        private readonly InventarioDbContext _localContext;         // SQLite
         private readonly string _deviceId;
+
+        private bool ShouldWriteOnline =>
+        _connectivity.IsOnline &&
+        _pgContext.Database.ProviderName?.Contains("Npgsql") == true;
 
         // Repositorios concretos instanciados bajo demanda
         private ProductoRepository PgRepo => new(_pgContext);
@@ -34,7 +40,7 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Routing
             IConnectivityService connectivity,
             ISyncOutboxRepository outbox,
             InventarioDbContext pgContext,
-            LocalDbContext localContext,
+            InventarioDbContext localContext,
             string deviceId)
         {
             _connectivity = connectivity;
@@ -69,7 +75,7 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Routing
 
         public async Task<int> AddAsync(Producto producto)
         {
-            if (_connectivity.IsOnline)
+            if (ShouldWriteOnline)
             {
                 var id = await PgRepo.AddAsync(producto);
                 // Replicar en local para mantener réplica actualizada
@@ -79,13 +85,13 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Routing
 
             // Offline: escribir local + encolar
             var localId = await LocalRepo.AddAsync(producto);
-            await EnqueueAsync("INSERT", "product", localId, producto);
+            await EnqueueAsync("INSERT", "product", localId,SupabasePayloadMapper.ToProductoJson(producto));
             return localId;
         }
 
         public async Task UpdateAsync(Producto producto)
         {
-            if (_connectivity.IsOnline)
+            if (ShouldWriteOnline)
             {
                 await PgRepo.UpdateAsync(producto);
                 await ReplicateUpdateLocalAsync(producto);
@@ -93,12 +99,12 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Routing
             }
 
             await LocalRepo.UpdateAsync(producto);
-            await EnqueueAsync("UPDATE", "product", producto.Id, producto);
+            await EnqueueAsync("UPDATE", "product", producto.Id, SupabasePayloadMapper.ToProductoJson(producto));
         }
 
         public async Task DeleteAsync(Producto producto)
         {
-            if (_connectivity.IsOnline)
+            if (ShouldWriteOnline)
             {
                 await PgRepo.DeleteAsync(producto);
                 await DeleteLocalIfExistsAsync(producto.Id);
@@ -112,7 +118,7 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Routing
         public async Task DeleteRangeAsync(IEnumerable<int> productoIds)
         {
             var ids = productoIds.ToList();
-            if (_connectivity.IsOnline)
+            if (ShouldWriteOnline)
             {
                 await PgRepo.DeleteRangeAsync(ids);
                 foreach (var id in ids)
@@ -129,37 +135,37 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Routing
 
         public async Task AddHotWheelsDetalleAsync(HotWheelsDetalle detalle)
         {
-            if (_connectivity.IsOnline) { await PgRepo.AddHotWheelsDetalleAsync(detalle); return; }
+            if (ShouldWriteOnline) { await PgRepo.AddHotWheelsDetalleAsync(detalle); return; }
             await LocalRepo.AddHotWheelsDetalleAsync(detalle);
-            await EnqueueAsync("INSERT", "hot_wheels", detalle.ProductoId, detalle);
+            await EnqueueAsync("INSERT", "hot_wheels", detalle.ProductoId, SupabasePayloadMapper.ToHotWheelsJson(detalle));
         }
 
         public async Task AddFunkoDetalleAsync(FunkoDetalle detalle)
         {
-            if (_connectivity.IsOnline) { await PgRepo.AddFunkoDetalleAsync(detalle); return; }
+            if (ShouldWriteOnline) { await PgRepo.AddFunkoDetalleAsync(detalle); return; }
             await LocalRepo.AddFunkoDetalleAsync(detalle);
-            await EnqueueAsync("INSERT", "funko", detalle.ProductoId, detalle);
+            await EnqueueAsync("INSERT", "funko", detalle.ProductoId, SupabasePayloadMapper.ToFunkoJson(detalle));
         }
 
         public async Task AddTcgDetalleAsync(TcgDetalle detalle)
         {
             if (_connectivity.IsOnline) { await PgRepo.AddTcgDetalleAsync(detalle); return; }
             await LocalRepo.AddTcgDetalleAsync(detalle);
-            await EnqueueAsync("INSERT", "tcg", detalle.ProductoId, detalle);
+            await EnqueueAsync("INSERT", "tcg", detalle.ProductoId, SupabasePayloadMapper.ToTcgJson(detalle));
         }
 
         public async Task AddToyDetalleAsync(ToyDetalle detalle)
         {
             if (_connectivity.IsOnline) { await PgRepo.AddToyDetalleAsync(detalle); return; }
             await LocalRepo.AddToyDetalleAsync(detalle);
-            await EnqueueAsync("INSERT", "toy", detalle.ProductoId, detalle);
+            await EnqueueAsync("INSERT", "toy", detalle.ProductoId, SupabasePayloadMapper.ToToyJson(detalle));
         }
 
         public async Task AddVariosDetalleAsync(VariosDetalle detalle)
         {
             if (_connectivity.IsOnline) { await PgRepo.AddVariosDetalleAsync(detalle); return; }
             await LocalRepo.AddVariosDetalleAsync(detalle);
-            await EnqueueAsync("INSERT", "varios", detalle.ProductoId, detalle);
+            await EnqueueAsync("INSERT", "varios", detalle.ProductoId, SupabasePayloadMapper.ToVariosJson(detalle));
         }
 
         // ── Detalles: Actualizar ─────────────────────────────────────────────
@@ -168,35 +174,35 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Routing
         {
             if (_connectivity.IsOnline) { await PgRepo.UpdateHotWheelsDetalleAsync(detalle); return; }
             await LocalRepo.UpdateHotWheelsDetalleAsync(detalle);
-            await EnqueueAsync("UPDATE", "hot_wheels", detalle.ProductoId, detalle);
+            await EnqueueAsync("UPDATE", "hot_wheels", detalle.ProductoId, SupabasePayloadMapper.ToHotWheelsJson(detalle));
         }
 
         public async Task UpdateFunkoDetalleAsync(FunkoDetalle detalle)
         {
             if (_connectivity.IsOnline) { await PgRepo.UpdateFunkoDetalleAsync(detalle); return; }
             await LocalRepo.UpdateFunkoDetalleAsync(detalle);
-            await EnqueueAsync("UPDATE", "funko", detalle.ProductoId, detalle);
+            await EnqueueAsync("UPDATE", "funko", detalle.ProductoId, SupabasePayloadMapper.ToFunkoJson(detalle));
         }
 
         public async Task UpdateTcgDetalleAsync(TcgDetalle detalle)
         {
             if (_connectivity.IsOnline) { await PgRepo.UpdateTcgDetalleAsync(detalle); return; }
             await LocalRepo.UpdateTcgDetalleAsync(detalle);
-            await EnqueueAsync("UPDATE", "tcg", detalle.ProductoId, detalle);
+            await EnqueueAsync("UPDATE", "tcg", detalle.ProductoId, SupabasePayloadMapper.ToTcgJson(detalle));
         }
 
         public async Task UpdateToyDetalleAsync(ToyDetalle detalle)
         {
             if (_connectivity.IsOnline) { await PgRepo.UpdateToyDetalleAsync(detalle); return; }
             await LocalRepo.UpdateToyDetalleAsync(detalle);
-            await EnqueueAsync("UPDATE", "toy", detalle.ProductoId, detalle);
+            await EnqueueAsync("UPDATE", "toy", detalle.ProductoId, SupabasePayloadMapper.ToToyJson(detalle));
         }
 
         public async Task UpdateVariosDetalleAsync(VariosDetalle detalle)
         {
             if (_connectivity.IsOnline) { await PgRepo.UpdateVariosDetalleAsync(detalle); return; }
             await LocalRepo.UpdateVariosDetalleAsync(detalle);
-            await EnqueueAsync("UPDATE", "varios", detalle.ProductoId, detalle);
+            await EnqueueAsync("UPDATE", "varios", detalle.ProductoId, SupabasePayloadMapper.ToVariosJson(detalle));
         }
 
         // ── Helpers privados ─────────────────────────────────────────────────
@@ -205,16 +211,14 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Routing
             => _connectivity.IsOnline ? PgRepo : LocalRepo;
 
         private async Task EnqueueAsync(
-            string operation, string table, int? entityId, object? payload)
+            string operation, string table, int? entityId, string payloadJson)
         {
             await _outbox.EnqueueAsync(new SyncOutboxEntry
             {
                 OperationType = operation,
                 EntityTable   = table,
                 EntityId      = entityId,
-                PayloadJson   = payload is null
-                    ? "{}"
-                    : JsonSerializer.Serialize(payload),
+                PayloadJson   = payloadJson ?? "{}",
                 DeviceId      = _deviceId
             });
         }

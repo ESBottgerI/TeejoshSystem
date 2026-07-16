@@ -132,7 +132,7 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Sync
                         throw new InvalidOperationException(
                             $"UPDATE sin EntityId en outbox entry {entry.Id}");
 
-                    var updateUrl = $"{url}?id=eq.{entry.EntityId}";
+                    var updateUrl = $"{url}?\"Id\"=eq.{entry.EntityId}";
                     var updateContent = new StringContent(
                         entry.PayloadJson, Encoding.UTF8, "application/json");
 
@@ -145,7 +145,7 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Sync
                             $"DELETE sin EntityId en outbox entry {entry.Id}");
 
                     response = await _http.DeleteAsync(
-                        $"{url}?id=eq.{entry.EntityId}", ct);
+                        $"{url}?\"Id\"=eq.{entry.EntityId}", ct);
                     break;
 
                 default:

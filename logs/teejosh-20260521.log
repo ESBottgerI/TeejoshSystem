@@ -1,2 +1,0 @@
-2026-05-21 21:07:02.951 -05:00 [WRN] TeejoshSystem.Infrastructure.Adapters.Outbound.Logging.AppLogger — Fallo de autenticación para usuario 'admin': Usuario o contraseña incorrectos.
-2026-05-21 21:07:10.577 -05:00 [INF] TeejoshSystem.Infrastructure.Adapters.Outbound.Logging.AppLogger — Autenticación exitosa: usuario='admin', rol=Administrador

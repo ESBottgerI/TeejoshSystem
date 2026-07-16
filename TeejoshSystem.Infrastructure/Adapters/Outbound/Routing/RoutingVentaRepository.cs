@@ -10,9 +10,9 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Routing
     /// <summary>
     /// Repositorio de enrutamiento para Venta.
     ///
-    /// Las ventas offline son el caso más crítico: el stock ya fue descontado localmente
-    /// pero Supabase aún no lo sabe. Al sincronizar, el SyncService aplica el INSERT
-    /// de la venta en Supabase. Si el stock en Supabase ya no alcanza (otra caja vendió
+    /// Las ventas offline son el caso mï¿½s crï¿½tico: el stock ya fue descontado localmente
+    /// pero Supabase aï¿½n no lo sabe. Al sincronizar, el SyncService aplica el INSERT
+    /// de la venta en Supabase. Si el stock en Supabase ya no alcanza (otra caja vendiï¿½
     /// el mismo producto), Supabase retorna error y SyncService lo marca como MarkFailed.
     /// El operador resuelve manualmente desde el panel de admin de Blazor.
     /// </summary>
@@ -21,7 +21,7 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Routing
         private readonly IConnectivityService _connectivity;
         private readonly ISyncOutboxRepository _outbox;
         private readonly InventarioDbContext _pgContext;
-        private readonly LocalDbContext _localContext;
+        private readonly InventarioDbContext _localContext;
         private readonly string _deviceId;
 
         private VentaRepository PgRepo => new(_pgContext);
@@ -31,7 +31,7 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Routing
             IConnectivityService connectivity,
             ISyncOutboxRepository outbox,
             InventarioDbContext pgContext,
-            LocalDbContext localContext,
+            InventarioDbContext localContext,
             string deviceId)
         {
             _connectivity = connectivity;
@@ -63,7 +63,7 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Routing
                 DeviceId      = _deviceId
             });
 
-            // Encolar también los detalles
+            // Encolar tambiï¿½n los detalles
             foreach (var detalle in venta.Detalles)
             {
                 await _outbox.EnqueueAsync(new SyncOutboxEntry

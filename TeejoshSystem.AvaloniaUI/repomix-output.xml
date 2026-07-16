@@ -117,7 +117,7 @@ Adapters/
 App.axaml
 App.axaml.cs
 app.manifest
-appsettings.json
+appsettings.Development.json
 appsettings.Production.json
 MainWindow.axaml
 MainWindow.axaml.cs
@@ -4279,8 +4279,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;          // NUEVO
-using Serilog;                               // NUEVO
+using Microsoft.Extensions.Logging;
+using Serilog;
 using System;
 using System.ComponentModel;
 using System.Threading.Tasks;
@@ -4312,7 +4312,7 @@ public partial class App : Avalonia.Application
 
         var configuration = new ConfigurationBuilder()
             .SetBasePath(AppContext.BaseDirectory)
-            .AddJsonFile("appsettings.json", optional: true)
+            .AddJsonFile("appsettings.json", optional: true)           // base compartido mínimo
             .AddJsonFile($"appsettings.{environment}.json", optional: true)
             .AddEnvironmentVariables()
             .Build();
@@ -4330,13 +4330,11 @@ public partial class App : Avalonia.Application
             .CreateLogger();
 
         _host = Host.CreateDefaultBuilder()
-            .UseSerilog()                    // NUEVO — reemplaza el logging por defecto del host
+            .UseSerilog()
             .ConfigureServices((_, services) =>
             {
-                // Infrastructure (incluye registro de IAppLogger → AppLogger)
                 services.AddInfrastructure(configuration);
 
-                // Application (MediatR)
                 services.AddMediatR(cfg =>
                     cfg.RegisterServicesFromAssembly(
                         typeof(TeejoshSystem.Application.Common.Result).Assembly));
@@ -4366,12 +4364,21 @@ public partial class App : Avalonia.Application
             })
             .Build();
 
-        // Aplicar migraciones pendientes
+        // ── Migraciones ───────────────────────────────────────────────────────
         using (var scope = _host.Services.CreateScope())
         {
+            // Contexto principal (PostgreSQL o SQLite según proveedor)
             var db = scope.ServiceProvider.GetRequiredService<InventarioDbContext>();
             db.Database.Migrate();
             DatabaseSeeder.SeedUsuarioAdmin(db);
+
+            // LocalDbContext solo existe cuando provider = "postgresql"
+            // GetService (no GetRequiredService) retorna null si no está registrado
+            var localDb = scope.ServiceProvider.GetService<LocalDbContext>();
+            if (localDb is not null)
+            {
+                localDb.Database.Migrate();
+            }
         }
 
         // Configurar navegación
@@ -4397,7 +4404,6 @@ public partial class App : Avalonia.Application
             () => mainVm.CurrentView = _host.Services.GetRequiredService<MenuPrincipalViewModel>()
         );
 
-        // Navegación inicial con verificación de sesión
         var sesionContext = _host.Services.GetRequiredService<SesionContext>();
         var loginVm = _host.Services.GetRequiredService<LoginViewModel>();
 
@@ -4416,7 +4422,7 @@ public partial class App : Avalonia.Application
             desktop.Exit += (_, _) =>
             {
                 _host.Dispose();
-                Log.CloseAndFlush();         // NUEVO — cierra Serilog limpiamente al salir
+                Log.CloseAndFlush();
             };
         }
 
@@ -4446,13 +4452,18 @@ public partial class App : Avalonia.Application
 </assembly>
 </file>
 
-<file path="appsettings.json">
+<file path="appsettings.Development.json">
 {
   "Database": {
     "Provider": "sqlite",
     "ConnectionString": "Data Source={LocalAppData}/TeejoshSystem/inventario.db"
   },
-
+  "Supabase": {
+    "Url": "https://wembmejrmztqhvvsownj.supabase.co",
+    "AnonKey": "sb_publishable_bU2T4LfNz-2zsO45EJGbug_q6CUauKn",
+    "ServiceKey": "Teejosh2026",
+    "BucketName": "product-images"
+  },
   "Serilog": {
     "Using": [ "Serilog.Sinks.Console", "Serilog.Sinks.File" ],
     "MinimumLevel": {
@@ -4464,23 +4475,16 @@ public partial class App : Avalonia.Application
       }
     },
     "WriteTo": [
-      {
-        "Name": "Console",
-        "Args": {
-          "outputTemplate": "[{Timestamp:HH:mm:ss} {Level:u3}] {SourceContext} — {Message:lj}{NewLine}{Exception}"
-        }
-      },
+      { "Name": "Console" },
       {
         "Name": "File",
         "Args": {
           "path": "logs/teejosh-.log",
           "rollingInterval": "Day",
-          "retainedFileCountLimit": 30,
-          "outputTemplate": "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {SourceContext} — {Message:lj}{NewLine}{Exception}"
+          "retainedFileCountLimit": 30
         }
       }
-    ],
-    "Enrich": [ "FromLogContext", "WithMachineName", "WithThreadId" ]
+    ]
   }
 }
 </file>
@@ -4488,10 +4492,15 @@ public partial class App : Avalonia.Application
 <file path="appsettings.Production.json">
 {
   "Database": {
-    "Provider": "postgresql",
-    "ConnectionString": "Host=db.wembmejrmztqhvvsownj.supabase.co;Port=5432;Database=postgres;Username=postgres;Password=Teejosh2026;SSL Mode=Require;Trust Server Certificate=true"
+    "Provider": "sqlite",
+    "ConnectionString": "Data Source={LocalAppData}/TeejoshSystem/inventario.db"
   },
-
+  "Supabase": {
+    "Url": "https://wembmejrmztqhvvsownj.supabase.co",
+    "AnonKey": "sb_publishable_bU2T4LfNz-2zsO45EJGbug_q6CUauKn",
+    "ServiceKey": "Teejosh2026",
+    "BucketName": "product-images"
+  },
   "Serilog": {
     "MinimumLevel": {
       "Default": "Information",
@@ -4505,10 +4514,9 @@ public partial class App : Avalonia.Application
       {
         "Name": "File",
         "Args": {
-          "path": "/var/log/teejosh/teejosh-.log",
+          "path": "logs/teejosh-.log",
           "rollingInterval": "Day",
-          "retainedFileCountLimit": 90,
-          "outputTemplate": "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {SourceContext} — {Message:lj}{NewLine}{Exception}"
+          "retainedFileCountLimit": 30
         }
       }
     ]

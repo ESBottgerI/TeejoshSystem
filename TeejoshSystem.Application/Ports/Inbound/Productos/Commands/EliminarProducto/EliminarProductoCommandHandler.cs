@@ -2,6 +2,7 @@
 
 using TeejoshSystem.Domain.Ports.Outbound.Repositories;
 using TeejoshSystem.Application.Common;
+using TeejoshSystem.Domain.Ports.Outbound;
 
 namespace TeejoshSystem.Application.Ports.Inbound.Productos.Commands.EliminarProducto
 {
@@ -11,7 +12,9 @@ namespace TeejoshSystem.Application.Ports.Inbound.Productos.Commands.EliminarPro
         private readonly IProductoRepository _repository;
         private readonly IApplicationMetrics _metrics;
 
-        public EliminarProductoCommandHandler(IProductoRepository repository)
+        public EliminarProductoCommandHandler(
+            IProductoRepository repository,
+            IApplicationMetrics metrics)
         {
             _repository = repository;
             _metrics = metrics;
@@ -23,6 +26,8 @@ namespace TeejoshSystem.Application.Ports.Inbound.Productos.Commands.EliminarPro
         {
             try
             {
+                _metrics.ProductDeleted();
+
                 await _repository.DeleteRangeAsync(request.ProductoIds);
                 return Result.Success();
             }

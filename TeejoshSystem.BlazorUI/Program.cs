@@ -7,6 +7,9 @@ using TeejoshSystem.BlazorUI.Components;
 using TeejoshSystem.BlazorUI.Extensions;
 using TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence;
 
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
+
 var builder = WebApplication.CreateBuilder(args);
 
 
@@ -36,6 +39,36 @@ builder.Services.AddTeejoshApplicationAndInfrastructure(builder.Configuration);
 builder.Services.AddTeejoshAuthentication();
 
 builder.Services.AddHealthChecks();
+
+builder.Services.AddOpenTelemetry()
+    .ConfigureResource(resource => resource
+        .AddService(
+            serviceName: "TeejoshSystem.BlazorUI",
+            serviceVersion: "1.0.0"))
+    .WithTracing(tracing =>
+    {
+        tracing
+            .AddAspNetCoreInstrumentation(options =>
+            {
+                options.RecordException = true;
+            })
+
+            .AddHttpClientInstrumentation(options =>
+            {
+                options.RecordException = true;
+            })
+
+            .AddSqlClientInstrumentation(options =>
+            {
+                options.SetDbStatementForText = true;
+                options.RecordException = true;
+            })
+
+            .AddOtlpExporter(options =>
+            {
+                options.Endpoint = new Uri("http://localhost:4317");
+            });
+    });
 
 var app = builder.Build();
 

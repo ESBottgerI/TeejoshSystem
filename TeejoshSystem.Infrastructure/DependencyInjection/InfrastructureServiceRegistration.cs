@@ -8,6 +8,7 @@ using TeejoshSystem.Infrastructure.Adapters.Outbound.Auth;
 using TeejoshSystem.Infrastructure.Adapters.Outbound.Backup;
 using TeejoshSystem.Infrastructure.Adapters.Outbound.Connectivity;
 using TeejoshSystem.Infrastructure.Adapters.Outbound.Logging;
+using TeejoshSystem.Infrastructure.Adapters.Outbound.Observability;
 using TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence;
 using TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Repositories;
 using TeejoshSystem.Infrastructure.Adapters.Outbound.Realtime;
@@ -33,6 +34,7 @@ namespace TeejoshSystem.Infrastructure.DependencyInjection
             // ── Servicios comunes (siempre registrados) ───────────────────────
             services.AddSingleton<IAppLogger, AppLogger>();
             services.AddScoped<IAuthService, LocalAuthService>();
+            services.AddSingleton<IApplicationMetrics, PrometheusApplicationMetrics>();
 
             services.AddHttpClient<TcgdexAdapter>();
             services.AddHttpClient<ScryfallAdapter>();

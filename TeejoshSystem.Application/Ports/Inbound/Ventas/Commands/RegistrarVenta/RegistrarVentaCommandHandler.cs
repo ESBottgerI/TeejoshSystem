@@ -16,7 +16,8 @@ namespace TeejoshSystem.Application.Ports.Inbound.Ventas.Commands.RegistrarVenta
 
         public RegistrarVentaCommandHandler(
             IVentaRepository ventaRepository,
-            IProductoRepository productoRepository)
+            IProductoRepository productoRepository,
+            IApplicationMetrics metrics)
         {
             _ventaRepository = ventaRepository;
             _productoRepository = productoRepository;

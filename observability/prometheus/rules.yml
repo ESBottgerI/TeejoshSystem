@@ -1,0 +1,46 @@
+groups:
+
+- name: teejosh-alerts
+
+  rules:
+
+  ########################################################
+  # Disponibilidad inferior al SLO (99%)
+  ########################################################
+
+  - alert: AvailabilityBelowSLO
+
+    expr: |
+      (
+        sum(rate(http_requests_received_total{code!~"5.."}[5m]))
+        /
+        sum(rate(http_requests_received_total[5m]))
+      ) < 0.99
+
+    for: 2m
+
+    labels:
+      severity: warning
+
+    annotations:
+      summary: "Disponibilidad inferior al SLO"
+      description: "La disponibilidad del sistema ha caído por debajo del 99 % durante más de dos minutos."
+
+
+
+  ########################################################
+  # Ventas fallidas
+  ########################################################
+
+  - alert: HighSaleFailureRate
+
+    expr: rate(teejosh_sale_failure_total[5m]) > 0
+
+    for: 2m
+
+    labels:
+      severity: critical
+
+    annotations:
+      summary: "Ventas fallidas detectadas"
+      description: "Se detectó una tasa positiva de ventas fallidas."

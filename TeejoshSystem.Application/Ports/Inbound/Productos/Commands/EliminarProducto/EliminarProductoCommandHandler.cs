@@ -1,7 +1,7 @@
 ﻿using MediatR;
-
-using TeejoshSystem.Domain.Ports.Outbound.Repositories;
 using TeejoshSystem.Application.Common;
+using TeejoshSystem.Domain.Ports.Outbound;
+using TeejoshSystem.Domain.Ports.Outbound.Repositories;
 
 namespace TeejoshSystem.Application.Ports.Inbound.Productos.Commands.EliminarProducto
 {
@@ -9,10 +9,14 @@ namespace TeejoshSystem.Application.Ports.Inbound.Productos.Commands.EliminarPro
         : IRequestHandler<EliminarProductoCommand, Result>
     {
         private readonly IProductoRepository _repository;
+        private readonly IApplicationMetrics _metrics;
 
-        public EliminarProductoCommandHandler(IProductoRepository repository)
+        public EliminarProductoCommandHandler(
+            IProductoRepository repository,
+            IApplicationMetrics metrics)
         {
             _repository = repository;
+            _metrics = metrics;
         }
 
         public async Task<Result> Handle(
@@ -21,6 +25,8 @@ namespace TeejoshSystem.Application.Ports.Inbound.Productos.Commands.EliminarPro
         {
             try
             {
+                _metrics.ProductDeleted();
+
                 await _repository.DeleteRangeAsync(request.ProductoIds);
                 return Result.Success();
             }

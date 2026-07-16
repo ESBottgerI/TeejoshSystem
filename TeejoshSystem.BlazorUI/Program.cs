@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
+using Prometheus;
 using TeejoshSystem.BlazorUI.Components;
 using TeejoshSystem.BlazorUI.Extensions;
 using TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence;
@@ -24,7 +25,7 @@ builder.Host.UseDefaultServiceProvider((context, options) =>
 });
 
 
-// Add services to the container.
+// Add services to the container.builder.Services
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
@@ -33,6 +34,8 @@ builder.Services.AddTeejoshApplicationAndInfrastructure(builder.Configuration);
 
 // ── Fase 2 (corregida): autenticación por cookie ────────────────────────────
 builder.Services.AddTeejoshAuthentication();
+
+builder.Services.AddHealthChecks();
 
 var app = builder.Build();
 
@@ -137,6 +140,7 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseHttpMetrics();
 app.UseStaticFiles();
 
 // Orden importante: Authentication/Authorization ANTES de Antiforgery y de
@@ -159,5 +163,8 @@ app.MapPost("/logout", async (HttpContext context) =>
     await context.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
     return Results.LocalRedirect("/login");
 });
+
+app.MapMetrics();
+app.MapHealthChecks("/health");
 
 app.Run();

@@ -11,6 +11,7 @@ using TeejoshSystem.Infrastructure.Adapters.Outbound.Auth;
 using TeejoshSystem.Infrastructure.Adapters.Outbound.Backup;
 using TeejoshSystem.Infrastructure.Adapters.Outbound.Connectivity;
 using TeejoshSystem.Infrastructure.Adapters.Outbound.Logging;
+using TeejoshSystem.Infrastructure.Adapters.Outbound.Observability;
 using TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence;
 using TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Repositories;
 using TeejoshSystem.Infrastructure.Adapters.Outbound.Realtime;
@@ -146,6 +147,8 @@ namespace TeejoshSystem.Infrastructure.DependencyInjection
 
                 services.AddHostedService<BackupService>();
             }
+
+            services.AddSingleton<IApplicationMetrics, PrometheusApplicationMetrics>();
 
             return services;
         }

@@ -11,13 +11,16 @@ namespace TeejoshSystem.Application.Ports.Inbound.Auth.Commands.AutenticarUsuari
     {
         private readonly IAuthService _authService;
         private readonly IAppLogger _logger;                 // NUEVO
+        private readonly IApplicationMetrics _metrics;
 
         public AutenticarUsuarioCommandHandler(
             IAuthService authService,
-            IAppLogger logger)                               // NUEVO
+            IAppLogger logger,
+            IApplicationMetrics metrics)                               // NUEVO
         {
             _authService = authService;
             _logger = logger;
+            _metrics = metrics;
         }
 
         public async Task<Result<SesionDto>> Handle(
@@ -41,17 +44,26 @@ namespace TeejoshSystem.Application.Ports.Inbound.Auth.Commands.AutenticarUsuari
                 {
                     // Loguear intento fallido sin exponer la contraseña
                     _logger.Warning($"Fallo de autenticación para usuario '{request.NombreUsuario}': {resultado.MensajeError}");
+
+                    _metrics.LoginFailed();
+
                     return Result.Failure<SesionDto>(
                         resultado.MensajeError ?? "Credenciales inválidas.");
                 }
 
                 _logger.Info($"Autenticación exitosa: usuario='{resultado.NombreUsuario}', rol={resultado.Rol}");
+
+                _metrics.LoginSucceeded();
+
                 return Result.Success(
                     new SesionDto(resultado.UsuarioId!.Value, resultado.NombreUsuario!, resultado.Rol!.Value));
             }
             catch (Exception ex)
             {
                 _logger.Error($"Error inesperado al autenticar usuario '{request.NombreUsuario}'", ex);
+
+                _metrics.LoginFailed();
+
                 return Result.Failure<SesionDto>("Error al autenticar. Intente nuevamente.");
             }
         }

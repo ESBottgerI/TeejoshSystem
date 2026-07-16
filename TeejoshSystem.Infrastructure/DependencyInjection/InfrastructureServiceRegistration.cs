@@ -1,17 +1,13 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-
 using TeejoshSystem.Domain.Ports.Outbound;
 using TeejoshSystem.Domain.Ports.Outbound.Auth;
 using TeejoshSystem.Domain.Ports.Outbound.Repositories;
-
 using TeejoshSystem.Infrastructure.Adapters.Outbound.Apis;
 using TeejoshSystem.Infrastructure.Adapters.Outbound.Auth;
 using TeejoshSystem.Infrastructure.Adapters.Outbound.Backup;
 using TeejoshSystem.Infrastructure.Adapters.Outbound.Connectivity;
 using TeejoshSystem.Infrastructure.Adapters.Outbound.Logging;
-using TeejoshSystem.Infrastructure.Adapters.Outbound.Observability;
 using TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence;
 using TeejoshSystem.Infrastructure.Adapters.Outbound.Persistence.Repositories;
 using TeejoshSystem.Infrastructure.Adapters.Outbound.Realtime;
@@ -27,37 +23,17 @@ namespace TeejoshSystem.Infrastructure.DependencyInjection
             this IServiceCollection services,
             IConfiguration configuration)
         {
-            // ── Persistencia (DbContexts) ─────────────────────────────────────
+            // ── Persistencia ──────────────────────────────────────────────────
             services.AddPersistence(configuration);
 
             var provider   = configuration["Database:Provider"] ?? "sqlite";
             var isPostgres = provider.Equals("postgresql", StringComparison.OrdinalIgnoreCase);
+            var deviceId   = GetOrCreateDeviceId();
 
-            // ── Device ID ─────────────────────────────────────────────────────
-            var deviceId = GetOrCreateDeviceId();
-
-            // ── Logging ───────────────────────────────────────────────────────
+            // ── Servicios comunes (siempre registrados) ───────────────────────
             services.AddSingleton<IAppLogger, AppLogger>();
-
-            // ── Auth ──────────────────────────────────────────────────────────
             services.AddScoped<IAuthService, LocalAuthService>();
 
-            // ── Storage de imágenes ───────────────────────────────────────────
-            if (isPostgres)
-            {
-                var supabaseUrl = RequireConfig(configuration, "Supabase:Url");
-                var supabaseKey = RequireConfig(configuration, "Supabase:ServiceKey");
-                var bucketName  = configuration["Supabase:BucketName"] ?? "product-images";
-
-                services.AddSingleton<IImageStorageService>(_ =>
-                    new SupabaseImageStorageService(supabaseUrl, supabaseKey, bucketName));
-            }
-            else
-            {
-                services.AddSingleton<IImageStorageService, LocalImageStorageService>();
-            }
-
-            // ── APIs externas TCG ─────────────────────────────────────────────
             services.AddHttpClient<TcgdexAdapter>();
             services.AddHttpClient<ScryfallAdapter>();
             services.AddHttpClient<YgoprodeckAdapter>();
@@ -66,91 +42,154 @@ namespace TeejoshSystem.Infrastructure.DependencyInjection
             services.AddScoped<ITcgCatalogoApiService, YgoprodeckAdapter>();
 
             if (isPostgres)
-            {
-                var supabaseUrl     = RequireConfig(configuration, "Supabase:Url");
-                var supabaseAnonKey = configuration["Supabase:AnonKey"]
-                    ?? RequireConfig(configuration, "Supabase:ServiceKey");
-                var supabaseKey     = RequireConfig(configuration, "Supabase:ServiceKey");
-
-                // ── Conectividad ───────────────────────────────────────────────
-                // Registrar la instancia concreta como Singleton para que sea compartida
-                // entre IConnectivityService y AddHostedService (misma instancia, no dos).
-                services.AddSingleton<SupabaseConnectivityService>(sp =>
-                    new SupabaseConnectivityService(
-                        supabaseUrl,
-                        supabaseAnonKey,
-                        pingIntervalSeconds: 15));
-
-                // IConnectivityService resuelve la misma instancia singleton
-                services.AddSingleton<IConnectivityService>(
-                    sp => sp.GetRequiredService<SupabaseConnectivityService>());
-
-                // BackgroundService también resuelve la misma instancia
-                services.AddHostedService(
-                    sp => sp.GetRequiredService<SupabaseConnectivityService>());
-
-                // ── Outbox ─────────────────────────────────────────────────────
-                services.AddScoped<ISyncOutboxRepository, SyncOutboxRepository>();
-
-                // ── Sync Service ───────────────────────────────────────────────
-                services.AddSingleton(sp => new SyncService(
-                    sp.GetRequiredService<IConnectivityService>(),
-                    sp.GetRequiredService<IServiceScopeFactory>(),
-                    supabaseUrl,
-                    supabaseKey,
-                    deviceId));
-                services.AddHostedService(
-                    sp => sp.GetRequiredService<SyncService>());
-
-                // ── Catalog Refresh ────────────────────────────────────────────
-                services.AddHostedService<CatalogRefreshService>();
-
-                // ── Realtime ───────────────────────────────────────────────────
-                services.AddSingleton<SupabaseRealtimeService>(sp =>
-                    new SupabaseRealtimeService(supabaseUrl, supabaseAnonKey));
-
-                services.AddSingleton<IRealtimeService>(
-                    sp => sp.GetRequiredService<SupabaseRealtimeService>());
-
-                services.AddHostedService(
-                    sp => sp.GetRequiredService<SupabaseRealtimeService>());
-
-                // ── Repositorios con routing online/offline ───────────────────
-                services.AddScoped<IProductoRepository>(sp => new RoutingProductoRepository(
-                    sp.GetRequiredService<IConnectivityService>(),
-                    sp.GetRequiredService<ISyncOutboxRepository>(),
-                    sp.GetRequiredService<InventarioDbContext>(),
-                    sp.GetRequiredService<LocalDbContext>(),
-                    deviceId));
-
-                services.AddScoped<IVentaRepository>(sp => new RoutingVentaRepository(
-                    sp.GetRequiredService<IConnectivityService>(),
-                    sp.GetRequiredService<ISyncOutboxRepository>(),
-                    sp.GetRequiredService<InventarioDbContext>(),
-                    sp.GetRequiredService<LocalDbContext>(),
-                    deviceId));
-
-                services.AddScoped<ICatalogoRepository>(sp => new RoutingCatalogoRepository(
-                    sp.GetRequiredService<IConnectivityService>(),
-                    sp.GetRequiredService<InventarioDbContext>(),
-                    sp.GetRequiredService<LocalDbContext>()));
-
-                services.AddScoped<IUsuarioRepository, UsuarioRepository>();
-            }
+                RegisterPostgresMode(services, configuration, deviceId);
             else
+                RegisterSqliteMode(services, configuration, deviceId);
+
+            return services;
+        }
+
+        // ── Modo PostgreSQL — Blazor VPS ──────────────────────────────────────
+        private static void RegisterPostgresMode(
+            IServiceCollection services,
+            IConfiguration configuration,
+            string deviceId)
+        {
+            var supabaseUrl     = RequireConfig(configuration, "Supabase:Url");
+            var supabaseKey     = RequireConfig(configuration, "Supabase:ServiceKey");
+            var supabaseAnonKey = configuration["Supabase:AnonKey"] ?? supabaseKey;
+            var bucketName      = configuration["Supabase:BucketName"] ?? "product-images";
+
+            // Storage
+            services.AddSingleton<IImageStorageService>(_ =>
+                new SupabaseImageStorageService(supabaseUrl, supabaseKey, bucketName));
+
+            // Conectividad
+            services.AddSingleton<SupabaseConnectivityService>(sp =>
+                new SupabaseConnectivityService(supabaseUrl, supabaseAnonKey));
+            services.AddSingleton<IConnectivityService>(
+                sp => sp.GetRequiredService<SupabaseConnectivityService>());
+            services.AddHostedService(
+                sp => sp.GetRequiredService<SupabaseConnectivityService>());
+
+            // Outbox
+            services.AddScoped<ISyncOutboxRepository, SyncOutboxRepository>();
+
+            // Sync
+            services.AddSingleton(sp => new SyncService(
+                sp.GetRequiredService<IConnectivityService>(),
+                sp.GetRequiredService<IServiceScopeFactory>(),
+                supabaseUrl, supabaseKey, deviceId));
+            services.AddHostedService(sp => sp.GetRequiredService<SyncService>());
+
+            // Catalog Refresh + Realtime
+            services.AddHostedService<CatalogRefreshService>();
+
+            services.AddSingleton<SupabaseRealtimeService>(sp =>
+                new SupabaseRealtimeService(supabaseUrl, supabaseAnonKey));
+            services.AddSingleton<IRealtimeService>(
+                sp => sp.GetRequiredService<SupabaseRealtimeService>());
+            services.AddHostedService(
+                sp => sp.GetRequiredService<SupabaseRealtimeService>());
+
+            // Repositorios con routing online/offline
+            services.AddScoped<IProductoRepository>(sp => new RoutingProductoRepository(
+                sp.GetRequiredService<IConnectivityService>(),
+                sp.GetRequiredService<ISyncOutboxRepository>(),
+                sp.GetRequiredService<InventarioDbContext>(),
+                sp.GetRequiredService<LocalDbContext>(),
+                deviceId));
+
+            services.AddScoped<IVentaRepository>(sp => new RoutingVentaRepository(
+                sp.GetRequiredService<IConnectivityService>(),
+                sp.GetRequiredService<ISyncOutboxRepository>(),
+                sp.GetRequiredService<InventarioDbContext>(),
+                sp.GetRequiredService<LocalDbContext>(),
+                deviceId));
+
+            services.AddScoped<ICatalogoRepository>(sp => new RoutingCatalogoRepository(
+                sp.GetRequiredService<IConnectivityService>(),
+                sp.GetRequiredService<InventarioDbContext>(),
+                sp.GetRequiredService<LocalDbContext>()));
+
+            services.AddScoped<IUsuarioRepository, UsuarioRepository>();
+        }
+
+        // ── Modo SQLite — Avalonia desktop ────────────────────────────────────
+        private static void RegisterSqliteMode(
+            IServiceCollection services,
+            IConfiguration configuration,
+            string deviceId)
+        {
+            services.AddSingleton<IImageStorageService, LocalImageStorageService>();
+            services.AddHostedService<BackupService>();
+
+            var supabaseUrl = configuration["Supabase:Url"];
+            var supabaseKey = configuration["Supabase:ServiceKey"];
+            var hasSupabase = !string.IsNullOrEmpty(supabaseUrl)
+                        && !string.IsNullOrEmpty(supabaseKey);
+
+            Console.WriteLine($"[DI] hasSupabase={hasSupabase}, supabaseUrl={supabaseUrl ?? "(null)"}");
+
+            if (!hasSupabase)
             {
-                // ── Modo SQLite puro (desarrollo / sin Supabase) ───────────────
+                // Sin Supabase — repositorios directos, sin routing ni sync
                 services.AddScoped<IProductoRepository, ProductoRepository>();
                 services.AddScoped<IVentaRepository, VentaRepository>();
                 services.AddScoped<ICatalogoRepository, CatalogoRepository>();
                 services.AddScoped<IUsuarioRepository, UsuarioRepository>();
 
-                services.AddHostedService<BackupService>();
+                return;
             }
 
-            services.AddSingleton<IApplicationMetrics, PrometheusApplicationMetrics>();
+            // Con Supabase — SQLite local + sincronización en background
+            var supabaseAnonKey = configuration["Supabase:AnonKey"] ?? supabaseKey;
 
-            return services;
+            // LocalDbContext apunta al mismo SQLite para sync_outbox
+            services.AddDbContext<LocalDbContext>(options =>
+                PersistenceServiceRegistration.ConfigureSqlite(options));
+
+            // Conectividad
+            services.AddSingleton<SupabaseConnectivityService>(sp =>
+                new SupabaseConnectivityService(
+                    supabaseUrl!, supabaseAnonKey!, pingIntervalSeconds: 15));
+            services.AddSingleton<IConnectivityService>(
+                sp => sp.GetRequiredService<SupabaseConnectivityService>());
+            services.AddHostedService(
+                sp => sp.GetRequiredService<SupabaseConnectivityService>());
+
+            // Outbox
+            services.AddScoped<ISyncOutboxRepository, SyncOutboxRepository>();
+
+            // SyncService
+            services.AddSingleton(sp => new SyncService(
+                sp.GetRequiredService<IConnectivityService>(),
+                sp.GetRequiredService<IServiceScopeFactory>(),
+                supabaseUrl!, supabaseKey!, deviceId));
+            services.AddHostedService(sp => sp.GetRequiredService<SyncService>());
+
+            // Repositorios con routing — escriben en SQLite local y encolan en outbox
+            // El SyncService replica el outbox a Supabase cuando hay conectividad
+            services.AddScoped<IProductoRepository>(sp => new RoutingProductoRepository(
+                sp.GetRequiredService<IConnectivityService>(),
+                sp.GetRequiredService<ISyncOutboxRepository>(),
+                sp.GetRequiredService<InventarioDbContext>(),
+                sp.GetRequiredService<InventarioDbContext>(),
+                deviceId));
+
+            services.AddScoped<IVentaRepository>(sp => new RoutingVentaRepository(
+                sp.GetRequiredService<IConnectivityService>(),
+                sp.GetRequiredService<ISyncOutboxRepository>(),
+                sp.GetRequiredService<InventarioDbContext>(),
+                sp.GetRequiredService<InventarioDbContext>(),
+                deviceId));
+
+            services.AddScoped<ICatalogoRepository>(sp => new RoutingCatalogoRepository(
+                sp.GetRequiredService<IConnectivityService>(),
+                sp.GetRequiredService<InventarioDbContext>(),
+                sp.GetRequiredService<InventarioDbContext>()));
+
+            services.AddScoped<IUsuarioRepository, UsuarioRepository>();
         }
 
         private static string GetOrCreateDeviceId()
@@ -159,7 +198,6 @@ namespace TeejoshSystem.Infrastructure.DependencyInjection
                 Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
                 "TeejoshSystem");
             var idFile = Path.Combine(dir, "device.id");
-
             Directory.CreateDirectory(dir);
 
             if (File.Exists(idFile))
@@ -172,6 +210,6 @@ namespace TeejoshSystem.Infrastructure.DependencyInjection
 
         private static string RequireConfig(IConfiguration config, string key)
             => config[key] ?? throw new InvalidOperationException(
-                $"La configuración '{key}' es requerida cuando provider='postgresql'.");
+                $"Configuración requerida ausente: '{key}'.");
     }
 }

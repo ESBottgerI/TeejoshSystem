@@ -19,7 +19,7 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Routing
     {
         private readonly IConnectivityService _connectivity;
         private readonly InventarioDbContext _pgContext;
-        private readonly LocalDbContext _localContext;
+        private readonly InventarioDbContext _localContext;
 
         private CatalogoRepository PgRepo => new(_pgContext);
         private CatalogoRepository LocalRepo => new(_localContext);
@@ -27,7 +27,7 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Routing
         public RoutingCatalogoRepository(
             IConnectivityService connectivity,
             InventarioDbContext pgContext,
-            LocalDbContext localContext)
+            InventarioDbContext localContext)
         {
             _connectivity = connectivity;
             _pgContext = pgContext;

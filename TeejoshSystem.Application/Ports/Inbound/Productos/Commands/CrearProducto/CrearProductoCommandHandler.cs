@@ -15,18 +15,15 @@ namespace TeejoshSystem.Application.Ports.Inbound.Productos.Commands.CrearProduc
         private readonly IProductoRepository _repository;
         private readonly IImageStorageService _imageStorage;
         private readonly IAppLogger _logger;                 // NUEVO
-        private readonly IApplicationMetrics _metrics;
 
         public CrearProductoCommandHandler(
             IProductoRepository repository,
             IImageStorageService imageStorage,
-            IAppLogger logger,
-            IApplicationMetrics metrics)                               // NUEVO
+            IAppLogger logger)                               // NUEVO
         {
             _repository = repository;
             _imageStorage = imageStorage;
             _logger = logger;
-            _metrics = metrics;
         }
 
         public async Task<Result> Handle(
@@ -57,8 +54,6 @@ namespace TeejoshSystem.Application.Ports.Inbound.Productos.Commands.CrearProduc
 
                 // 5. Crear y guardar detalle según tipo
                 await CrearYGuardarDetallePorTipo(productoId, producto, request);
-
-                _metrics.ProductCreated();
 
                 _logger.Info($"Producto creado exitosamente: Id={productoId}, Nombre={request.Nombre}");
                 return Result.Success();

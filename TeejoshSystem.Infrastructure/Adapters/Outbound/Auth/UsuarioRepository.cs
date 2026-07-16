@@ -26,7 +26,7 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Auth
         {
             var hash = BCrypt.Net.BCrypt.HashPassword(passwordPlano, workFactor: 12);
             await _context.Database.ExecuteSqlRawAsync(
-                "INSERT INTO app_user (username, password_hash, rol, active) VALUES ({0}, {1}, {2}, 1)",
+                "INSERT INTO app_user (username, password_hash, rol, active) VALUES ({0}, {1}, {2}, true)",
                 nombreUsuario, hash, rol.ToString());
         }
 
@@ -44,8 +44,7 @@ namespace TeejoshSystem.Infrastructure.Adapters.Outbound.Auth
         public async Task DesactivarAsync(int usuarioId, CancellationToken ct = default)
         {
             await _context.Database.ExecuteSqlRawAsync(
-                "UPDATE app_user SET active = 0 WHERE id = {0}",
-                usuarioId);
+                "UPDATE app_user SET active = false WHERE id = {0}", usuarioId);
         }
     }
 }

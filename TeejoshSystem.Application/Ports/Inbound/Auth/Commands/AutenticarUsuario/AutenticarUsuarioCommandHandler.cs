@@ -15,8 +15,7 @@ namespace TeejoshSystem.Application.Ports.Inbound.Auth.Commands.AutenticarUsuari
 
         public AutenticarUsuarioCommandHandler(
             IAuthService authService,
-            IAppLogger logger,
-            IApplicationMetrics metrics)                               // NUEVO
+            IAppLogger logger)                               // NUEVO
         {
             _authService = authService;
             _logger = logger;

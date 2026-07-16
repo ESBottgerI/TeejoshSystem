@@ -6,12 +6,14 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using Serilog;
+using Serilog.Settings.Configuration;
 using System;
+using System.IO;
 using System.ComponentModel;
 using System.Threading.Tasks;
 using TeejoshSystem.Domain.Ports.Outbound;
+using TeejoshSystem.Domain.Ports.Outbound.Repositories;
 using TeejoshSystem.AvaloniaUI.Adapters.Inbound.Services;
 using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Admin;
 using TeejoshSystem.AvaloniaUI.Adapters.Inbound.ViewModels.Auth;
@@ -35,29 +37,37 @@ public partial class App : Avalonia.Application
 
     public override void OnFrameworkInitializationCompleted()
     {
-        var environment = Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") ?? "Development";
+        // ── Fase 1: Configuración ─────────────────────────────────────────────
+        var environment = Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT")
+            ?? "Production";
+
+        var basePath = Path.GetDirectoryName(Environment.ProcessPath!)!;
 
         var configuration = new ConfigurationBuilder()
-            .SetBasePath(AppContext.BaseDirectory)
+            .SetBasePath(basePath)
             .AddJsonFile("appsettings.json", optional: true)
             .AddJsonFile($"appsettings.{environment}.json", optional: true)
             .AddEnvironmentVariables()
             .Build();
 
-        // ── DEBUG TEMPORAL ─────────────────────────────────────
-        var dbProvider = configuration["Database:Provider"] ?? "(no encontrado)";
-        var dbCs = configuration["Database:ConnectionString"] ?? "(no encontrado)";
-        Console.WriteLine($"[STARTUP] Provider  : {dbProvider}");
-        Console.WriteLine($"[STARTUP] ConnString: {dbCs[..Math.Min(50, dbCs.Length)]}...");
-        // ───────────────────────────────────────────────────────
-
-        // NUEVO — Serilog lee su configuración completa desde appsettings.json
+        // ── Fase 2: Logging ───────────────────────────────────────────────────
         Log.Logger = new LoggerConfiguration()
-            .ReadFrom.Configuration(configuration)
+            .ReadFrom.Configuration(configuration, new ConfigurationReaderOptions(
+                typeof(ConsoleLoggerConfigurationExtensions).Assembly,
+                typeof(Serilog.Sinks.File.FileSink).Assembly))
             .CreateLogger();
 
+        Log.Information("TeejoshSystem arrancando. Ambiente: {Environment}", environment);
+        Log.Information("Provider: {Provider}", configuration["Database:Provider"] ?? "sqlite");
+
+        // ── Fase 3: Construcción del host ─────────────────────────────────────
         _host = Host.CreateDefaultBuilder()
             .UseSerilog()
+            .UseDefaultServiceProvider(options =>
+            {
+                options.ValidateOnBuild = false;  // igual que Blazor — IAuditLogRepository pendiente
+                options.ValidateScopes = false;
+            })
             .ConfigureServices((_, services) =>
             {
                 services.AddInfrastructure(configuration);
@@ -91,33 +101,50 @@ public partial class App : Avalonia.Application
             })
             .Build();
 
-        // ── Migraciones ───────────────────────────────────────────────────────
+        // ── Fase 4: Migraciones y seeding ─────────────────────────────────────
         using (var scope = _host.Services.CreateScope())
         {
-            // Contexto principal (PostgreSQL o SQLite según proveedor)
             var db = scope.ServiceProvider.GetRequiredService<InventarioDbContext>();
             db.Database.Migrate();
             DatabaseSeeder.SeedUsuarioAdmin(db);
 
-            // LocalDbContext solo existe cuando provider = "postgresql"
-            // GetService (no GetRequiredService) retorna null si no está registrado
             var localDb = scope.ServiceProvider.GetService<LocalDbContext>();
-            if (localDb is not null)
-            {
-                localDb.Database.Migrate();
-            }
+            localDb?.Database.EnsureCreated();
         }
 
-        // Configurar navegación
+        // ── Fase 5: Iniciar el host (arranca IHostedServices) ─────────────────
+        // StartAsync arranca SupabaseConnectivityService, SyncService, BackupService, etc.
+        // Se hace en un Task.Run para no bloquear el hilo de UI de Avalonia.
+        _ = Task.Run(async () =>
+        {
+            await _host.StartAsync();
+            Log.Information("Host iniciado. IHostedServices activos.");
+
+            // Esperar primer ping de conectividad
+            await Task.Delay(2000);
+
+            var connectivity = _host.Services.GetService<IConnectivityService>();
+
+            // Verificar qué implementación de IProductoRepository está registrada
+            var productoRepo = _host.Services.GetService<IProductoRepository>();
+            Log.Information("IProductoRepository resuelto como: {Tipo}", 
+                productoRepo?.GetType().Name ?? "(null)");
+
+            if (connectivity is not null)
+                Log.Information("Conectividad inicial: {Estado}",
+                    connectivity.IsOnline ? "ONLINE" : "OFFLINE");
+            else
+                Log.Warning("IConnectivityService no registrado — modo SQLite puro.");
+        });
+
+        // ── Fase 6: Configurar UI y navegación ────────────────────────────────
         var navService = _host.Services.GetRequiredService<NavigationService>();
         var mainVm = _host.Services.GetRequiredService<MainViewModel>();
 
         mainVm.PropertyChanged += (object? sender, PropertyChangedEventArgs e) =>
         {
             if (e.PropertyName == nameof(MainViewModel.ThemeVariant))
-            {
                 Dispatcher.UIThread.Post(() => RequestedThemeVariant = mainVm.ThemeVariant);
-            }
         };
 
         _ = Task.Run(async () =>
@@ -141,13 +168,17 @@ public partial class App : Avalonia.Application
             ? _host.Services.GetRequiredService<MenuPrincipalViewModel>()
             : (object)loginVm;
 
+        // ── Fase 7: Ventana principal ─────────────────────────────────────────
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             var mainWindow = new MainWindow();
             mainWindow.DataContext = mainVm;
             desktop.MainWindow = mainWindow;
-            desktop.Exit += (_, _) =>
+
+            desktop.Exit += async (_, _) =>
             {
+                Log.Information("Cerrando TeejoshSystem...");
+                await _host.StopAsync(TimeSpan.FromSeconds(5));
                 _host.Dispose();
                 Log.CloseAndFlush();
             };

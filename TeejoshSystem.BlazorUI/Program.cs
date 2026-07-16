@@ -25,7 +25,7 @@ builder.Host.UseDefaultServiceProvider((context, options) =>
 });
 
 
-// Add services to the container.builder.Services
+// Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
